@@ -36,11 +36,10 @@ Copy
 pip install -r requirements.txt
 (If you don't have a requirements.txt, create one with the following contents:)
 
-text
-Copy
 selenium
 webdriver-manager
-Setup
+
+### Setup
 Credentials File (Optional):
 You can store your Travian login credentials in a file named credentials.txt in the following format:
 
@@ -120,3 +119,4 @@ Travian’s website layout may change. If the script cannot find an element (e.g
 
 License
 MIT License
+Made with love by Eng.\ Kareem Hussien - ++201099339393

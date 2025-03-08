@@ -1,3 +1,10 @@
+import warnings
+warnings.filterwarnings(
+    "ignore", 
+    message="Unable to find acceptable character detection dependency", 
+    module="requests"
+)
+
 import os
 import time
 import threading
@@ -14,6 +21,21 @@ import trainer
 import villages  # Module for village list extraction
 
 LOGIN_URL = "https://ts1.x1.international.travian.com"
+
+def welcome():
+    """Displays welcome messages with a loading effect."""
+    messages = [
+        "Travian Whispers",
+        "made by Eng. Kareem Hussien",
+        "WhatsApp : https://wa.me/00201099339393"
+    ]
+    # For each message, print it, then show 5 dots (with a space before each) over 3 seconds.
+    for message in messages:
+        print(message, end='', flush=True)
+        for i in range(5):
+            print(" .", end='', flush=True)
+            time.sleep(0.6)  # 0.6 sec per dot gives 3 seconds total per message.
+        print()  # New line after each message.
 
 def get_credentials():
     """
@@ -86,14 +108,16 @@ def login(driver, username, password):
 def detect_tribe(driver):
     """
     Navigates to the profile edit page, clicks the Overview tab,
-    waits for the tribe information to load, extracts the tribe from the table,
-    confirms with the user, and saves it to 'tribe.txt' if confirmed.
+    waits for the page to fully load (so that the URL becomes like .../profile/4662),
+    extracts the profile ID and tribe type from the table,
+    and then confirms with the user.
+    If confirmed, saves both values to 'tribe.txt' in the format: tribe,profileID.
     """
-    profile_url = "https://ts1.x1.international.travian.com/profile/edit"
+    profile_edit_url = "https://ts1.x1.international.travian.com/profile/edit"
     print("[INFO] Navigating to the profile edit page for tribe detection...")
-    driver.get(profile_url)
+    driver.get(profile_edit_url)
 
-    # Wait for the tab container to load and click on the Overview tab.
+    # Click the Overview tab.
     try:
         overview_tab = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.XPATH, "//a[@data-tab='1' and contains(.,'Overview')]"))
@@ -102,6 +126,16 @@ def detect_tribe(driver):
     except Exception as e:
         print(f"[ERROR] Could not click Overview tab: {e}")
         return None
+
+    # Wait until the URL changes to one containing /profile/ (e.g., .../profile/4662).
+    try:
+        WebDriverWait(driver, 10).until(lambda d: "/profile/" in d.current_url and d.current_url != profile_edit_url)
+        current_url = driver.current_url
+        print(f"[INFO] Redirected URL: {current_url}")
+        profile_id = current_url.rstrip("/").split("/")[-1]
+    except Exception as e:
+        print(f"[ERROR] Could not retrieve profile id from URL: {e}")
+        profile_id = None
 
     # Wait for the tribe row in the table to appear.
     try:
@@ -113,9 +147,9 @@ def detect_tribe(driver):
         confirm = input("Is this your correct tribe? (y/n): ").strip().lower()
         if confirm == "y":
             with open("tribe.txt", "w") as file:
-                file.write(detected_tribe)
-            print("[SUCCESS] Tribe saved to tribe.txt")
-            return detected_tribe
+                file.write(f"{detected_tribe},{profile_id}")
+            print(f"[SUCCESS] Tribe and profile id saved to tribe.txt: {detected_tribe}, {profile_id}")
+            return (detected_tribe, profile_id)
         else:
             print("[INFO] Tribe detection not confirmed. You can update it manually later if needed.")
             return None
@@ -146,12 +180,14 @@ def start_tasks(driver, run_auto_farm, run_trainer):
 def main():
     """
     Main flow:
-      1. Ask for login credentials.
-      2. Open the browser and log in.
-      3. Auto-detect account tribe and confirm/save it.
-      4. Ask if the villages list should be refreshed.
-      5. Display task menu (Auto-Farm, Trainer, Both, or Exit).
+      1. Display welcome messages.
+      2. Ask for login credentials.
+      3. Open the browser and log in.
+      4. Auto-detect account tribe (and extract profile id) from the profile edit page.
+      5. Ask if the villages list should be refreshed.
+      6. Display task menu (Auto-Farm, Trainer, Both, or Exit).
     """
+    welcome()
     username, password = get_credentials()
     driver = setup_browser()
     
@@ -159,9 +195,9 @@ def main():
         driver.quit()
         return
 
-    # Auto-detect tribe from the profile edit page.
-    detected_tribe = detect_tribe(driver)
-    if not detected_tribe:
+    # Auto-detect tribe and profile id.
+    detected_info = detect_tribe(driver)
+    if not detected_info:
         print("[INFO] Tribe detection was not confirmed or failed.")
     
     # Ask if the user wants to refresh the villages list.
