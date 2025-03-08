@@ -1,0 +1,40 @@
+Romans-barracks-[tid1]-Legionnaire
+Romans-barracks-[tid2]-Praetorian
+Romans-barracks-[tid3]-Imperian
+Romans-stable-[tid4]-Equites Legati
+Romans-stable-[tid5]-Equites Imperatoris
+Romans-stable-[tid6]-Equites Caesaris
+Romans-workshop-[tid7]-Ram
+Romans-workshop-[tid8]-Fire Catapult
+Teutons-barracks-[tid11]-Clubswinger
+Teutons-barracks-[tid12]-Spearman
+Teutons-barracks-[tid13]-Axeman
+Teutons-stable-[tid14]-Scout
+Teutons-stable-[tid15]-Paladin
+Teutons-stable-[tid16]-Teutonic Knight
+Teutons-workshop-[tid17]-Ram
+Teutons-workshop-[tid18]-Catapult
+Gauls-barracks-[tid21]-Phalanx
+Gauls-barracks-[tid22]-Swordsman
+Gauls-stable-[tid23]-Pathfinder
+Gauls-stable-[tid24]-Theutates Thunder
+Gauls-stable-[tid25]-Druidrider
+Gauls-stable-[tid26]-Haeduan
+Gauls-workshop-[tid27]-Ram
+Gauls-workshop-[tid28]-Trebuchet
+Egyptians-barracks-[tid31]-Slave Militia
+Egyptians-barracks-[tid32]-Ash Warden
+Egyptians-barracks-[tid33]-Khopesh Warrior
+Egyptians-stable-[tid34]-Sopdu Explorer
+Egyptians-stable-[tid35]-Anhur Guard
+Egyptians-stable-[tid36]-Resheph Chariot
+Egyptians-workshop-[tid37]-Battering Ram
+Egyptians-workshop-[tid38]-Stone Catapult
+Huns-barracks-[tid41]-Mercenary
+Huns-barracks-[tid42]-Bowman
+Huns-barracks-[tid43]-Steppe Rider
+Huns-stable-[tid44]-Marksman
+Huns-stable-[tid45]-Marauder
+Huns-stable-[tid46]-Short Bowman
+Huns-workshop-[tid47]-Ram
+Huns-workshop-[tid48]-Ballistar
