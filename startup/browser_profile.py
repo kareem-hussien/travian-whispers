@@ -26,7 +26,7 @@ def setup_browser():
 def login_and_detect_profile(driver, username, password):
     """
     Opens the browser, logs in with provided credentials, then auto-detects the account tribe
-    and profile ID from the profile edit page (merging login and profile detection).
+    and profile ID by navigating to the profile edit page and clicking the Overview tab.
     
     Returns a tuple (login_success, detected_info).
     detected_info is a tuple (detected_tribe, profile_id) if successful, else None.
