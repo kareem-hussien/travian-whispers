@@ -24,7 +24,7 @@ def start_tasks(driver, run_auto_farm, run_trainer):
 def run_task_menu(driver):
     """
     Displays the main task menu (Auto-Farm, Trainer, Both, or Exit)
-    and calls start_tasks() according to the user's choice.
+    and calls start_tasks() based on the user's choice.
     """
     while True:
         print("\n=== Travian Automation Suite ===")

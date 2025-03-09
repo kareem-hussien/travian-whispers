@@ -9,11 +9,7 @@ def run_villages(driver):
     """
     Navigates to the village overview page, extracts the list of villages,
     prints them for confirmation, and if confirmed, saves them to villages_list.txt.
-    
-    Extracted details:
-      - Village name (from <span class="name">)
-      - Village coordinates (data-x and data-y from <span class="coordinatesGrid">)
-      - Village newdid (from the data-did attribute of the village entry)
+    Extracted details include village name, coordinates, and newdid.
     """
     print("[INFO] Navigating to the village overview page...")
     driver.get(VILLAGE_OVERVIEW_URL)
@@ -26,7 +22,7 @@ def run_villages(driver):
         print(f"[ERROR] Village list not found: {e}")
         return
     
-    time.sleep(3)  # Ensure all villages have loaded
+    time.sleep(3)
 
     villages = []
     village_elements = driver.find_elements(By.CSS_SELECTOR, "div.villageList div.listEntry.village")

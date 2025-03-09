@@ -57,13 +57,9 @@ def train_troops(driver, building_url, troop_name, count):
     """
     print(f"[INFO] Navigating to {building_url} to train {count} {troop_name}.")
     driver.get(building_url)
-    time.sleep(3)  # wait for page to load
-    # Here you would normally:
-    #  - Locate the input field for troop count
-    #  - Clear it and send the count
-    #  - Click the train/submit button
+    time.sleep(3)  # Wait for page to load
     print(f"[INFO] Training {count} {troop_name} ...")
-    time.sleep(2)  # simulate time taken to perform the training action
+    time.sleep(2)  # Simulate action delay
 
 def run_trainer(driver):
     """Main function to run the troop training automation."""
@@ -175,7 +171,6 @@ def run_trainer(driver):
             except ValueError:
                 print("[ERROR] Invalid input for training time. Exiting.")
                 return
-            # For great building, we assume a larger troop range
             min_troops, max_troops = 500, 2000
         else:
             print("[ERROR] Invalid sub-option. Exiting.")
@@ -184,21 +179,18 @@ def run_trainer(driver):
         print("[ERROR] Invalid training option. Exiting.")
         return
 
-    # Choose a random training time (in minutes) and troop count from the selected range
     training_time = random.randint(min_time, max_time)
     troop_count = random.randint(min_troops, max_troops)
     
     print(f"[INFO] Training will occur every {training_time} minutes, training {troop_count} troops each cycle.")
     
-    # === Step 5: Read building URLs ===
     building_urls = read_building_urls()
     if not building_urls:
         print("[ERROR] Building URLs not loaded. Exiting.")
         return
 
-    # === Step 6: For each selected troop, determine the building and trigger training ===
+    # Training cycle (a single cycle for demonstration; you can wrap this in a loop if desired).
     for troop_name, troop_building in selected_troops:
-        # If using great building option, only train if the troop's training building is in the great building selection
         if use_great_building:
             if troop_building in great_building_choice:
                 url = building_urls.get(troop_building)
@@ -209,7 +201,6 @@ def run_trainer(driver):
             else:
                 print(f"[INFO] Skipping {troop_name} (trained in {troop_building}) due to great building selection.")
         else:
-            # Otherwise, check if the troop’s building is among the valid buildings chosen
             if troop_building in valid_buildings:
                 url = building_urls.get(troop_building)
                 if url:
@@ -218,14 +209,13 @@ def run_trainer(driver):
                     print(f"[ERROR] URL for {troop_building} not found.")
             else:
                 print(f"[INFO] Skipping {troop_name} (trained in {troop_building}) as it is not in the selected buildings.")
-
+    
     print(f"[INFO] Waiting {training_time} minutes until next training cycle...")
     time.sleep(training_time * 60)
-    # Optionally, loop the training cycle.
     print("[INFO] Training cycle completed. Exiting trainer.")
 
 if __name__ == "__main__":
-    # For testing as a standalone script, we create a new browser instance.
+    # For standalone testing.
     from selenium import webdriver
     from selenium.webdriver.chrome.service import Service
     from selenium.webdriver.chrome.options import Options
