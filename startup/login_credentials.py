@@ -1,13 +1,13 @@
 import os
 
-def get_credentials():
+def get_credentials(profile_path="info/profile/credentials.txt"):
     """
-    Reads credentials from 'credentials.txt' if available.
+    Reads credentials from 'info/profile/credentials.txt' if available.
     If found, asks if you want to use them.
     Otherwise, prompts for credentials and offers to save them.
     """
-    if os.path.exists("credentials.txt"):
-        with open("credentials.txt", "r") as file:
+    if os.path.exists(profile_path):
+        with open(profile_path, "r") as file:
             lines = file.read().splitlines()
             if len(lines) >= 2:
                 saved_username = lines[0].strip()
@@ -19,7 +19,8 @@ def get_credentials():
     password = input("Enter your Travian password: ")
     save = input("Save these credentials for future use? (y/n): ").strip().lower()
     if save == 'y':
-        with open("credentials.txt", "w") as file:
+        # Save to info/profile/credentials.txt
+        with open(profile_path, "w") as file:
             file.write(username + "\n")
             file.write(password + "\n")
     return username, password

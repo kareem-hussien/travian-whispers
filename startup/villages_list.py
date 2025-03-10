@@ -5,11 +5,11 @@ from selenium.webdriver.support import expected_conditions as EC
 
 VILLAGE_OVERVIEW_URL = "https://ts1.x1.international.travian.com/dorf1.php"
 
-def run_villages(driver):
+def run_villages(driver, villages_path="info/profile/villages_list.txt"):
     """
     Navigates to the village overview page, extracts the list of villages,
-    prints them for confirmation, and if confirmed, saves them to villages_list.txt.
-    Extracted details include village name, coordinates, and newdid.
+    prints them for confirmation, and if confirmed, saves them to villages_list.txt
+    under info/profile/.
     """
     print("[INFO] Navigating to the village overview page...")
     driver.get(VILLAGE_OVERVIEW_URL)
@@ -61,9 +61,9 @@ def run_villages(driver):
         return
 
     try:
-        with open("villages_list.txt", "w") as file:
+        with open(villages_path, "w") as file:
             for v in villages:
                 file.write(f"{v['name']},{v['newdid']},{v['x']},{v['y']}\n")
-        print("[SUCCESS] Villages list saved to villages_list.txt")
+        print(f"[SUCCESS] Villages list saved to {villages_path}")
     except Exception as e:
         print(f"[ERROR] Could not write to file: {e}")

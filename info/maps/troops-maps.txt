@@ -1,0 +1,40 @@
+Romans-barracks-[t1]-Legionnaire
+Romans-barracks-[t2]-Praetorian
+Romans-barracks-[t3]-Imperian
+Romans-stable-[t4]-Equites Legati
+Romans-stable-[t5]-Equites Imperatoris
+Romans-stable-[t6]-Equites Caesaris
+Romans-workshop-[t7]-Ram
+Romans-workshop-[t8]-Fire Catapult
+Teutons-barracks-[t1]-Clubswinger
+Teutons-barracks-[t2]-Spearman
+Teutons-barracks-[t3]-Axeman
+Teutons-stable-[t4]-Scout
+Teutons-stable-[t5]-Paladin
+Teutons-stable-[t6]-Teutonic Knight
+Teutons-workshop-[t7]-Ram
+Teutons-workshop-[t8]-Catapult
+Gauls-barracks-[t1]-Phalanx
+Gauls-barracks-[t2]-Swordsman
+Gauls-stable-[t3]-Pathfinder
+Gauls-stable-[t4]-Theutates Thunder
+Gauls-stable-[t5]-Druidrider
+Gauls-stable-[t6]-Haeduan
+Gauls-workshop-[t7]-Ram
+Gauls-workshop-[t8]-Trebuchet
+Egyptians-barracks-[t1]-Slave Militia
+Egyptians-barracks-[t2]-Ash Warden
+Egyptians-barracks-[t3]-Khopesh Warrior
+Egyptians-stable-[t4]-Sopdu Explorer
+Egyptians-stable-[t5]-Anhur Guard
+Egyptians-stable-[t6]-Resheph Chariot
+Egyptians-workshop-[t7]-Battering Ram
+Egyptians-workshop-[t8]-Stone Catapult
+Huns-barracks-[t1]-Mercenary
+Huns-barracks-[t2]-Bowman
+Huns-barracks-[t3]-Steppe Rider
+Huns-stable-[t4]-Marksman
+Huns-stable-[t5]-Marauder
+Huns-stable-[t6]-Short Bowman
+Huns-workshop-[t7]-Ram
+Huns-workshop-[t8]-Ballistar

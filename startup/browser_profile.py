@@ -41,7 +41,7 @@ def login_only(driver, username, password):
             driver.find_element(By.CLASS_NAME, "recaptcha-checkbox")
             print("[WARNING] CAPTCHA detected! Please solve it manually.")
             input("[ACTION REQUIRED] Press Enter after solving CAPTCHA...")
-        except Exception:
+        except:
             print("[INFO] No CAPTCHA detected.")
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "topBar")))
         print("[SUCCESS] Logged in successfully!")
@@ -50,15 +50,18 @@ def login_only(driver, username, password):
         print(f"[ERROR] Login failed: {e}")
         return False
 
-def update_profile(driver):
+def update_profile(driver, profile_path="info/profile/tribe.txt"):
     """
     Navigates to the profile edit page, clicks the Overview tab,
     waits for the URL to update (e.g. .../profile/4662), and extracts the tribe.
-    Returns a tuple (detected_tribe, profile_id) if successful, else None.
+    Saves tribe & profile ID to 'info/profile/tribe.txt' if confirmed.
+    Returns (detected_tribe, profile_id) if successful, else None.
     """
     profile_edit_url = "https://ts1.x1.international.travian.com/profile/edit"
     print("[INFO] Navigating to the profile edit page for profile update...")
     driver.get(profile_edit_url)
+
+    # Click the "Overview" tab
     try:
         overview_tab = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.XPATH, "//a[@data-tab='1' and contains(.,'Overview')]"))
@@ -67,6 +70,8 @@ def update_profile(driver):
     except Exception as e:
         print(f"[ERROR] Could not click Overview tab: {e}")
         return None
+
+    # Wait until the URL changes to .../profile/xxxx
     try:
         WebDriverWait(driver, 10).until(lambda d: "/profile/" in d.current_url and d.current_url != profile_edit_url)
         current_url = driver.current_url
@@ -75,13 +80,23 @@ def update_profile(driver):
     except Exception as e:
         print(f"[ERROR] Could not retrieve profile id from URL: {e}")
         profile_id = None
+
+    # Detect tribe from the table
     try:
         tribe_element = WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.XPATH, "//tr[th[text()='Tribe']]/td"))
         )
         detected_tribe = tribe_element.text.strip()
         print(f"[INFO] Detected tribe: {detected_tribe}")
-        return (detected_tribe, profile_id)
+        confirm = input("Is this your correct tribe? (y/n): ").strip().lower()
+        if confirm == "y":
+            with open(profile_path, "w") as file:
+                file.write(f"{detected_tribe},{profile_id}")
+            print("[SUCCESS] Tribe and profile ID saved.")
+            return (detected_tribe, profile_id)
+        else:
+            print("[INFO] Tribe detection not confirmed.")
+            return None
     except Exception as e:
         print(f"[ERROR] Could not detect tribe: {e}")
         return None

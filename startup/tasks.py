@@ -1,17 +1,18 @@
 import threading
-import auto_farm
-import trainer
+from tasks.auto_farm import run_auto_farm
+from tasks.trainer import run_trainer
 
-def start_tasks(driver, run_auto_farm, run_trainer):
+
+def start_tasks(driver, run_auto_farm_flag, run_trainer_flag):
     """
     Starts selected tasks in separate threads.
     """
     threads = []
-    if run_auto_farm:
-        t_af = threading.Thread(target=auto_farm.run_auto_farm, args=(driver,), daemon=True)
+    if run_auto_farm_flag:
+        t_af = threading.Thread(target=run_auto_farm, args=(driver,), daemon=True)
         threads.append(t_af)
-    if run_trainer:
-        t_tr = threading.Thread(target=trainer.run_trainer, args=(driver,), daemon=True)
+    if run_trainer_flag:
+        t_tr = threading.Thread(target=run_trainer, args=(driver,), daemon=True)
         threads.append(t_tr)
     
     for t in threads:
@@ -35,11 +36,11 @@ def run_task_menu(driver):
         choice = input("Enter your option (1/2/3/4): ").strip()
         
         if choice == "1":
-            start_tasks(driver, run_auto_farm=True, run_trainer=False)
+            start_tasks(driver, run_auto_farm_flag=True, run_trainer_flag=False)
         elif choice == "2":
-            start_tasks(driver, run_auto_farm=False, run_trainer=True)
+            start_tasks(driver, run_auto_farm_flag=False, run_trainer_flag=True)
         elif choice == "3":
-            start_tasks(driver, run_auto_farm=True, run_trainer=True)
+            start_tasks(driver, run_auto_farm_flag=True, run_trainer_flag=True)
         elif choice == "4":
             print("[INFO] Exiting... Closing browser.")
             driver.quit()

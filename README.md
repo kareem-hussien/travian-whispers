@@ -1,149 +1,167 @@
-Below is an updated README.md that includes all the latest features and project structure:
+# Travian Whispers - Automated Travian Bot
+
+**Author:** Eng. Kareem Hussien  
+**Contact:** [WhatsApp](https://wa.me/00201099339393)
+
+## Project Overview
+
+This project provides automation scripts for the browser-based game **Travian**. It supports automatic farming, troop training, and account profile management with Selenium.
+
+## Project Structure
+
+```plaintext
+travian-whispers/
+├── main.py
+├── info/
+│   ├── maps/
+│   │   ├── buildings.txt
+│   │   └── troops-maps.txt
+│
+│   └── profile/
+│       ├── credentials.txt
+│       ├── tribe.txt
+│       └── villages_list.txt
+│
+├── startup/
+│   ├── welcome_messages.py
+│   ├── login_credentials.py
+│   ├── browser_profile.py
+│   ├── villages_list.py
+│   └── tasks.py
+│
+└── tasks/
+    ├── auto_farm.py
+    ├── villages.py
+    └── trainer/
+        ├── __init__.py
+        ├── trainer_data.py
+        ├── trainer_actions.py
+        └── trainer_main.py
+
+
+## Detailed File Descriptions
+
+### Main Entry (`main.py`)
+This file starts the bot, initializes the environment, and triggers task menus.
+
+### Startup Scripts (`startup/`)
+- **welcome_messages.py** - Display welcome/loading messages.
+- **login_credentials.py** - Handle credential retrieval and storage.
+- **tasks.py** - Provides a menu to choose tasks to run concurrently.
+- **villages_list.py** extracts all account villages.
+
+### Task Automation Scripts (`tasks/`)
+- **auto_farm.py** - Automatically starts farm lists.
+- **villages.py** - Extracts and manages village data.
+- **trainer/** - Automates troop training:
+    - **trainer_data.py** - Loads troop types and buildings from maps.
+    - **trainer_actions.py** - Performs the actual Selenium actions.
+    - **trainer_main.py** - User interaction and task scheduling.
+
+### Info Data (`info/`)
+- **maps/**:
+  - **buildings.txt**: URLs for barracks, stable, and workshop.
+  ```
+  barracks=https://ts1.x1.international.travian.com/build.php?gid=19
+  stable=https://ts1.x1.international.travian.com/build.php?gid=20
+  workshop=https://ts1.x1.international.travian.com/build.php?gid=21
+  ```
+  - **troops-maps.txt** - Troops mapping per tribe.
+  ```
+  Romans-barracks-[tid1]-Legionnaire
+  Romans-barracks-[tid2]-Praetorian
+  Romans-barracks-[tid3]-Imperian
+  ```
+
+## Python Dependencies
+- `selenium`
+- `webdriver_manager`
 
 ---
 
-```markdown
-# travian-whispers
+# Installation
 
-Travian Text-Game AutoBot.
+Create a virtual environment:
 
-This project automates several tasks for Travian (e.g., auto-farming, troop training, village extraction, and tribe detection) using Selenium WebDriver. The suite is built in Python with a modular design, making it easy to add new features in the future.
-
-## Features
-
-- **Auto-Farm**: Automatically triggers your farm list at random intervals.
-- **Trainer**: Automates troop training based on your tribe’s available units.
-- **Village Extraction**: Extracts your village list (name, coordinates, newdid) and saves it for later use.
-- **Tribe Detection**: Automatically detects your account tribe (and profile ID) from your profile, confirms it with you, and saves the information to a file.
-- **Task Scheduling**: Multiple tasks can be scheduled concurrently using threading.
-- **Startup Animation**: Displays welcome messages with a loading effect at startup.
-- **Modular Design**: Code is split into multiple modules (including a `startup` folder) for improved maintainability.
-
-## Requirements
-
-- Python 3.8+
-- [Selenium](https://www.selenium.dev/)
-- [webdriver-manager](https://pypi.org/project/webdriver-manager/)
-
-## Installation
-
-1. **Clone the Repository**  
-   Open your terminal and run:
-   ```bash
-   git clone https://github.com/yourusername/travian-whispers.git
-   cd travian-whispers
-   ```
-
-2. **Create and Activate a Virtual Environment (recommended)**
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   ```
-
-3. **Install the Required Python Packages**
-   ```bash
-   pip install -r requirements.txt
-   ```
-   *(If you don't have a `requirements.txt`, create one with the following contents:)*
-   ```
-   selenium
-   webdriver-manager
-   ```
-
-## Setup
-
-### Credentials File (Optional)
-You can store your Travian login credentials in a file named `credentials.txt` in the following format:
-```
-your_username
-your_password
-```
-When you run the program, it will ask if you want to use these saved credentials.
-
-### Buildings File (For Trainer Module)
-Create a `buildings.txt` file with the URLs for your building pages (barracks, stable, workshop). Example:
-```
-barracks=https://ts1.x1.international.travian.com/build.php?gid=19
-stable=https://ts1.x1.international.travian.com/build.php?gid=20
-workshop=https://ts1.x1.international.travian.com/build.php?gid=21
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install selenium webdriver_manager
 ```
 
-### Tribe File
-After successful tribe detection from your profile, the detected tribe and profile ID will be saved to `tribe.txt` in the format:  
-```
-Tribe,ProfileID
-```
+# Usage
 
-## How to Run
+Run the bot:
 
-Start the Automation Suite by running the main script:
 ```bash
 python3 main.py
 ```
 
-### Program Flow
+---
 
-1. **Welcome Animation**  
-   At startup, the program displays welcome messages with a loading effect.
-2. **Login**  
-   You will be prompted for your Travian credentials (or you can use the saved ones from `credentials.txt`).
-3. **Browser & Profile Detection**  
-   The program opens the browser, logs in, and automatically navigates to your profile edit page. It clicks the Overview tab to detect your tribe and extract your profile ID. You are asked to confirm the detected tribe. Once confirmed, the tribe and profile ID are saved to `tribe.txt`.
-4. **Village List Refresh**  
-   You will be asked whether to refresh your villages list. If you choose yes, the script extracts village names, coordinates, and IDs, then saves them to `villages_list.txt`.
-5. **Task Menu**  
-   Finally, a menu is displayed with the following options:
-   - **Auto-Farm**: Runs the auto-farming routine.
-   - **Trainer**: Runs the troop training routine.
-   - **Both Auto-Farm and Trainer**: Runs both tasks concurrently.
-   - **Exit**: Closes the browser and terminates the program.
+# Step-by-Step Flow
 
-## Project Structure
+1. **Startup and Login**:
+    - Display welcome messages (`startup/welcome_messages.py`).
+    - Load saved credentials or prompt to input them (`startup/login_credentials.py`).
 
-```
-travian-whispers/
-├── main.py
-├── auto_farm.py
-├── trainer.py
-├── villages.py
-├── requirements.txt
-├── credentials.txt (optional)
-├── buildings.txt
-├── tribe.txt (generated after tribe detection)
-└── startup/
-    ├── welcome_messages.py
-    ├── login_credentials.py
-    └── browser_profile.py
-```
+2. **Browser Initialization**
+   - Opens ChromeDriver instance.
 
-- **main.py**  
-  The central script that displays welcome messages, handles login, performs profile/tribe detection, village extraction, and shows the main task menu.
-- **auto_farm.py**  
-  Contains automation code for triggering your farm list at random intervals.
-- **trainer.py**  
-  Contains automation code for troop training based on your tribe and selected options.
-- **villages.py**  
-  Contains code to extract and save the list of villages from the overview page.
-- **startup/**  
-  Contains modules for startup tasks:
-  - **welcome_messages.py**: Displays welcome messages with a loading effect.
-  - **login_credentials.py**: Handles reading and saving Travian credentials.
-  - **browser_profile.py**: Handles browser setup, login, and auto-detection of account tribe and profile ID.
+3. **Account Profile Check**
+   - Detects and confirms account tribe and profile ID (`tasks/villages.py`).
 
-## Troubleshooting
+4. **Villages List Management**
+   - Extract villages and their coordinates, saving data to `villages_list.txt`.
 
-- **Login Issues**:  
-  If login fails, verify that your credentials are correct. If you encounter CAPTCHA challenges, run the browser in non-headless mode to solve them manually.
-  
-- **Element Not Found Errors**:  
-  Travian’s website layout may change. If the script cannot locate an element (e.g., the tribe row or village list), inspect the page and update the corresponding XPath or CSS selectors in the code.
-
-## License
-
-MIT License
-
-Made with love by Eng. Kareem Hussien  
-WhatsApp: [https://wa.me/002010993393](https://wa.me/002010993393)
-```
+5. **Task Selection Menu (`startup/tasks.py`)**
+   - Select tasks to run concurrently:
+     - Auto-Farm
+     - Trainer
+     - Both
+     - Exit
 
 ---
+
+# Usage
+
+1. Ensure your Travian login credentials are saved in:
+```
+info/profile/credentials.txt
+```
+or input them manually on the first run.
+
+2. Run the bot:
+```bash
+python3 main.py
+```
+
+3. Select tasks to run from the presented menu.
+
+---
+
+# Troubleshooting
+
+**Common Issues:**
+
+- **ChromeDriver issues:**
+  Ensure you have the latest version of Chrome and compatible ChromeDriver.
+- **Credential issues:** Verify `credentials.txt` has the correct format.
+
+---
+
+# Project Structure Overview
+
+This project follows a modular structure, allowing for easy maintenance and updates. Data files are separated from scripts, ensuring flexibility.
+
+---
+
+# Contact & Support
+
+For further assistance, contact me on [WhatsApp](https://wa.me/00201099339393).
+
+---
+
+**© Eng. Kareem Hussien - Travian Whispers Automation Suite**
+```
+
