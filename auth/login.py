@@ -3,6 +3,8 @@ User login module for Travian Whispers.
 """
 import jwt
 import logging
+import os
+from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from database.models.user import User
 
@@ -13,10 +15,13 @@ logging.basicConfig(
 )
 logger = logging.getLogger('auth.login')
 
+# Load environment variables
+load_dotenv()
+
 # JWT Configuration
-JWT_SECRET = "your-secret-key-change-in-production"  # Change this in production
+JWT_SECRET = os.getenv("JWT_SECRET", "fallback-secret-change-in-production")  # Add proper fallback
 JWT_ALGORITHM = "HS256"
-JWT_EXPIRATION = 24  # hours
+JWT_EXPIRATION = int(os.getenv("JWT_EXPIRATION_HOURS", "24"))  # hours
 
 def generate_token(user_id, username, email, role):
     """

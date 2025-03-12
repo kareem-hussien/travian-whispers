@@ -1,10 +1,12 @@
 """
 MongoDB connection and management module.
 """
+import os
 import pymongo
 from pymongo import MongoClient
 import logging
 from datetime import datetime
+from dotenv import load_dotenv
 from database.error_handler import (
     handle_connection_error, 
     handle_operation_error,
@@ -17,6 +19,9 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger('mongodb')
+
+# Load environment variables
+load_dotenv()
 
 class MongoDB:
     """MongoDB connection handler for Travian Whispers."""
@@ -33,7 +38,7 @@ class MongoDB:
     
     @handle_connection_error
     @log_database_activity("connection")
-    def connect(self, connection_string=None, db_name='whispers'):
+    def connect(self, connection_string=None, db_name=None):
         """
         Connect to MongoDB using the provided connection string.
         
@@ -45,7 +50,10 @@ class MongoDB:
             bool: True if connection successful, False otherwise
         """
         if not connection_string:
-            connection_string = "mongodb+srv://whispers:eZAafCQTrjKKcZua@cluster0.9josw.mongodb.net/whispers"
+            connection_string = os.getenv('MONGODB_URI', "mongodb+srv://whispers:eZAafCQTrjKKcZua@cluster0.9josw.mongodb.net/whispers")
+        
+        if not db_name:
+            db_name = os.getenv('MONGODB_DB_NAME', 'whispers')
         
         try:
             self.client = MongoClient(connection_string, 
@@ -104,6 +112,7 @@ class MongoDB:
             self.db.users.create_index([("email", pymongo.ASCENDING)], unique=True)
             self.db.users.create_index([("verificationToken", pymongo.ASCENDING)])
             self.db.users.create_index([("resetPasswordToken", pymongo.ASCENDING)])
+            self.db.users.create_index([("resetPasswordTokenHash", pymongo.ASCENDING)])
             self.db.users.create_index([("subscription.status", pymongo.ASCENDING)])
             self.db.users.create_index([("subscription.endDate", pymongo.ASCENDING)])
             
@@ -136,4 +145,3 @@ class MongoDB:
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit."""
         self.disconnect()
-

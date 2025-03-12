@@ -26,6 +26,36 @@ class BackupError(Exception):
         self.original_error = original_error
         super().__init__(self.message)
 
+def encrypt_backup(backup_path, output_path=None):
+    """
+    Encrypt a backup file.
+    
+    Args:
+        backup_path (Path): Path to the backup file
+        output_path (Path, optional): Path to save the encrypted file
+        
+    Returns:
+        Path: Path to the encrypted file
+    """
+    if not output_path:
+        output_path = backup_path.with_suffix('.enc')
+    
+    try:
+        with open(backup_path, 'rb') as f:
+            data = f.read()
+        
+        # Encrypt the data
+        encrypted_data = cipher.encrypt(data)
+        
+        with open(output_path, 'wb') as f:
+            f.write(encrypted_data)
+        
+        logger.info(f"Backup encrypted and saved to {output_path}")
+        return output_path
+    except Exception as e:
+        logger.error(f"Failed to encrypt backup: {e}")
+        raise BackupError(f"Failed to encrypt backup: {e}", e)
+    
 def create_backup_directory(base_path="backups"):
     """
     Create a directory for storing backups.
@@ -212,4 +242,4 @@ def cleanup_old_backups(backup_dir="backups", keep_last=5):
         logger.error(f"Error cleaning up old backups: {e}")
         return 0
 
-def create_backup(connection
+def create_backup(connection)

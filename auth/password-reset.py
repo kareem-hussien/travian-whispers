@@ -4,10 +4,12 @@ Password reset module for Travian Whispers.
 import logging
 import uuid
 import re
+import hashlib  # Add this import
 from datetime import datetime, timedelta
 from database.models.user import User
-from email.sender import send_password_reset_email
+from email_module.sender import send_password_reset_email
 from database.error_handler import handle_operation_error, log_database_activity
+from utils.encryption import encrypt_data, decrypt_data  # Add this import
 
 # Configure logger
 logging.basicConfig(
@@ -76,12 +78,14 @@ def request_password_reset(email, reset_url_base):
         return True, "If your email exists in our system, you will receive password reset instructions."
     
     # Generate reset token and set expiration (24 hours)
-    reset_token = str(uuid.uuid4())
+    raw_reset_token = str(uuid.uuid4())
+    # Create a hash of the token to store in the database
+    reset_token_hash = hashlib.sha256(raw_reset_token.encode()).hexdigest()
     expires = datetime.utcnow() + timedelta(hours=24)
     
-    # Update user record
+    # Update user record with the hashed token
     update_data = {
-        "resetPasswordToken": reset_token,
+        "resetPasswordTokenHash": reset_token_hash,
         "resetPasswordExpires": expires,
         "updatedAt": datetime.utcnow()
     }
@@ -89,8 +93,8 @@ def request_password_reset(email, reset_url_base):
     if not user_model.update_user(str(user["_id"]), update_data):
         raise PasswordResetError("Failed to create password reset token")
     
-    # Generate reset URL
-    reset_url = f"{reset_url_base}?token={reset_token}"
+    # Generate reset URL with the raw token
+    reset_url = f"{reset_url_base}?token={raw_reset_token}"
     
     # Send reset email
     try:
@@ -115,8 +119,11 @@ def validate_reset_token(token):
     if not token:
         return False, None
     
+    # Calculate the hash of the provided token
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+    
     user_model = User()
-    user = user_model.get_user_by_reset_token(token)
+    user = user_model.get_user_by_reset_token_hash(token_hash)
     
     if not user:
         return False, None
@@ -159,73 +166,12 @@ def reset_password(token, new_password, confirm_password):
     if not is_strong:
         return False, message
     
+    # Calculate token hash
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+    
     # Reset password
     user_model = User()
-    if user_model.reset_password(token, new_password):
+    if user_model.reset_password_with_hash(token_hash, new_password):
         return True, "Your password has been reset successfully. You can now log in with your new password."
     
     return False, "Failed to reset password"
-
-@handle_operation_error
-@log_database_activity("password change")
-def change_password(user_id, current_password, new_password, confirm_password):
-    """
-    Change a user's password.
-    
-    Args:
-        user_id (str): User ID
-        current_password (str): Current password
-        new_password (str): New password
-        confirm_password (str): Password confirmation
-        
-    Returns:
-        tuple: (success, message)
-    """
-    # Validate passwords match
-    if new_password != confirm_password:
-        return False, "New passwords do not match"
-    
-    # Validate password strength
-    is_strong, message = validate_password_strength(new_password)
-    if not is_strong:
-        return False, message
-    
-    # Change password
-    user_model = User()
-    if user_model.change_password(user_id, current_password, new_password):
-        return True, "Your password has been changed successfully."
-    
-    return False, "Current password is incorrect or password change failed"
-
-@handle_operation_error
-@log_database_activity("reset token cleanup")
-def cleanup_expired_tokens():
-    """
-    Clean up expired password reset tokens.
-    
-    Returns:
-        int: Number of tokens cleaned up
-    """
-    user_model = User()
-    
-    # Get current time
-    now = datetime.utcnow()
-    
-    # In a real implementation, this would use the database's update_many
-    # to update all matching records in a single operation
-    users_collection = user_model.collection
-    result = users_collection.update_many(
-        {
-            "resetPasswordToken": {"$ne": None},
-            "resetPasswordExpires": {"$lt": now}
-        },
-        {
-            "$set": {
-                "resetPasswordToken": None,
-                "resetPasswordExpires": None,
-                "updatedAt": now
-            }
-        }
-    )
-    
-    return result.modified_count

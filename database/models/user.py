@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from bson import ObjectId
 from database.mongodb import MongoDB
 from passlib.hash import pbkdf2_sha256
+from utils.encryption import encrypt_data, decrypt_data
 
 class User:
     """User model for Travian Whispers application."""
@@ -132,6 +133,32 @@ class User:
         
         return None
     
+    def get_travian_credentials(self, user_id):
+        """
+        Get decrypted Travian credentials.
+        
+        Args:
+            user_id (str): User ID
+            
+        Returns:
+            dict: Decrypted credentials or None if not found
+        """
+        if not self.collection:
+            return None
+        
+        user = self.get_user_by_id(user_id)
+        if not user or "travianCredentials" not in user:
+            return None
+        
+        travian_creds = user["travianCredentials"]
+        
+        return {
+            "username": decrypt_data(travian_creds.get("username")),
+            "password": decrypt_data(travian_creds.get("password")),
+            "tribe": travian_creds.get("tribe"),
+            "profileId": travian_creds.get("profileId")
+        }
+    
     def get_user_by_id(self, user_id):
         """
         Get a user by ID.
@@ -195,23 +222,55 @@ class User:
         
         return self.collection.find_one({"verificationToken": token})
     
-    def get_user_by_reset_token(self, token):
-        """
-        Get a user by password reset token.
+def get_user_by_reset_token_hash(self, token_hash):
+    """
+    Get a user by password reset token hash.
+    
+    Args:
+        token_hash (str): Reset token hash
         
-        Args:
-            token (str): Reset token
-            
-        Returns:
-            dict: User document or None if not found
-        """
-        if not self.collection:
-            return None
+    Returns:
+        dict: User document or None if not found
+    """
+    if not self.collection:
+        return None
+    
+    return self.collection.find_one({
+        "resetPasswordTokenHash": token_hash,
+        "resetPasswordExpires": {"$gt": datetime.utcnow()}
+    })
+
+def reset_password_with_hash(self, token_hash, new_password):
+    """
+    Reset a user's password with token hash.
+    
+    Args:
+        token_hash (str): Reset token hash
+        new_password (str): New password
         
-        return self.collection.find_one({
-            "resetPasswordToken": token,
-            "resetPasswordExpires": {"$gt": datetime.utcnow()}
-        })
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    if not self.collection:
+        return False
+    
+    user = self.get_user_by_reset_token_hash(token_hash)
+    if not user:
+        return False
+    
+    hashed_password = self.hash_password(new_password)
+    
+    result = self.collection.update_one(
+        {"_id": user["_id"]},
+        {"$set": {
+            "password": hashed_password,
+            "resetPasswordTokenHash": None,
+            "resetPasswordExpires": None,
+            "updatedAt": datetime.utcnow()
+        }}
+    )
+    
+    return result.modified_count > 0
     
     def update_user(self, user_id, update_data):
         """
@@ -363,41 +422,45 @@ class User:
         
         return result.modified_count > 0
     
-    def update_travian_credentials(self, user_id, travian_username, travian_password, tribe=None, profile_id=None):
-        """
-        Update a user's Travian credentials.
+def update_travian_credentials(self, user_id, travian_username, travian_password, tribe=None, profile_id=None):
+    """
+    Update a user's Travian credentials.
+    
+    Args:
+        user_id (str): User ID
+        travian_username (str): Travian username
+        travian_password (str): Travian password
+        tribe (str, optional): User tribe
+        profile_id (str, optional): Profile ID
         
-        Args:
-            user_id (str): User ID
-            travian_username (str): Travian username
-            travian_password (str): Travian password
-            tribe (str, optional): User tribe
-            profile_id (str, optional): Profile ID
-            
-        Returns:
-            bool: True if successful, False otherwise
-        """
-        if not self.collection:
-            return False
-            
-        update_data = {
-            "travianCredentials.username": travian_username,
-            "travianCredentials.password": travian_password,
-            "updatedAt": datetime.utcnow()
-        }
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    if not self.collection:
+        return False
+    
+    # Encrypt the Travian credentials
+    encrypted_username = encrypt_data(travian_username)
+    encrypted_password = encrypt_data(travian_password)
+    
+    update_data = {
+        "travianCredentials.username": encrypted_username,
+        "travianCredentials.password": encrypted_password,
+        "updatedAt": datetime.utcnow()
+    }
+    
+    if tribe:
+        update_data["travianCredentials.tribe"] = tribe
         
-        if tribe:
-            update_data["travianCredentials.tribe"] = tribe
-            
-        if profile_id:
-            update_data["travianCredentials.profileId"] = profile_id
-        
-        result = self.collection.update_one(
-            {"_id": ObjectId(user_id)},
-            {"$set": update_data}
-        )
-        
-        return result.modified_count > 0
+    if profile_id:
+        update_data["travianCredentials.profileId"] = profile_id
+    
+    result = self.collection.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": update_data}
+    )
+    
+    return result.modified_count > 0
     
     def update_villages(self, user_id, villages):
         """

@@ -1,4 +1,5 @@
-import time
+import json
+from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
@@ -9,23 +10,155 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 LOGIN_URL = "https://ts1.x1.international.travian.com"
 
-def setup_browser():
-    """Sets up and returns a new Chrome WebDriver instance."""
+def setup_browser(headless=False, user_id=None):
+    """
+    Sets up and returns a new Chrome WebDriver instance.
+    If user_id is provided, tries to load saved session.
+    
+    Args:
+        headless (bool): Whether to run in headless mode
+        user_id (str, optional): User ID to load saved session
+        
+    Returns:
+        WebDriver: Selenium WebDriver instance
+    """
     print("[INFO] Launching browser...")
     chrome_options = Options()
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--window-size=1920x1080")
-    # Uncomment to run headless:
-    # chrome_options.add_argument("--headless")
+    
+    if headless:
+        chrome_options.add_argument("--headless")
     
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=chrome_options)
+    
+    # Try to load saved session if user_id is provided
+    if user_id:
+        session_loaded = load_browser_session(driver, user_id)
+        if session_loaded:
+            return driver
+    
     return driver
 
-def login_only(driver, username, password):
+def save_browser_session(driver, user_id):
+    """
+    Save browser cookies for future sessions.
+    
+    Args:
+        driver (WebDriver): Selenium WebDriver instance
+        user_id (str): User ID
+        
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    try:
+        from utils.encryption import encrypt_data
+        from database.models.user import User
+        
+        # Get cookies from the browser
+        cookies = driver.get_cookies()
+        
+        # Serialize cookies to JSON
+        serialized_cookies = json.dumps(cookies)
+        
+        # Encrypt the serialized cookies
+        encrypted_cookies = encrypt_data(serialized_cookies)
+        
+        # Update user document
+        user_model = User()
+        update_data = {
+            "browserSession.cookies": encrypted_cookies,
+            "browserSession.lastSaved": datetime.utcnow(),
+            "updatedAt": datetime.utcnow()
+        }
+        
+        result = user_model.update_user(user_id, update_data)
+        
+        if result:
+            print("[INFO] Browser session saved successfully")
+            return True
+        else:
+            print("[ERROR] Failed to save browser session")
+            return False
+    except Exception as e:
+        print(f"[ERROR] Error saving browser session: {e}")
+        return False
+
+def load_browser_session(driver, user_id):
+    """
+    Load saved browser cookies into the driver.
+    
+    Args:
+        driver (WebDriver): Selenium WebDriver instance
+        user_id (str): User ID
+        
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    try:
+        from utils.encryption import decrypt_data
+        from database.models.user import User
+        
+        # Get user document
+        user_model = User()
+        user = user_model.get_user_by_id(user_id)
+        
+        # Check if browser session exists
+        if not user or "browserSession" not in user or not user["browserSession"].get("cookies"):
+            print("[INFO] No saved browser session found")
+            return False
+        
+        # Decrypt cookies
+        encrypted_cookies = user["browserSession"]["cookies"]
+        serialized_cookies = decrypt_data(encrypted_cookies)
+        
+        if not serialized_cookies:
+            print("[ERROR] Failed to decrypt browser session")
+            return False
+        
+        # Deserialize cookies
+        cookies = json.loads(serialized_cookies)
+        
+        # Navigate to the domain first (required to set cookies)
+        driver.get(LOGIN_URL)
+        
+        # Add cookies to the browser
+        for cookie in cookies:
+            try:
+                driver.add_cookie(cookie)
+            except Exception as e:
+                print(f"[WARNING] Failed to add cookie: {e}")
+        
+        # Refresh the page to apply cookies
+        driver.refresh()
+        
+        # Check if still logged in
+        try:
+            WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.ID, "topBar")))
+            print("[INFO] Browser session restored successfully")
+            return True
+        except:
+            print("[INFO] Browser session expired or invalid")
+            return False
+    except Exception as e:
+        print(f"[ERROR] Error loading browser session: {e}")
+        return False
+    
+def login_only(driver, username, password, user_id=None):
     """
     Logs in with the provided credentials and returns True if successful.
+    If user_id is provided, saves the session after login.
+    
+    Args:
+        driver (WebDriver): Selenium WebDriver instance
+        username (str): Travian username
+        password (str): Travian password
+        user_id (str, optional): User ID to save session
+        
+    Returns:
+        bool: True if login successful, False otherwise
     """
     driver.get(LOGIN_URL)
     time.sleep(3)
@@ -45,6 +178,11 @@ def login_only(driver, username, password):
             print("[INFO] No CAPTCHA detected.")
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "topBar")))
         print("[SUCCESS] Logged in successfully!")
+        
+        # Save browser session if user_id is provided
+        if user_id:
+            save_browser_session(driver, user_id)
+        
         return True
     except Exception as e:
         print(f"[ERROR] Login failed: {e}")
