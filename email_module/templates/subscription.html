@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travian Whispers Subscription Confirmation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #f8f8f8;
+            border-radius: 5px;
+            padding: 20px;
+            border: 1px solid #ddd;
+        }
+        .header {
+            text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #17a2b8;
+            margin-bottom: 20px;
+        }
+        .logo {
+            max-width: 150px;
+            height: auto;
+        }
+        h1 {
+            color: #17a2b8;
+            font-size: 24px;
+        }
+        .button {
+            display: inline-block;
+            background-color: #17a2b8;
+            color: white !important;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .button:hover {
+            background-color: #138496;
+        }
+        .subscription-details {
+            background-color: #fff;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #ddd;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #eee;
+            padding: 10px 0;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .detail-label {
+            font-weight: bold;
+            color: #555;
+        }
+        .detail-value {
+            text-align: right;
+        }
+        .receipt {
+            background-color: #f2f9fc;
+            border-radius: 5px;
+            border: 1px solid #bee5eb;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        .receipt-title {
+            text-align: center;
+            color: #17a2b8;
+            margin-top: 0;
+            border-bottom: 1px solid #bee5eb;
+            padding-bottom: 10px;
+        }
+        .thank-you {
+            font-size: 18px;
+            color: #17a2b8;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+        }
+        @media only screen and (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            .container {
+                padding: 15px;
+            }
+            h1 {
+                font-size: 20px;
+            }
+            .detail-row {
+                flex-direction: column;
+            }
+            .detail-value {
+                text-align: left;
+                margin-top: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Subscription Confirmation</h1>
+        </div>
+        
+        <p>Hello <strong>{username}</strong>,</p>
+        
+        <p>Thank you for subscribing to Travian Whispers! Your payment has been successfully processed, and your subscription is now active.</p>
+        
+        <div class="subscription-details">
+            <div class="detail-row">
+                <span class="detail-label">Plan:</span>
+                <span class="detail-value"><strong>{plan_name}</strong></span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Amount Paid:</span>
+                <span class="detail-value"><strong>${amount:.2f}</strong></span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Subscription Valid Until:</span>
+                <span class="detail-value"><strong>{end_date}</strong></span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Payment ID:</span>
+                <span class="detail-value">{payment_id}</span>
+            </div>
+        </div>
+        
+        <div class="receipt">
+            <h3 class="receipt-title">Receipt</h3>
+            <p>This email serves as your official receipt for this transaction. You can also view your billing history in your account dashboard.</p>
+        </div>
+        
+        <p>You can now enjoy all the features included in your subscription plan. To access your Travian Whispers dashboard, click the button below:</p>
+        
+        <p style="text-align: center;">
+            <a href="https://travian-whispers.com/dashboard" class="button">Go to Dashboard</a>
+        </p>
+        
+        <p class="thank-you">Thank you for choosing Travian Whispers!</p>
+        
+        <p>If you have any questions or need assistance, please don't hesitate to contact our support team.</p>
+        
+        <p>Best regards,<br>
+        The Travian Whispers Team</p>
+        
+        <div class="footer">
+            <p>This is an automated message, please do not reply to this email.</p>
+            <p>&copy; 2025 Travian Whispers. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

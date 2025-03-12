@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Travian Whispers</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body {
+            background-color: #f4f4f9;
+            display: flex;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .register-container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+        }
+        .card-header {
+            background-color: #ff9a3c;
+            color: white;
+            text-align: center;
+            border-radius: 10px 10px 0 0 !important;
+            padding: 1.5rem 1rem;
+        }
+        .card-header h3 {
+            margin-bottom: 0;
+        }
+        .register-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        .form-control {
+            padding: 0.75rem 1rem;
+        }
+        .btn-primary {
+            background-color: #ff9a3c;
+            border-color: #ff9a3c;
+            padding: 0.75rem 1rem;
+        }
+        .btn-primary:hover {
+            background-color: #f58c2a;
+            border-color: #f58c2a;
+        }
+        .register-footer {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 1.5rem 0;
+        }
+        .divider::before, .divider::after {
+            content: "";
+            flex: 1;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .divider span {
+            padding: 0 1rem;
+            color: #6c757d;
+        }
+        .alert {
+            margin-bottom: 1.5rem;
+        }
+        .password-strength {
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+        }
+        .strength-meter {
+            height: 4px;
+            border-radius: 2px;
+            margin-top: 0.25rem;
+            background-color: #e9ecef;
+            position: relative;
+            overflow: hidden;
+        }
+        .strength-meter-fill {
+            height: 100%;
+            border-radius: 2px;
+            background-color: #dc3545;
+            width: 0%;
+            transition: width 0.3s, background-color 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="register-container">
+            <!-- Logo and Title -->
+            <div class="text-center mb-4">
+                <a href="{{ url_for('index') }}">
+                    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Travian Whispers Logo" height="60">
+                </a>
+            </div>
+            
+            <!-- Registration Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="register-icon">
+                        <i class="bi bi-person-plus"></i>
+                    </div>
+                    <h3>Create Account</h3>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Flash Messages -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }}">{{ message }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <!-- Registration Form -->
+                    <form action="{{ url_for('register') }}" method="post" id="registrationForm">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                <input type="text" class="form-control" id="username" name="username" required 
+                                       placeholder="Choose a username (3-20 characters)" 
+                                       pattern="^[a-zA-Z][a-zA-Z0-9_]{2,19}$" 
+                                       title="Username must be 3-20 characters, start with a letter, and contain only letters, numbers, and underscores">
+                            </div>
+                            <small class="form-text text-muted">Start with a letter, use only letters, numbers, and underscores</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                <input type="email" class="form-control" id="email" name="email" required 
+                                       placeholder="Enter your email address">
+                            </div>
+                            <small class="form-text text-muted">We'll send a verification link to this email</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                <input type="password" class="form-control" id="password" name="password" required 
+                                       placeholder="Create a strong password" 
+                                       minlength="8">
+                                <button type="button" class="btn btn-outline-secondary" id="togglePassword">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            <div class="password-strength">
+                                <span id="passwordStrengthText">Password strength:</span>
+                                <div class="strength-meter">
+                                    <div class="strength-meter-fill" id="passwordStrengthMeter"></div>
+                                </div>
+                            </div>
+                            <small class="form-text text-muted">Must be at least 8 characters with uppercase, lowercase, and numbers</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">Confirm Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                                <input type="password" class="form-control" id="confirm_password" name="confirm_password" required 
+                                       placeholder="Confirm your password">
+                            </div>
+                            <div id="passwordMatch" class="form-text"></div>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="termsCheck" name="terms" required>
+                            <label class="form-check-label" for="termsCheck">
+                                I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms & Conditions</a> and <a href="#" data-bs-toggle="modal" data-bs-target="#privacyModal">Privacy Policy</a>
+                            </label>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary" id="registerButton">Create Account</button>
+                        </div>
+                    </form>
+                    
+                    <div class="divider">
+                        <span>OR</span>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <a href="{{ url_for('login') }}" class="btn btn-outline-secondary">Already Have an Account? Login</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="register-footer">
+                <p class="mb-0 text-muted">&copy; 2025 Travian Whispers. All rights reserved.</p>
+                <p class="mb-0 mt-2">
+                    <a href="{{ url_for('index') }}" class="text-decoration-none">Home</a> | 
+                    <a href="#" class="text-decoration-none">Privacy Policy</a> | 
+                    <a href="#" class="text-decoration-none">Terms of Service</a>
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Terms Modal -->
+    <div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="termsModalLabel">Terms & Conditions</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>1. Terms of Service</h6>
+                    <p>By using Travian Whispers, you agree to comply with these terms and all applicable laws and regulations.</p>
+                    
+                    <h6>2. Use of the Service</h6>
+                    <p>You may use our service only in compliance with the Travian game's terms of service. We do not encourage breaking any game rules.</p>
+                    
+                    <h6>3. Account and Security</h6>
+                    <p>You are responsible for safeguarding your password and for all activities that occur under your account.</p>
+                    
+                    <h6>4. Payment and Subscriptions</h6>
+                    <p>Subscription fees are charged in advance. You can cancel your subscription at any time.</p>
+                    
+                    <h6>5. Limitation of Liability</h6>
+                    <p>We provide this service "as is" without any express or implied warranties.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">I Understand</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Privacy Modal -->
+    <div class="modal fade" id="privacyModal" tabindex="-1" aria-labelledby="privacyModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="privacyModalLabel">Privacy Policy</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>1. Information We Collect</h6>
+                    <p>We collect information you provide including your name, email address, and Travian credentials.</p>
+                    
+                    <h6>2. How We Use Information</h6>
+                    <p>We use your information to provide and improve our services, process payments, and communicate with you.</p>
+                    
+                    <h6>3. Data Security</h6>
+                    <p>We implement appropriate security measures to protect your personal information.</p>
+                    
+                    <h6>4. Cookies</h6>
+                    <p>We use cookies to enhance your experience on our website.</p>
+                    
+                    <h6>5. Third Party Services</h6>
+                    <p>We may use third-party services for payment processing and analytics.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">I Understand</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Password visibility toggle
+        document.getElementById('togglePassword').addEventListener('click', function() {
+            const passwordInput = document.getElementById('password');
+            const icon = this.querySelector('i');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            }
+        });
+        
+        // Password strength meter
+        document.getElementById('password').addEventListener('input', function() {
+            const password = this.value;
+            const meter = document.getElementById('passwordStrengthMeter');
+            const text = document.getElementById('passwordStrengthText');
+            
+            // Calculate strength
+            let strength = 0;
+            if (password.length >= 8) strength += 25;
+            if (password.match(/[A-Z]/)) strength += 25;
+            if (password.match(/[a-z]/)) strength += 25;
+            if (password.match(/[0-9]/)) strength += 25;
+            
+            // Update meter
+            meter.style.width = strength + '%';
+            
+            // Update color and text
+            if (strength <= 25) {
+                meter.style.backgroundColor = '#dc3545'; // red
+                text.textContent = 'Password strength: Weak';
+                text.style.color = '#dc3545';
+            } else if (strength <= 50) {
+                meter.style.backgroundColor = '#ffc107'; // yellow
+                text.textContent = 'Password strength: Fair';
+                text.style.color = '#ffc107';
+            } else if (strength <= 75) {
+                meter.style.backgroundColor = '#fd7e14'; // orange
+                text.textContent = 'Password strength: Good';
+                text.style.color = '#fd7e14';
+            } else {
+                meter.style.backgroundColor = '#198754'; // green
+                text.textContent = 'Password strength: Strong';
+                text.style.color = '#198754';
+            }
+        });
+        
+        // Password match validation
+        document.getElementById('confirm_password').addEventListener('input', function() {
+            const password = document.getElementById('password').value;
+            const confirmPassword = this.value;
+            const matchText = document.getElementById('passwordMatch');
+            
+            if (confirmPassword === '') {
+                matchText.textContent = '';
+                matchText.className = 'form-text';
+            } else if (password === confirmPassword) {
+                matchText.textContent = 'Passwords match';
+                matchText.className = 'form-text text-success';
+            } else {
+                matchText.textContent = 'Passwords do not match';
+                matchText.className = 'form-text text-danger';
+            }
+        });
+        
+        // Form validation
+        document.getElementById('registrationForm').addEventListener('submit', function(event) {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            
+            if (password !== confirmPassword) {
+                event.preventDefault();
+                alert('Passwords do not match!');
+            }
+        });
+    </script>
+</body>
+</html>
