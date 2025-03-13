@@ -24,23 +24,23 @@ class VerificationError(Exception):
 @handle_operation_error
 @log_database_activity("verification")
 def create_verification_token(user_id):
-    """Generate a new verification token for a user."""
-    # Generate a secure token using the encryption utilities
-    raw_token = str(uuid.uuid4())
-    # Store only the hash of the token in the database
-    hashed_token = hashlib.sha256(raw_token.encode()).hexdigest()
+    """
+    Generate a new verification token for a user.
     
-    # Update user with hashed token
-    update_data = {
-        "verificationTokenHash": hashed_token,
-        "updatedAt": datetime.utcnow()
-    }
+    Args:
+        user_id (str): ID of the user
+        
+    Returns:
+        str: Verification token or None if failed
+    """
+    user_model = User()
+    user = user_model.get_user_by_id(user_id)
     
-    if user_model.update_user(user_id, update_data):
-        # Return the raw token to be included in the email
-        return raw_token
+    if not user:
+        raise VerificationError(f"User not found with ID: {user_id}")
     
-    return None
+    if user["isVerified"]:
+        raise VerificationError(f"User {user['username']} is already verified")
     
     # Generate new token
     verification_token = str(uuid.uuid4())

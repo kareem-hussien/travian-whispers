@@ -40,34 +40,6 @@ class DuplicateError(DatabaseError):
     """Error raised when attempting to insert a duplicate record."""
     pass
 
-def sanitize_sensitive_data(message):
-    """Sanitize potentially sensitive data from log messages."""
-    # List of patterns to replace
-    patterns = [
-        (r'password["\']?\s*[:=]\s*["\']?([^"\']+)["\']?', 'password=***'),
-        (r'token["\']?\s*[:=]\s*["\']?([^"\']+)["\']?', 'token=***'),
-        # Add more patterns as needed
-    ]
-    
-    sanitized = message
-    for pattern, replacement in patterns:
-        sanitized = re.sub(pattern, replacement, sanitized, flags=re.IGNORECASE)
-    
-    return sanitized
-
-def log_database_activity(activity_type):
-    """Decorator to log database activities."""
-    def decorator(func):
-        def wrapper(*args, **kwargs):
-            logger.info(f"Database {activity_type} started: {func.__name__}")
-            result = func(*args, **kwargs)
-            # Sanitize any log messages
-            sanitized_result = sanitize_sensitive_data(str(result)) if result else None
-            logger.info(f"Database {activity_type} completed: {func.__name__}")
-            return result
-        return wrapper
-    return decorator
-
 def handle_connection_error(func):
     """
     Decorator to handle database connection errors.

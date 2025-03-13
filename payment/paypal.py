@@ -4,8 +4,6 @@ PayPal integration for Travian Whispers subscription payments.
 import logging
 import requests
 import json
-import os
-from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from database.models.transaction import Transaction
 from database.models.user import User
@@ -19,81 +17,41 @@ logging.basicConfig(
 )
 logger = logging.getLogger('payment.paypal')
 
-# Load environment variables
-load_dotenv()
-
 # PayPal API configuration
-PAYPAL_CLIENT_ID = os.getenv("PAYPAL_CLIENT_ID")
-PAYPAL_SECRET = os.getenv("PAYPAL_SECRET")
-PAYPAL_BASE_URL = os.getenv("PAYPAL_BASE_URL", "https://api-m.sandbox.paypal.com")
-PAYPAL_WEBHOOK_ID = os.getenv("PAYPAL_WEBHOOK_ID")  # Add this to your .env
+PAYPAL_CLIENT_ID = "your-paypal-client-id"  # Change this
+PAYPAL_SECRET = "your-paypal-secret"  # Change this
+PAYPAL_BASE_URL = "https://api-m.sandbox.paypal.com"  # Use https://api-m.paypal.com for production
 
-def verify_webhook_signature(request_body, headers):
+def get_access_token():
     """
-    Verify PayPal webhook signature.
+    Get PayPal API access token.
     
-    Args:
-        request_body (bytes): Raw request body
-        headers (dict): Request headers
-        
     Returns:
-        bool: True if signature is valid, False otherwise
+        str: Access token or None if failed
     """
-    if not PAYPAL_WEBHOOK_ID:
-        logger.error("PayPal webhook ID is missing from environment variables")
-        return False
-    
     try:
-        # Get required headers
-        paypal_transmission_id = headers.get('Paypal-Transmission-Id')
-        paypal_timestamp = headers.get('Paypal-Transmission-Time')
-        paypal_signature = headers.get('Paypal-Transmission-Sig')
-        paypal_cert_url = headers.get('Paypal-Cert-Url')
-        
-        if not all([paypal_transmission_id, paypal_timestamp, paypal_signature, paypal_cert_url]):
-            logger.error("Missing required PayPal webhook headers")
-            return False
-        
-        # Build verification payload
-        verification_payload = {
-            "auth_algo": headers.get('Paypal-Auth-Algo', 'SHA256withRSA'),
-            "cert_url": paypal_cert_url,
-            "transmission_id": paypal_transmission_id,
-            "transmission_sig": paypal_signature,
-            "transmission_time": paypal_timestamp,
-            "webhook_id": PAYPAL_WEBHOOK_ID,
-            "webhook_event": json.loads(request_body.decode('utf-8'))
-        }
-        
-        # Get access token
-        access_token = get_access_token()
-        if not access_token:
-            logger.error("Failed to get PayPal access token for webhook verification")
-            return False
-        
-        # Call PayPal to verify the signature
-        url = f"{PAYPAL_BASE_URL}/v1/notifications/verify-webhook-signature"
+        url = f"{PAYPAL_BASE_URL}/v1/oauth2/token"
         headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {access_token}"
+            "Accept": "application/json",
+            "Accept-Language": "en_US"
         }
+        data = "grant_type=client_credentials"
         
         response = requests.post(
             url,
+            auth=(PAYPAL_CLIENT_ID, PAYPAL_SECRET),
             headers=headers,
-            data=json.dumps(verification_payload)
+            data=data
         )
         
         if response.status_code == 200:
-            result = response.json()
-            verification_status = result.get("verification_status")
-            return verification_status == "SUCCESS"
+            return response.json().get("access_token")
         
-        logger.error(f"Failed to verify webhook signature: {response.text}")
-        return False
+        logger.error(f"Failed to get PayPal access token: {response.text}")
+        return None
     except Exception as e:
-        logger.error(f"Error verifying webhook signature: {e}")
-        return False
+        logger.error(f"Error getting PayPal access token: {e}")
+        return None
 
 def create_subscription_order(plan_id, user_id, success_url, cancel_url):
     """
