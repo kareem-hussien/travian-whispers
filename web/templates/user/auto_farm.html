@@ -1,0 +1,341 @@
+{% extends 'user/layout.html' %}
+
+{% block title %}Auto Farm Management{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">Auto Farm</li>
+{% endblock %}
+
+{% block content %}
+<div class="content">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-4">Auto Farm Management</h2>
+            
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+    
+    <!-- Status Overview -->
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-4 mb-lg-0">
+            <div class="dashboard-card">
+                <h4 class="mb-3">Auto Farm Status</h4>
+                
+                <div class="d-flex align-items-center mb-4">
+                    <div class="pe-3">
+                        <span class="d-inline-block rounded-circle" style="width: 24px; height: 24px; background-color: {{ 'green' if auto_farm.status == 'active' else 'orange' if auto_farm.status == 'paused' else 'red' }};"></span>
+                    </div>
+                    <div>
+                        <h5 class="mb-0">{{ auto_farm.status|capitalize }}</h5>
+                        <p class="text-muted mb-0">Last run: {{ auto_farm.last_run }}</p>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span>Next farm run in:</span>
+                    <div class="d-flex align-items-center">
+                        <div class="spinner-border spinner-border-sm text-primary me-2" role="status" aria-hidden="true"></div>
+                        <span id="countdownTimer">Loading...</span>
+                    </div>
+                </div>
+                
+                <div class="progress mb-4" style="height: 10px;">
+                    <div class="progress-bar bg-primary" role="progressbar" style="width: 65%;" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                
+                <div class="d-flex justify-content-between">
+                    {% if auto_farm.status == 'active' %}
+                    <button class="btn btn-warning" id="pauseAutoFarm">
+                        <i class="bi bi-pause-fill"></i> Pause
+                    </button>
+                    <button class="btn btn-danger" id="stopAutoFarm">
+                        <i class="bi bi-stop-fill"></i> Stop
+                    </button>
+                    {% elif auto_farm.status == 'paused' %}
+                    <button class="btn btn-success" id="resumeAutoFarm">
+                        <i class="bi bi-play-fill"></i> Resume
+                    </button>
+                    <button class="btn btn-danger" id="stopAutoFarm">
+                        <i class="bi bi-stop-fill"></i> Stop
+                    </button>
+                    {% else %}
+                    <button class="btn btn-success" id="startAutoFarm">
+                        <i class="bi bi-play-fill"></i> Start
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6">
+            <div class="dashboard-card">
+                <h4 class="mb-3">Farm Statistics</h4>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="border rounded p-3 text-center">
+                            <h3 class="mb-0">345</h3>
+                            <p class="text-muted mb-0">Farms Today</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="border rounded p-3 text-center">
+                            <h3 class="mb-0">4,582</h3>
+                            <p class="text-muted mb-0">Farms Total</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="border rounded p-3 text-center">
+                            <h3 class="mb-0">~25,000</h3>
+                            <p class="text-muted mb-0">Resources Today</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="border rounded p-3 text-center">
+                            <h3 class="mb-0">~340,000</h3>
+                            <p class="text-muted mb-0">Resources Total</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Auto Farm Settings -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="dashboard-card">
+                <h4 class="mb-4">Auto Farm Settings</h4>
+                
+                <form>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="farmInterval" class="form-label">Farming Interval (minutes)</label>
+                            <input type="number" class="form-control" id="farmInterval" min="30" max="120" value="{{ auto_farm.interval }}">
+                            <small class="form-text text-muted">Minimum: 30 minutes, Maximum: 120 minutes</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="farmRandomize" class="form-label">Randomize Interval</label>
+                            <div class="input-group">
+                                <select class="form-select" id="farmRandomize">
+                                    <option value="0">No randomization</option>
+                                    <option value="5">±5 minutes</option>
+                                    <option value="10" selected>±10 minutes</option>
+                                    <option value="15">±15 minutes</option>
+                                </select>
+                                <button class="btn btn-outline-secondary" type="button" data-bs-toggle="tooltip" title="Randomization helps avoid detection">
+                                    <i class="bi bi-info-circle"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="avoidNightFarming" checked>
+                        <label class="form-check-label" for="avoidNightFarming">Avoid farming during typical sleeping hours (12AM - 6AM)</label>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="useAllFarmLists" checked>
+                        <label class="form-check-label" for="useAllFarmLists">Use all available farm lists</label>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Active During Hours</label>
+                        <div class="d-flex flex-wrap">
+                            {% for hour in range(0, 24) %}
+                            <div class="form-check me-3 mb-2">
+                                <input class="form-check-input" type="checkbox" id="hour{{ hour }}" {% if hour >= 6 and hour <= 23 %}checked{% endif %}>
+                                <label class="form-check-label" for="hour{{ hour }}">{{ hour }}:00</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Save Settings</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Villages List -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="dashboard-card">
+                <div class="d-flex justify-content-between mb-4">
+                    <h4 class="mb-0">Villages for Auto Farm</h4>
+                    <button class="btn btn-outline-primary btn-sm">Refresh Villages</button>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Village Name</th>
+                                <th>Coordinates</th>
+                                <th>Status</th>
+                                <th>Farm Lists</th>
+                                <th>Last Farmed</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for village in auto_farm.villages %}
+                            <tr>
+                                <td>{{ village.name }}</td>
+                                <td>{{ village.coordinates }}</td>
+                                <td>
+                                    {% if village.status == 'active' %}
+                                    <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td>3 farm lists</td>
+                                <td>{{ village.last_farmed|default('Never') }}</td>
+                                <td>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="village{{ loop.index }}" {% if village.status == 'active' %}checked{% endif %}>
+                                        <label class="form-check-label" for="village{{ loop.index }}">Enable</label>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="alert alert-info mt-3">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    Make sure you have set up farm lists in Travian for each village to use auto-farming.
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Activity Log -->
+    <div class="row">
+        <div class="col-12">
+            <div class="dashboard-card">
+                <h4 class="mb-4">Auto Farm Activity Log</h4>
+                
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Village</th>
+                                <th>Action</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>2025-03-13 15:30:45</td>
+                                <td>Main Village</td>
+                                <td>Sent farm lists</td>
+                                <td><span class="badge bg-success">Success</span></td>
+                            </tr>
+                            <tr>
+                                <td>2025-03-13 15:00:12</td>
+                                <td>Second Village</td>
+                                <td>Sent farm lists</td>
+                                <td><span class="badge bg-success">Success</span></td>
+                            </tr>
+                            <tr>
+                                <td>2025-03-13 14:30:56</td>
+                                <td>Main Village</td>
+                                <td>Sent farm lists</td>
+                                <td><span class="badge bg-warning">Partial</span></td>
+                            </tr>
+                            <tr>
+                                <td>2025-03-13 14:00:23</td>
+                                <td>Second Village</td>
+                                <td>Sent farm lists</td>
+                                <td><span class="badge bg-success">Success</span></td>
+                            </tr>
+                            <tr>
+                                <td>2025-03-13 13:30:17</td>
+                                <td>Main Village</td>
+                                <td>Sent farm lists</td>
+                                <td><span class="badge bg-success">Success</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="d-flex justify-content-center mt-3">
+                    <button class="btn btn-outline-primary btn-sm">Load More</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+    
+    // Countdown timer
+    function updateCountdown() {
+        // This would calculate the actual time until next farm in production
+        const nextFarmTime = new Date("{{ auto_farm.next_run }}").getTime();
+        const now = new Date().getTime();
+        const timeLeft = nextFarmTime - now;
+        
+        if (timeLeft <= 0) {
+            document.getElementById('countdownTimer').innerHTML = "Any moment now...";
+        } else {
+            const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+            document.getElementById('countdownTimer').innerHTML = minutes + "m " + seconds + "s";
+        }
+    }
+    
+    // Update every second
+    setInterval(updateCountdown, 1000);
+    updateCountdown();
+    
+    // Button handlers
+    document.getElementById('startAutoFarm')?.addEventListener('click', function() {
+        alert('Auto Farm started!');
+        location.reload();
+    });
+    
+    document.getElementById('pauseAutoFarm')?.addEventListener('click', function() {
+        alert('Auto Farm paused!');
+        location.reload();
+    });
+    
+    document.getElementById('resumeAutoFarm')?.addEventListener('click', function() {
+        alert('Auto Farm resumed!');
+        location.reload();
+    });
+    
+    document.getElementById('stopAutoFarm')?.addEventListener('click', function() {
+        if (confirm('Are you sure you want to stop Auto Farm?')) {
+            alert('Auto Farm stopped!');
+            location.reload();
+        }
+    });
+</script>
+{% endblock %}

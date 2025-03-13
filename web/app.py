@@ -102,15 +102,203 @@ def dashboard():
     if 'user_id' not in session:
         flash('Please log in to access your dashboard', 'warning')
         return redirect(url_for('login'))
-    return render_template('user/dashboard.html', title='Dashboard')
+    
+    # Mock data for the dashboard
+    user_profile = {
+        'subscription': {
+            'status': 'active',
+            'plan_name': 'Standard Plan',
+            'end_date': '2025-04-12'
+        },
+        'villages': [
+            {'name': 'Main Village', 'coordinates': '(24, -35)', 'population': 320},
+            {'name': 'Second Village', 'coordinates': '(22, -40)', 'population': 215}
+        ],
+        'tasks': [
+            {'name': 'Auto-Farming', 'status': 'active', 'duration': '3d 05h 12m'},
+            {'name': 'Troop Training', 'status': 'paused', 'duration': '1d 12h 45m'}
+        ]
+    }
+    
+    return render_template('user/dashboard.html', title='Dashboard', user_profile=user_profile)
 
-@app.route('/profile')
+@app.route('/profile', methods=['GET', 'POST'])
 def profile():
     """User profile route."""
     if 'user_id' not in session:
         flash('Please log in to access your profile', 'warning')
         return redirect(url_for('login'))
-    return render_template('user/profile.html', title='Profile')
+    
+    # Process form submissions
+    if request.method == 'POST':
+        form_type = request.form.get('form_type')
+        
+        if form_type == 'profile':
+            # Process profile update
+            flash('Profile updated successfully!', 'success')
+        elif form_type == 'password':
+            # Process password change
+            flash('Password changed successfully!', 'success')
+        
+        return redirect(url_for('profile'))
+    
+    # Mock user profile data
+    user_profile = {
+        'username': session.get('username', 'User'),
+        'email': session.get('email', 'user@example.com'),
+        'settings': {
+            'notification_email': True,
+            'auto_renew': False
+        },
+        'subscription': {
+            'status': 'active',
+            'plan_name': 'Standard Plan',
+            'start_date': '2025-03-12',
+            'end_date': '2025-04-12'
+        }
+    }
+    
+    return render_template('user/profile.html', title='Profile', user_profile=user_profile)
+
+@app.route('/travian_settings', methods=['GET', 'POST'])
+def travian_settings():
+    """Travian settings route."""
+    if 'user_id' not in session:
+        flash('Please log in to access this page', 'warning')
+        return redirect(url_for('login'))
+    
+    # Process form submissions
+    if request.method == 'POST':
+        # Process Travian settings update
+        flash('Travian settings updated successfully!', 'success')
+        return redirect(url_for('travian_settings'))
+    
+    # Mock user profile data
+    user_profile = {
+        'travian_credentials': {
+            'username': 'travian_user',
+            'server': 'ts1.x1.international.travian.com',
+            'tribe': 'Romans'
+        }
+    }
+    
+    return render_template('user/travian_settings.html', title='Travian Settings', user_profile=user_profile)
+
+@app.route('/villages')
+def villages():
+    """Villages management route."""
+    if 'user_id' not in session:
+        flash('Please log in to access this page', 'warning')
+        return redirect(url_for('login'))
+    
+    # Mock villages data
+    villages_data = [
+        {'id': 1, 'name': 'Main Village', 'coordinates': '(24, -35)', 'population': 320, 'status': 'active'},
+        {'id': 2, 'name': 'Second Village', 'coordinates': '(22, -40)', 'population': 215, 'status': 'active'}
+    ]
+    
+    return render_template('user/villages.html', title='Villages Management', villages=villages_data)
+
+@app.route('/auto_farm')
+def auto_farm():
+    """Auto farm management route."""
+    if 'user_id' not in session:
+        flash('Please log in to access this page', 'warning')
+        return redirect(url_for('login'))
+    
+    # Mock auto farm data
+    auto_farm_data = {
+        'status': 'active',
+        'interval': 45,
+        'last_run': '2025-03-12 15:30:45',
+        'next_run': '2025-03-12 16:15:45',
+        'villages': [
+            {'id': 1, 'name': 'Main Village', 'status': 'active'},
+            {'id': 2, 'name': 'Second Village', 'status': 'active'}
+        ]
+    }
+    
+    return render_template('user/auto_farm.html', title='Auto Farm', auto_farm=auto_farm_data)
+
+@app.route('/troop_trainer')
+def troop_trainer():
+    """Troop trainer management route."""
+    if 'user_id' not in session:
+        flash('Please log in to access this page', 'warning')
+        return redirect(url_for('login'))
+    
+    # Mock troop trainer data
+    troop_trainer_data = {
+        'status': 'paused',
+        'tribe': 'Romans',
+        'troops': [
+            {'name': 'Legionnaire', 'quantity': 50, 'status': 'training'},
+            {'name': 'Praetorian', 'quantity': 30, 'status': 'queued'},
+            {'name': 'Imperian', 'quantity': 20, 'status': 'pending'}
+        ],
+        'villages': [
+            {'id': 1, 'name': 'Main Village', 'status': 'active'},
+            {'id': 2, 'name': 'Second Village', 'status': 'paused'}
+        ]
+    }
+    
+    return render_template('user/troop_trainer.html', title='Troop Trainer', trainer=troop_trainer_data)
+
+@app.route('/activity_logs')
+def activity_logs():
+    """Activity logs route."""
+    if 'user_id' not in session:
+        flash('Please log in to access this page', 'warning')
+        return redirect(url_for('login'))
+    
+    # Mock activity logs data
+    logs = [
+        {'date': '2025-03-12 15:30:45', 'activity': 'Auto-Farm', 'details': 'Sent farm lists from Main Village', 'status': 'success'},
+        {'date': '2025-03-12 14:15:22', 'activity': 'Troop Training', 'details': 'Trained 50 Legionnaires in Main Village', 'status': 'success'},
+        {'date': '2025-03-12 12:30:10', 'activity': 'Auto-Farm', 'details': 'Sent farm lists from Second Village', 'status': 'success'},
+        {'date': '2025-03-12 11:05:38', 'activity': 'System', 'details': 'Bot started after maintenance', 'status': 'info'},
+        {'date': '2025-03-12 10:45:15', 'activity': 'System', 'details': 'Scheduled maintenance began', 'status': 'warning'}
+    ]
+    
+    return render_template('user/activity_logs.html', title='Activity Logs', logs=logs)
+
+@app.route('/subscription')
+def subscription():
+    """Subscription management route."""
+    if 'user_id' not in session:
+        flash('Please log in to access this page', 'warning')
+        return redirect(url_for('login'))
+    
+    # Mock subscription data
+    subscription_data = {
+        'current_plan': 'Standard Plan',
+        'status': 'active',
+        'start_date': '2025-03-12',
+        'end_date': '2025-04-12',
+        'auto_renew': False,
+        'payment_method': 'PayPal',
+        'payment_history': [
+            {'date': '2025-03-12', 'amount': '$9.99', 'method': 'PayPal', 'status': 'completed'},
+            {'date': '2025-02-12', 'amount': '$9.99', 'method': 'PayPal', 'status': 'completed'},
+            {'date': '2025-01-12', 'amount': '$9.99', 'method': 'PayPal', 'status': 'completed'}
+        ],
+        'available_plans': [
+            {'id': 1, 'name': 'Basic Plan', 'price': '$4.99', 'features': ['Auto-Farm feature', 'Support for 2 villages', '1 concurrent task']},
+            {'id': 2, 'name': 'Standard Plan', 'price': '$9.99', 'features': ['Auto-Farm feature', 'Troop training', 'Support for 5 villages', '2 concurrent tasks']},
+            {'id': 3, 'name': 'Premium Plan', 'price': '$19.99', 'features': ['Auto-Farm feature', 'Troop training', 'Support for 15 villages', '5 concurrent tasks', 'Advanced features']}
+        ]
+    }
+    
+    return render_template('user/subscription.html', title='Subscription Management', subscription=subscription_data)
+
+@app.route('/support')
+def support():
+    """Help and support route."""
+    if 'user_id' not in session:
+        flash('Please log in to access this page', 'warning')
+        return redirect(url_for('login'))
+    
+    return render_template('user/support.html', title='Help & Support')
 
 # Admin routes
 @app.route('/admin')
@@ -119,7 +307,83 @@ def admin_dashboard():
     if 'user_id' not in session or session.get('role') != 'admin':
         flash('Admin access required', 'danger')
         return redirect(url_for('index'))
-    return render_template('admin/dashboard.html', title='Admin Dashboard')
+    
+    # Mock admin dashboard data
+    admin_data = {
+        'total_users': 245,
+        'active_users': 189,
+        'expired_users': 56,
+        'total_revenue': '$2,345.67',
+        'recent_transactions': [
+            {'id': 'TX12345', 'user': 'user1', 'amount': '$9.99', 'date': '2025-03-12', 'status': 'completed'},
+            {'id': 'TX12344', 'user': 'user2', 'amount': '$19.99', 'date': '2025-03-12', 'status': 'completed'},
+            {'id': 'TX12343', 'user': 'user3', 'amount': '$4.99', 'date': '2025-03-11', 'status': 'completed'},
+            {'id': 'TX12342', 'user': 'user4', 'amount': '$9.99', 'date': '2025-03-11', 'status': 'pending'},
+            {'id': 'TX12341', 'user': 'user5', 'amount': '$9.99', 'date': '2025-03-10', 'status': 'completed'}
+        ]
+    }
+    
+    return render_template('admin/dashboard.html', title='Admin Dashboard', admin_data=admin_data)
+
+@app.route('/admin/users')
+def admin_users():
+    """Admin users management route."""
+    if 'user_id' not in session or session.get('role') != 'admin':
+        flash('Admin access required', 'danger')
+        return redirect(url_for('index'))
+    
+    # Mock users data
+    users_data = [
+        {'id': 1, 'username': 'user1', 'email': 'user1@example.com', 'role': 'user', 'status': 'active', 'subscription': 'Standard', 'joined': '2025-02-15'},
+        {'id': 2, 'username': 'user2', 'email': 'user2@example.com', 'role': 'user', 'status': 'active', 'subscription': 'Premium', 'joined': '2025-02-20'},
+        {'id': 3, 'username': 'user3', 'email': 'user3@example.com', 'role': 'user', 'status': 'inactive', 'subscription': 'Basic', 'joined': '2025-03-01'},
+        {'id': 4, 'username': 'admin', 'email': 'admin@example.com', 'role': 'admin', 'status': 'active', 'subscription': 'Premium', 'joined': '2025-01-10'}
+    ]
+    
+    return render_template('admin/users.html', title='User Management', users=users_data)
+
+@app.route('/admin/subscriptions')
+def admin_subscriptions():
+    """Admin subscription plans management route."""
+    if 'user_id' not in session or session.get('role') != 'admin':
+        flash('Admin access required', 'danger')
+        return redirect(url_for('index'))
+    
+    # Mock subscription plans data
+    plans_data = [
+        {'id': 1, 'name': 'Basic Plan', 'price': '$4.99', 'users': 78, 'revenue': '$389.22'},
+        {'id': 2, 'name': 'Standard Plan', 'price': '$9.99', 'users': 95, 'revenue': '$949.05'},
+        {'id': 3, 'name': 'Premium Plan', 'price': '$19.99', 'users': 16, 'revenue': '$319.84'}
+    ]
+    
+    return render_template('admin/subscriptions.html', title='Subscription Plans', plans=plans_data)
+
+@app.route('/admin/transactions')
+def admin_transactions():
+    """Admin transactions management route."""
+    if 'user_id' not in session or session.get('role') != 'admin':
+        flash('Admin access required', 'danger')
+        return redirect(url_for('index'))
+    
+    # Mock transactions data
+    transactions_data = [
+        {'id': 'TX12345', 'user': 'user1', 'plan': 'Standard', 'amount': '$9.99', 'date': '2025-03-12', 'status': 'completed'},
+        {'id': 'TX12344', 'user': 'user2', 'plan': 'Premium', 'amount': '$19.99', 'date': '2025-03-12', 'status': 'completed'},
+        {'id': 'TX12343', 'user': 'user3', 'plan': 'Basic', 'amount': '$4.99', 'date': '2025-03-11', 'status': 'completed'},
+        {'id': 'TX12342', 'user': 'user4', 'plan': 'Standard', 'amount': '$9.99', 'date': '2025-03-11', 'status': 'pending'},
+        {'id': 'TX12341', 'user': 'user5', 'plan': 'Standard', 'amount': '$9.99', 'date': '2025-03-10', 'status': 'completed'}
+    ]
+    
+    return render_template('admin/transactions.html', title='Transactions', transactions=transactions_data)
+
+@app.route('/admin/settings')
+def admin_settings():
+    """Admin system settings route."""
+    if 'user_id' not in session or session.get('role') != 'admin':
+        flash('Admin access required', 'danger')
+        return redirect(url_for('index'))
+    
+    return render_template('admin/settings.html', title='System Settings')
 
 # Authentication routes
 @app.route('/login', methods=['GET', 'POST'])

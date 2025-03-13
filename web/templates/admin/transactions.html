@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - Travian Whispers</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        :root {
+            --sidebar-width: 250px;
+            --topbar-height: 60px;
+            --primary-color: #3a6ea5;
+            --secondary-color: #ff9a3c;
+            --dark-color: #344055;
+            --light-color: #f4f4f9;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f9;
+            overflow-x: hidden;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background-color: var(--dark-color);
+            color: white;
+            z-index: 1000;
+            transition: left 0.3s ease;
+        }
+        
+        .sidebar-header {
+            height: var(--topbar-height);
+            display: flex;
+            align-items: center;
+            padding: 0 1rem;
+            background-color: rgba(0, 0, 0, 0.2);
+        }
+        
+        .sidebar-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            text-decoration: none;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .sidebar-content {
+            padding: 1rem 0;
+            height: calc(100vh - var(--topbar-height));
+            overflow-y: auto;
+        }
+        
+        .nav-item {
+            margin-bottom: 0.25rem;
+        }
+        
+        .nav-link {
+            color: rgba(255, 255, 255, 0.75);
+            padding: 0.75rem 1.5rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            border-left: 3px solid transparent;
+        }
+        
+        .nav-link:hover {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .nav-link.active {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left: 3px solid var(--secondary-color);
+        }
+        
+        .nav-icon {
+            margin-right: 0.75rem;
+            font-size: 1.1rem;
+            width: 1.5rem;
+            text-align: center;
+        }
+        
+        .sidebar-footer {
+            padding: 1rem 1.5rem;
+            background-color: rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+        
+        .topbar {
+            height: var(--topbar-height);
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            padding: 0 1.5rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .menu-toggle {
+            cursor: pointer;
+            margin-right: 1rem;
+            font-size: 1.5rem;
+            color: var(--dark-color);
+            display: none;
+        }
+        
+        .breadcrumb {
+            margin-bottom: 0;
+        }
+        
+        .user-dropdown {
+            margin-left: auto;
+        }
+        
+        .content {
+            padding: 1.5rem;
+        }
+        
+        .dashboard-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            height: 100%;
+            transition: transform 0.3s ease;
+        }
+        
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        @media (max-width: 992px) {
+            .sidebar {
+                left: calc(-1 * var(--sidebar-width));
+            }
+            
+            .sidebar.show {
+                left: 0;
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .menu-toggle {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <a href="{{ url_for('admin_dashboard') }}" class="sidebar-logo">
+                <i class="bi bi-shield-lock"></i> Admin Panel
+            </a>
+        </div>
+        <div class="sidebar-content">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a href="{{ url_for('admin_dashboard') }}" class="nav-link {{ 'active' if request.endpoint == 'admin_dashboard' else '' }}">
+                        <span class="nav-icon"><i class="bi bi-speedometer2"></i></span>
+                        Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('admin_users') }}" class="nav-link {{ 'active' if request.endpoint == 'admin_users' else '' }}">
+                        <span class="nav-icon"><i class="bi bi-people"></i></span>
+                        User Management
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('admin_subscriptions') }}" class="nav-link {{ 'active' if request.endpoint == 'admin_subscriptions' else '' }}">
+                        <span class="nav-icon"><i class="bi bi-credit-card"></i></span>
+                        Subscription Plans
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('admin_transactions') }}" class="nav-link {{ 'active' if request.endpoint == 'admin_transactions' else '' }}">
+                        <span class="nav-icon"><i class="bi bi-cash-stack"></i></span>
+                        Transactions
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('admin_settings') }}" class="nav-link {{ 'active' if request.endpoint == 'admin_settings' else '' }}">
+                        <span class="nav-icon"><i class="bi bi-gear"></i></span>
+                        System Settings
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <div class="sidebar-footer">
+            <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm w-100">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Bar -->
+        <div class="topbar">
+            <div class="menu-toggle" id="menuToggle">
+                <i class="bi bi-list"></i>
+            </div>
+            
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Admin</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Transactions</li>
+                </ol>
+            </nav>
+            
+            <div class="user-dropdown dropdown">
+                <button class="btn dropdown-toggle" type="button" id="userMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-person-circle"></i> {{ current_user.username }}
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenuButton">
+                    <li><a class="dropdown-item" href="{{ url_for('profile') }}"><i class="bi bi-person"></i> Profile</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('admin_settings') }}"><i class="bi bi-gear"></i> Settings</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Content -->
+        <div class="content">
+            <!-- Page Header -->
+            <div class="row mb-4">
+                <div class="col-12 d-flex justify-content-between align-items-center">
+                    <h2>Transaction History</h2>
+                    <div>
+                        <button class="btn btn-outline-secondary me-2">
+                            <i class="bi bi-download"></i> Export CSV
+                        </button>
+                        <button class="btn btn-outline-secondary">
+                            <i class="bi bi-printer"></i> Print
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Transaction Statistics -->
+            <div class="row mb-4">
+                <div class="col-md-3 mb-4 mb-md-0">
+                    <div class="dashboard-card text-center py-4">
+                        <h3 class="mb-0">{{ transactions|length }}</h3>
+                        <p class="text-muted mb-0">Total Transactions</p>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4 mb-md-0">
+                    <div class="dashboard-card text-center py-4">
+                        <h3 class="mb-0">${{ transactions|selectattr('status', 'equalto', 'completed')|sum(attribute='amount')|float }}</h3>
+                        <p class="text-muted mb-0">Total Revenue</p>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4 mb-md-0">
+                    <div class="dashboard-card text-center py-4">
+                        <h3 class="mb-0">{{ transactions|selectattr('status', 'equalto', 'completed')|count }}</h3>
+                        <p class="text-muted mb-0">Successful Payments</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="dashboard-card text-center py-4">
+                        <h3 class="mb-0">{{ transactions|selectattr('status', 'equalto', 'pending')|count }}</h3>
+                        <p class="text-muted mb-0">Pending Transactions</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Search & Filter -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="dashboard-card">
+                        <div class="row">
+                            <div class="col-md-5">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" placeholder="Search transactions...">
+                                    <button class="btn btn-outline-secondary" type="button"><i class="bi bi-search"></i></button>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select">
+                                    <option value="">All Statuses</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="failed">Failed</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="input-group">
+                                    <span class="input-group-text">Date Range</span>
+                                    <input type="date" class="form-control">
+                                    <span class="input-group-text">to</span>
+                                    <input type="date" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Transactions Table -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="dashboard-card">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Transaction ID</th>
+                                        <th>User</th>
+                                        <th>Plan</th>
+                                        <th>Amount</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for tx in transactions %}
+                                    <tr>
+                                        <td>{{ tx.id }}</td>
+                                        <td>{{ tx.user }}</td>
+                                        <td>{{ tx.plan }}</td>
+                                        <td>{{ tx.amount }}</td>
+                                        <td>{{ tx.date }}</td>
+                                        <td>
+                                            {% if tx.status == 'completed' %}
+                                            <span class="badge bg-success">Completed</span>
+                                            {% elif tx.status == 'pending' %}
+                                            <span class="badge bg-warning">Pending</span>
+                                            {% else %}
+                                            <span class="badge bg-danger">Failed</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-outline-primary" data-bs-toggle="tooltip" title="View Details">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                                <button class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="Send Receipt">
+                                                    <i class="bi bi-envelope"></i>
+                                                </button>
+                                                {% if tx.status == 'pending' %}
+                                                <button class="btn btn-outline-success" data-bs-toggle="tooltip" title="Mark as Completed">
+                                                    <i class="bi bi-check-circle"></i>
+                                                </button>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Pagination -->
+                        <nav aria-label="Transactions pagination" class="mt-4">
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                                </li>
+                                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                                <li class="page-item">
+                                    <a class="page-link" href="#">Next</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+        
+        // Mobile sidebar toggle
+        document.getElementById('menuToggle').addEventListener('click', function() {
+            document.querySelector('.sidebar').classList.toggle('show');
+        });
+        
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(event) {
+            const sidebar = document.querySelector('.sidebar');
+            const menuToggle = document.getElementById('menuToggle');
+            
+            if (window.innerWidth < 992 && sidebar.classList.contains('show') && 
+                !sidebar.contains(event.target) && !menuToggle.contains(event.target)) {
+                sidebar.classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>

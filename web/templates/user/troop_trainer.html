@@ -1,0 +1,440 @@
+{% extends 'user/layout.html' %}
+
+{% block title %}Troop Trainer{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">Troop Trainer</li>
+{% endblock %}
+
+{% block content %}
+<div class="content">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-4">Troop Trainer</h2>
+            
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+    
+    <!-- Status Overview -->
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-4 mb-lg-0">
+            <div class="dashboard-card">
+                <h4 class="mb-3">Trainer Status</h4>
+                
+                <div class="d-flex align-items-center mb-4">
+                    <div class="pe-3">
+                        <span class="d-inline-block rounded-circle" style="width: 24px; height: 24px; background-color: {{ 'green' if trainer.status == 'active' else 'orange' if trainer.status == 'paused' else 'red' }};"></span>
+                    </div>
+                    <div>
+                        <h5 class="mb-0">{{ trainer.status|capitalize }}</h5>
+                        <p class="text-muted mb-0">Tribe: {{ trainer.tribe }}</p>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between">
+                    {% if trainer.status == 'active' %}
+                    <button class="btn btn-warning" id="pauseTrainer">
+                        <i class="bi bi-pause-fill"></i> Pause
+                    </button>
+                    <button class="btn btn-danger" id="stopTrainer">
+                        <i class="bi bi-stop-fill"></i> Stop
+                    </button>
+                    {% elif trainer.status == 'paused' %}
+                    <button class="btn btn-success" id="resumeTrainer">
+                        <i class="bi bi-play-fill"></i> Resume
+                    </button>
+                    <button class="btn btn-danger" id="stopTrainer">
+                        <i class="bi bi-stop-fill"></i> Stop
+                    </button>
+                    {% else %}
+                    <button class="btn btn-success" id="startTrainer">
+                        <i class="bi bi-play-fill"></i> Start
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6">
+            <div class="dashboard-card">
+                <h4 class="mb-3">Training Statistics</h4>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="border rounded p-3 text-center">
+                            <h3 class="mb-0">{{ trainer.troops|sum(attribute='quantity') }}</h3>
+                            <p class="text-muted mb-0">Troops in Queue</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="border rounded p-3 text-center">
+                            <h3 class="mb-0">450</h3>
+                            <p class="text-muted mb-0">Troops Trained Today</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="border rounded p-3 text-center">
+                            <h3 class="mb-0">2,850</h3>
+                            <p class="text-muted mb-0">Troops Trained Total</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="border rounded p-3 text-center">
+                            <h3 class="mb-0">2/5</h3>
+                            <p class="text-muted mb-0">Active Villages</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Current Training -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="dashboard-card">
+                <h4 class="mb-4">Current Training</h4>
+                
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Troop Type</th>
+                                <th>Quantity</th>
+                                <th>Village</th>
+                                <th>Status</th>
+                                <th>Progress</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for troop in trainer.troops %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{ url_for('static', filename='img/troops/' + troop.name|lower + '.png') }}" alt="{{ troop.name }}" width="32" class="me-2">
+                                        <span>{{ troop.name }}</span>
+                                    </div>
+                                </td>
+                                <td>{{ troop.quantity }}</td>
+                                <td>{{ troop.village }}</td>
+                                <td>
+                                    {% if troop.status == 'training' %}
+                                    <span class="badge bg-primary">Training</span>
+                                    {% elif troop.status == 'queued' %}
+                                    <span class="badge bg-warning">Queued</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if troop.status == 'training' %}
+                                    <div class="progress" style="height: 10px;">
+                                        <div class="progress-bar bg-primary" role="progressbar" style="width: 65%;" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    {% else %}
+                                    <span class="text-muted">Waiting</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-danger" title="Cancel">
+                                        <i class="bi bi-x-circle"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                {% if trainer.troops|length == 0 %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    No troops currently in training. Configure your training settings below.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Training Configuration -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="dashboard-card">
+                <h4 class="mb-4">Training Configuration</h4>
+                
+                <form>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label">Tribe</label>
+                            <input type="text" class="form-control" value="{{ trainer.tribe }}" readonly>
+                            <small class="form-text text-muted">Tribe is detected automatically from your Travian account.</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Training Interval (minutes)</label>
+                            <input type="number" class="form-control" min="30" max="120" value="60">
+                            <small class="form-text text-muted">How often to check and train troops</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Troops Selection -->
+                    <h5 class="mb-3">Troops to Train</h5>
+                    <div class="row">
+                        {% if trainer.tribe == 'Romans' %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <img src="{{ url_for('static', filename='img/troops/legionnaire.png') }}" alt="Legionnaire" width="40" class="me-2">
+                                        <h6 class="mb-0">Legionnaire</h6>
+                                    </div>
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" id="trainLegionnaire" checked>
+                                        <label class="form-check-label" for="trainLegionnaire">Enable</label>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">Quantity</label>
+                                        <input type="number" class="form-control form-control-sm" min="1" value="20">
+                                    </div>
+                                    <div class="mb-0">
+                                        <label class="form-label">Priority</label>
+                                        <select class="form-select form-select-sm">
+                                            <option value="1">High</option>
+                                            <option value="2" selected>Normal</option>
+                                            <option value="3">Low</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <img src="{{ url_for('static', filename='img/troops/praetorian.png') }}" alt="Praetorian" width="40" class="me-2">
+                                        <h6 class="mb-0">Praetorian</h6>
+                                    </div>
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" id="trainPraetorian" checked>
+                                        <label class="form-check-label" for="trainPraetorian">Enable</label>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">Quantity</label>
+                                        <input type="number" class="form-control form-control-sm" min="1" value="15">
+                                    </div>
+                                    <div class="mb-0">
+                                        <label class="form-label">Priority</label>
+                                        <select class="form-select form-select-sm">
+                                            <option value="1">High</option>
+                                            <option value="2" selected>Normal</option>
+                                            <option value="3">Low</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <img src="{{ url_for('static', filename='img/troops/imperian.png') }}" alt="Imperian" width="40" class="me-2">
+                                        <h6 class="mb-0">Imperian</h6>
+                                    </div>
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" id="trainImperian">
+                                        <label class="form-check-label" for="trainImperian">Enable</label>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">Quantity</label>
+                                        <input type="number" class="form-control form-control-sm" min="1" value="10">
+                                    </div>
+                                    <div class="mb-0">
+                                        <label class="form-label">Priority</label>
+                                        <select class="form-select form-select-sm">
+                                            <option value="1">High</option>
+                                            <option value="2" selected>Normal</option>
+                                            <option value="3">Low</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% elif trainer.tribe == 'Gauls' %}
+                        <!-- Gaul-specific troops would go here -->
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle-fill me-2"></i>
+                                Gaul tribe troops configuration displayed here.
+                            </div>
+                        </div>
+                        {% elif trainer.tribe == 'Teutons' %}
+                        <!-- Teuton-specific troops would go here -->
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle-fill me-2"></i>
+                                Teuton tribe troops configuration displayed here.
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="col-12">
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                Unknown tribe detected. Please make sure your tribe is set correctly in your Travian settings.
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Village Selection -->
+                    <h5 class="mb-3 mt-4">Villages for Training</h5>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Village</th>
+                                    <th>Buildings</th>
+                                    <th>Status</th>
+                                    <th>Enable/Disable</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for village in trainer.villages %}
+                                <tr>
+                                    <td>{{ village.name }}</td>
+                                    <td>
+                                        <span class="badge bg-secondary me-1">Barracks Lvl 5</span>
+                                        <span class="badge bg-secondary me-1">Stable Lvl 3</span>
+                                        <span class="badge bg-secondary">Workshop Lvl 1</span>
+                                    </td>
+                                    <td>
+                                        {% if village.status == 'active' %}
+                                        <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="village{{ loop.index }}" {% if village.status == 'active' %}checked{% endif %}>
+                                            <label class="form-check-label" for="village{{ loop.index }}">Enable</label>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">Save Configuration</button>
+                        <button type="reset" class="btn btn-outline-secondary ms-2">Reset</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Training History -->
+    <div class="row">
+        <div class="col-12">
+            <div class="dashboard-card">
+                <h4 class="mb-4">Training History</h4>
+                
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Troop Type</th>
+                                <th>Quantity</th>
+                                <th>Village</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>2025-03-13 14:15:22</td>
+                                <td>Legionnaire</td>
+                                <td>50</td>
+                                <td>Main Village</td>
+                                <td><span class="badge bg-success">Completed</span></td>
+                            </tr>
+                            <tr>
+                                <td>2025-03-13 12:45:56</td>
+                                <td>Praetorian</td>
+                                <td>30</td>
+                                <td>Main Village</td>
+                                <td><span class="badge bg-success">Completed</span></td>
+                            </tr>
+                            <tr>
+                                <td>2025-03-13 10:30:12</td>
+                                <td>Legionnaire</td>
+                                <td>45</td>
+                                <td>Second Village</td>
+                                <td><span class="badge bg-success">Completed</span></td>
+                            </tr>
+                            <tr>
+                                <td>2025-03-13 08:20:45</td>
+                                <td>Imperian</td>
+                                <td>20</td>
+                                <td>Main Village</td>
+                                <td><span class="badge bg-success">Completed</span></td>
+                            </tr>
+                            <tr>
+                                <td>2025-03-12 22:10:33</td>
+                                <td>Praetorian</td>
+                                <td>25</td>
+                                <td>Second Village</td>
+                                <td><span class="badge bg-success">Completed</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="d-flex justify-content-center mt-3">
+                    <button class="btn btn-outline-primary btn-sm">Load More</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Button handlers
+    document.getElementById('startTrainer')?.addEventListener('click', function() {
+        alert('Troop Trainer started!');
+        location.reload();
+    });
+    
+    document.getElementById('pauseTrainer')?.addEventListener('click', function() {
+        alert('Troop Trainer paused!');
+        location.reload();
+    });
+    
+    document.getElementById('resumeTrainer')?.addEventListener('click', function() {
+        alert('Troop Trainer resumed!');
+        location.reload();
+    });
+    
+    document.getElementById('stopTrainer')?.addEventListener('click', function() {
+        if (confirm('Are you sure you want to stop Troop Trainer?')) {
+            alert('Troop Trainer stopped!');
+            location.reload();
+        }
+    });
+</script>
+{% endblock %}
