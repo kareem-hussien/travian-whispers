@@ -4,6 +4,7 @@ User login module for Travian Whispers.
 import jwt
 import logging
 from datetime import datetime, timedelta
+import config
 from database.models.user import User
 
 # Configure logger
@@ -12,11 +13,6 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger('auth.login')
-
-# JWT Configuration
-JWT_SECRET = "your-secret-key-change-in-production"  # Change this in production
-JWT_ALGORITHM = "HS256"
-JWT_EXPIRATION = 24  # hours
 
 def generate_token(user_id, username, email, role):
     """
@@ -36,11 +32,11 @@ def generate_token(user_id, username, email, role):
         "username": username,
         "email": email,
         "role": role,
-        "exp": datetime.utcnow() + timedelta(hours=JWT_EXPIRATION),
+        "exp": datetime.utcnow() + timedelta(hours=config.JWT_EXPIRATION),
         "iat": datetime.utcnow()
     }
     
-    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    return jwt.encode(payload, config.JWT_SECRET, algorithm=config.JWT_ALGORITHM)
 
 def verify_token(token):
     """
@@ -53,13 +49,41 @@ def verify_token(token):
         dict: Token payload if valid, None otherwise
     """
     try:
-        return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        return jwt.decode(token, config.JWT_SECRET, algorithms=[config.JWT_ALGORITHM])
     except jwt.ExpiredSignatureError:
         logger.warning("Expired JWT token")
         return None
     except jwt.InvalidTokenError as e:
         logger.warning(f"Invalid JWT token: {e}")
         return None
+    
+# Additional function to check user authentication status for routes
+def check_authenticated():
+    """
+    Check if the current user is authenticated based on session.
+    
+    Returns:
+        tuple: (is_authenticated, user_data)
+    """
+    if 'user_id' not in session:
+        return False, None
+    
+    user_model = User()
+    user = user_model.get_user_by_id(session['user_id'])
+    
+    if not user:
+        # Clear invalid session
+        session.clear()
+        return False, None
+    
+    user_data = {
+        "id": str(user["_id"]),
+        "username": user["username"],
+        "email": user["email"],
+        "role": user["role"]
+    }
+    
+    return True, user_data
 
 def login_user(username_or_email, password):
     """

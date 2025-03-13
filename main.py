@@ -169,14 +169,6 @@ def check_imports_mode():
 def web_mode(host='0.0.0.0', port=5000, debug=False):
     """
     Run in web application mode.
-    
-    Args:
-        host (str): Host address to bind to
-        port (int): Port to listen on
-        debug (bool): Whether to enable debug mode
-        
-    Returns:
-        int: Exit code (0 for success, 1 for failure)
     """
     try:
         # Connect to database
@@ -192,38 +184,15 @@ def web_mode(host='0.0.0.0', port=5000, debug=False):
         except Exception as e:
             logger.error(f"Database connection error: {e}")
             logger.error(traceback.format_exc())
-            # Continue without database for basic web functionality
-        
-        # Initialize cron jobs if available
-        if has_scheduler:
-            try:
-                scheduler_thread = start_scheduler()
-                logger.info("Scheduler started successfully.")
-            except Exception as e:
-                logger.error(f"Failed to start scheduler: {e}")
-        
-        # Initialize signal handlers if available
-        if has_signal_handler:
-            try:
-                initialize_signal_handlers()
-                logger.info("Signal handlers initialized successfully.")
-                
-                # Register database disconnect on shutdown if database is connected
-                if 'db' in locals():
-                    def shutdown_db():
-                        logger.info("Disconnecting from database...")
-                        db.disconnect()
-                    
-                    register_shutdown_handler(shutdown_db)
-            except Exception as e:
-                logger.error(f"Failed to initialize signal handlers: {e}")
+            return 1
         
         # Import and run Flask application
         try:
-            from web.app import app
+            from web.app import create_app  # Import the factory function
+            app = create_app()  # Create the app instance
             
             # Set debug mode based on argument
-            app.debug = debug
+            app.config['DEBUG'] = debug
             
             # Get host and port from environment variables or use provided values
             env_host = os.environ.get('HOST', host)
@@ -264,16 +233,13 @@ def bot_mode(user_id=None, headless=False):
             logger.error("Make sure all required modules are properly installed.")
             return 1
         
-        # Connect to database
-        try:
-            from database.mongodb import MongoDB
-            db = MongoDB()
-            if not db.connect():
-                logger.error("Failed to connect to MongoDB. Please check your connection string.")
-                return 1
-        except ImportError:
-            logger.error("MongoDB module not found. Database functionality is required for bot mode.")
-            return 1
+        # Ensure database is connected
+        from database.mongodb import MongoDB
+        db = MongoDB()
+        if not db.connect():
+            logger.error("Failed to connect to MongoDB. Exiting.")
+            sys.exit(1)
+        logger.info("MongoDB connected successfully.")
         
         # Display welcome messages
         welcome()

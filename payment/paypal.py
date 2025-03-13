@@ -5,10 +5,11 @@ import logging
 import requests
 import json
 from datetime import datetime, timedelta
+import config
 from database.models.transaction import Transaction
 from database.models.user import User
 from database.models.subscription import SubscriptionPlan
-from email.sender import send_subscription_confirmation_email
+from email_module.sender import send_subscription_confirmation_email
 
 # Configure logger
 logging.basicConfig(
@@ -16,11 +17,6 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger('payment.paypal')
-
-# PayPal API configuration
-PAYPAL_CLIENT_ID = "your-paypal-client-id"  # Change this
-PAYPAL_SECRET = "your-paypal-secret"  # Change this
-PAYPAL_BASE_URL = "https://api-m.sandbox.paypal.com"  # Use https://api-m.paypal.com for production
 
 def get_access_token():
     """
@@ -30,7 +26,7 @@ def get_access_token():
         str: Access token or None if failed
     """
     try:
-        url = f"{PAYPAL_BASE_URL}/v1/oauth2/token"
+        url = f"{config.PAYPAL_BASE_URL}/v1/oauth2/token"
         headers = {
             "Accept": "application/json",
             "Accept-Language": "en_US"
@@ -39,7 +35,7 @@ def get_access_token():
         
         response = requests.post(
             url,
-            auth=(PAYPAL_CLIENT_ID, PAYPAL_SECRET),
+            auth=(config.PAYPAL_CLIENT_ID, config.PAYPAL_SECRET),
             headers=headers,
             data=data
         )

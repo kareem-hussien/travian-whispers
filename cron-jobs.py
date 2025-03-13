@@ -11,7 +11,7 @@ from database.mongodb import MongoDB
 from database.models.user import User
 from database.models.subscription import SubscriptionPlan
 from database.models.transaction import Transaction
-from email.sender import send_subscription_expiry_email
+from email_module.sender import send_subscription_expiry_email
 
 # Configure logger
 logging.basicConfig(
@@ -116,7 +116,7 @@ def send_renewal_reminders():
             
             # Send reminder email
             try:
-                from email.sender import send_renewal_reminder_email
+                from email_module.sender import send_renewal_reminder_email
                 send_renewal_reminder_email(
                     user["email"],
                     user["username"],
@@ -230,7 +230,7 @@ def generate_admin_report():
             admin_users = user_model.collection.find({"role": "admin"})
             
             for admin in admin_users:
-                from email.sender import send_admin_report_email
+                from email_module.sender import send_admin_report_email
                 send_admin_report_email(
                     admin["email"],
                     admin["username"],

@@ -6,7 +6,7 @@ import uuid
 import re
 from datetime import datetime, timedelta
 from database.models.user import User
-from email.sender import send_password_reset_email
+from email_module.sender import send_password_reset_email
 from database.error_handler import handle_operation_error, log_database_activity
 
 # Configure logger

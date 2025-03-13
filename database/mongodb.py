@@ -5,6 +5,7 @@ import pymongo
 from pymongo import MongoClient
 import logging
 from datetime import datetime
+import config
 from database.error_handler import (
     handle_connection_error, 
     handle_operation_error,
@@ -33,7 +34,7 @@ class MongoDB:
     
     @handle_connection_error
     @log_database_activity("connection")
-    def connect(self, connection_string=None, db_name='whispers'):
+    def connect(self, connection_string=None, db_name=None):
         """
         Connect to MongoDB using the provided connection string.
         
@@ -44,8 +45,12 @@ class MongoDB:
         Returns:
             bool: True if connection successful, False otherwise
         """
-        if not connection_string:
-            connection_string = "mongodb+srv://whispers:eZAafCQTrjKKcZua@cluster0.9josw.mongodb.net/whispers"
+        # Use config values if not provided
+        if connection_string is None:
+            connection_string = config.MONGODB_URI
+        
+        if db_name is None:
+            db_name = config.MONGODB_DB_NAME
         
         try:
             self.client = MongoClient(connection_string, 
@@ -69,7 +74,7 @@ class MongoDB:
         Returns:
             pymongo.database.Database: Database instance or None if not connected
         """
-        if not self.client or not self.db:
+        if self.client is None or self.db is None:
             logger.warning("Database not connected. Call connect() first.")
             return None
         return self.db
@@ -84,7 +89,7 @@ class MongoDB:
         Returns:
             pymongo.collection.Collection: Collection instance or None if not found
         """
-        if not self.db:
+        if self.db is None:
             logger.warning("Database not connected. Call connect() first.")
             return None
         return self.db[collection_name]

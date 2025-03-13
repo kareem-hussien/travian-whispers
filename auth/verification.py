@@ -5,7 +5,7 @@ import logging
 import uuid
 from datetime import datetime, timedelta
 from database.models.user import User
-from email.sender import send_verification_email, send_welcome_email
+from email_module.sender import send_verification_email, send_welcome_email
 from database.error_handler import handle_operation_error, log_database_activity
 
 # Configure logger
@@ -23,38 +23,64 @@ class VerificationError(Exception):
 
 @handle_operation_error
 @log_database_activity("verification")
-def create_verification_token(user_id):
+def verify_email_token(token):
     """
-    Generate a new verification token for a user.
+    Verify a user's email with token.
     
     Args:
-        user_id (str): ID of the user
+        token (str): Verification token
         
     Returns:
-        str: Verification token or None if failed
+        tuple: (success, message, user_data)
     """
+    if not token:
+        logger.error("Empty verification token provided")
+        return False, "Invalid verification token", None
+    
     user_model = User()
-    user = user_model.get_user_by_id(user_id)
     
-    if not user:
-        raise VerificationError(f"User not found with ID: {user_id}")
+    # Check if collection is initialized
+    if user_model.collection is None:
+        logger.error("Database connection not available")
+        return False, "Database not available, please try again later", None
     
-    if user["isVerified"]:
-        raise VerificationError(f"User {user['username']} is already verified")
+    # Debug: Log token
+    logger.info(f"Attempting to verify token: {token}")
     
-    # Generate new token
-    verification_token = str(uuid.uuid4())
+    # Find the user with this token
+    user = user_model.get_user_by_verification_token(token)
     
-    # Update user record
-    update_data = {
-        "verificationToken": verification_token,
-        "updatedAt": datetime.utcnow()
-    }
+    if user is None:
+        logger.error(f"No user found with verification token: {token}")
+        return False, "Invalid or expired verification token", None
     
-    if user_model.update_user(user_id, update_data):
-        return verification_token
+    if user.get("isVerified", False):
+        logger.info(f"User {user['username']} is already verified")
+        return True, "Your email is already verified", {
+            "username": user["username"],
+            "email": user["email"]
+        }
     
-    raise VerificationError(f"Failed to update verification token for user: {user_id}")
+    # Update user verification status
+    success = user_model.verify_user(token)
+    if success:
+        logger.info(f"Successfully verified user {user['username']}")
+        
+        # Send welcome email
+        try:
+            send_welcome_email(user["email"], user["username"])
+            logger.info(f"Welcome email sent to {user['email']}")
+        except Exception as e:
+            logger.error(f"Failed to send welcome email: {e}")
+            # Continue as this is not critical
+        
+        return True, "Email verified successfully! You can now log in.", {
+            "username": user["username"],
+            "email": user["email"]
+        }
+    
+    logger.error(f"Failed to update verification status for user: {user['_id']}")
+    return False, "Failed to verify email", None
 
 @handle_operation_error
 @log_database_activity("verification")
@@ -72,9 +98,14 @@ def verify_email_token(token):
         raise VerificationError("Invalid verification token")
     
     user_model = User()
+    
+    # Check if collection is initialized
+    if user_model.collection is None:
+        raise VerificationError("Database not available")
+    
     user = user_model.get_user_by_verification_token(token)
     
-    if not user:
+    if user is None:
         raise VerificationError("Invalid or expired verification token")
     
     if user["isVerified"]:
@@ -114,7 +145,7 @@ def resend_verification_email(email):
     user_model = User()
     user = user_model.get_user_by_email(email)
     
-    if not user:
+    if user is None:
         raise VerificationError(f"User not found with email: {email}")
     
     if user["isVerified"]:
@@ -137,57 +168,3 @@ def resend_verification_email(email):
     except Exception as e:
         logger.error(f"Failed to send verification email: {e}")
         raise VerificationError("Failed to send verification email")
-
-@handle_operation_error
-@log_database_activity("verification")
-def get_verification_status(user_id):
-    """
-    Get verification status for a user.
-    
-    Args:
-        user_id (str): User ID
-        
-    Returns:
-        bool: True if verified, False otherwise
-    """
-    user_model = User()
-    user = user_model.get_user_by_id(user_id)
-    
-    if not user:
-        raise VerificationError(f"User not found with ID: {user_id}")
-    
-    return user["isVerified"]
-
-@handle_operation_error
-@log_database_activity("verification cleanup")
-def cleanup_expired_verifications():
-    """
-    Clean up expired verification tokens.
-    
-    Returns:
-        int: Number of tokens cleaned up
-    """
-    user_model = User()
-    
-    # Get users with verification tokens older than 7 days
-    now = datetime.utcnow()
-    seven_days_ago = now - timedelta(days=7)
-    
-    # In a real implementation, this would use the database's update_many
-    # to update all matching records in a single operation
-    users_collection = user_model.collection
-    result = users_collection.update_many(
-        {
-            "verificationToken": {"$ne": None},
-            "isVerified": False,
-            "createdAt": {"$lt": seven_days_ago}
-        },
-        {
-            "$set": {
-                "verificationToken": None,
-                "updatedAt": now
-            }
-        }
-    )
-    
-    return result.modified_count
