@@ -203,8 +203,12 @@ def register_routes(app):
                         session.permanent = True
                     
                     flash('Login successful!', 'success')
-                    next_url = request.args.get('next', url_for('dashboard'))
-                    return redirect(next_url)
+                    
+                    # Redirect based on user role
+                    if user_data['role'] == 'admin':
+                        return redirect(url_for('admin_dashboard'))
+                    else:
+                        return redirect(url_for('dashboard'))
                 else:
                     flash(message, 'danger')
                     return render_template('auth/login.html', title='Login', username=username_or_email)
@@ -290,16 +294,21 @@ def register_routes(app):
     @app.route('/logout')
     def logout():
         """User logout route."""
-        from auth.login import logout_user
+        try:
+            # Log before logout
+            username = session.get('username', 'Unknown')
+            app.logger.info(f"User logging out: {username}")
+            
+            # Import and call the logout function
+            from auth.login import logout_user
+            logout_user()
+            
+            flash('You have been logged out successfully', 'success')
+        except Exception as e:
+            app.logger.error(f"Logout error: {str(e)}")
+            flash('An error occurred during logout', 'warning')
         
-        # Log before logout
-        if 'username' in session:
-            app.logger.info(f"User logging out: {session['username']}")
-        
-        # Perform logout
-        logout_user()
-        
-        flash('You have been logged out successfully', 'success')
+        # Always redirect to index, even if there was an error
         return redirect(url_for('index'))
     
     @app.route('/forgot-password', methods=['GET', 'POST'])

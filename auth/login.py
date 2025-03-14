@@ -119,6 +119,26 @@ def generate_simple_token(user_id, username, email, role):
     token = f"{payload_b64}.{signature_b64}"
     return token
 
+def logout_user():
+    """
+    Log out a user by clearing the session.
+    
+    Returns:
+        bool: True if successful
+    """
+    try:
+        if 'user_id' in session:
+            user_id = session.get('user_id')
+            username = session.get('username', 'Unknown')
+            logger.info(f"User logged out successfully: {username} (ID: {user_id})")
+            
+        # Clear all session data
+        session.clear()
+        return True
+    except Exception as e:
+        logger.error(f"Error during logout: {str(e)}")
+        return False
+
 def verify_simple_token(token):
     """
     Verify a simple token.
