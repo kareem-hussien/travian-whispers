@@ -182,32 +182,36 @@ def register_routes(app):
     def login():
         """User login route."""
         if request.method == 'POST':
-            username_or_email = request.form.get('username')
-            password = request.form.get('password')
+            username_or_email = request.form.get('username', '')
+            password = request.form.get('password', '')
             remember_me = 'remember' in request.form
             
-            # Use the actual login function
-            from auth.login import login_user
-            success, message, token, user_data = login_user(username_or_email, password)
-            
-            if success:
-                # Store user info in session
-                session['user_id'] = user_data['id']
-                session['username'] = user_data['username']
-                session['email'] = user_data['email']
-                session['role'] = user_data['role']
+            try:
+                # Use the login_user function
+                from auth.login import login_user
+                success, message, token, user_data = login_user(username_or_email, password, remember_me)
                 
-                # Handle remember me option
-                if remember_me:
-                    # Set session to expire after 30 days
-                    session.permanent = True
-                
-                flash('Login successful!', 'success')
-                next_url = request.args.get('next', url_for('dashboard'))
-                return redirect(next_url)
-            else:
-                flash(message, 'danger')
-                return render_template('auth/login.html', title='Login')
+                if success:
+                    # Store user info in session
+                    session['user_id'] = user_data['id']
+                    session['username'] = user_data['username']
+                    session['email'] = user_data['email']
+                    session['role'] = user_data['role']
+                    
+                    # Handle remember me option
+                    if remember_me:
+                        session.permanent = True
+                    
+                    flash('Login successful!', 'success')
+                    next_url = request.args.get('next', url_for('dashboard'))
+                    return redirect(next_url)
+                else:
+                    flash(message, 'danger')
+                    return render_template('auth/login.html', title='Login', username=username_or_email)
+            except Exception as e:
+                app.logger.error(f"Login error: {str(e)}")
+                flash('An error occurred during login. Please try again.', 'danger')
+                return render_template('auth/login.html', title='Login', username=username_or_email)
         
         # GET request: show login form
         return render_template('auth/login.html', title='Login')
@@ -286,9 +290,16 @@ def register_routes(app):
     @app.route('/logout')
     def logout():
         """User logout route."""
-        # Clear the session
-        session.clear()
-        flash('You have been logged out', 'success')
+        from auth.login import logout_user
+        
+        # Log before logout
+        if 'username' in session:
+            app.logger.info(f"User logging out: {session['username']}")
+        
+        # Perform logout
+        logout_user()
+        
+        flash('You have been logged out successfully', 'success')
         return redirect(url_for('index'))
     
     @app.route('/forgot-password', methods=['GET', 'POST'])

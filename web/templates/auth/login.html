@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Login - Travian Whispers</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
@@ -31,9 +32,6 @@
             border-radius: 10px 10px 0 0 !important;
             padding: 1.5rem 1rem;
         }
-        .card-header h3 {
-            margin-bottom: 0;
-        }
         .login-icon {
             font-size: 3rem;
             margin-bottom: 1rem;
@@ -41,12 +39,23 @@
         .form-control {
             padding: 0.75rem 1rem;
         }
+        .form-control:focus {
+            box-shadow: 0 0 0 0.25rem rgba(58, 110, 165, 0.25);
+            border-color: #3a6ea5;
+        }
+        .input-group-text {
+            background-color: #f8f9fa;
+            border-right: none;
+        }
+        .form-control {
+            border-left: none;
+        }
         .btn-primary {
             background-color: #3a6ea5;
             border-color: #3a6ea5;
             padding: 0.75rem 1rem;
         }
-        .btn-primary:hover {
+        .btn-primary:hover, .btn-primary:focus {
             background-color: #31598a;
             border-color: #31598a;
         }
@@ -96,33 +105,47 @@
                     {% with messages = get_flashed_messages(with_categories=true) %}
                         {% if messages %}
                             {% for category, message in messages %}
-                                <div class="alert alert-{{ category }}">{{ message }}</div>
+                                <div class="alert alert-{{ category }} alert-dismissible fade show">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
                             {% endfor %}
                         {% endif %}
                     {% endwith %}
                     
                     <!-- Login Form -->
-                    <form action="{{ url_for('login') }}" method="post">
+                    <form action="{{ url_for('login') }}" method="post" id="loginForm">
                         <div class="mb-3">
                             <label for="username" class="form-label">Username or Email</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-person"></i></span>
-                                <input type="text" class="form-control" id="username" name="username" required placeholder="Enter your username or email">
+                                <input type="text" class="form-control" id="username" name="username" 
+                                       value="{{ username if username else '' }}"
+                                       required placeholder="Enter your username or email" autocomplete="username">
                             </div>
                         </div>
+                        
                         <div class="mb-3">
                             <label for="password" class="form-label">Password</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                                <input type="password" class="form-control" id="password" name="password" required placeholder="Enter your password">
+                                <input type="password" class="form-control" id="password" name="password" 
+                                       required placeholder="Enter your password" autocomplete="current-password">
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                    <i class="bi bi-eye"></i>
+                                </button>
                             </div>
                         </div>
+                        
                         <div class="mb-3 form-check">
                             <input type="checkbox" class="form-check-input" id="rememberMe" name="remember">
                             <label class="form-check-label" for="rememberMe">Remember me</label>
                         </div>
+                        
                         <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">Login</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>Login
+                            </button>
                         </div>
                     </form>
                     
@@ -135,7 +158,9 @@
                     </div>
                     
                     <div class="d-grid">
-                        <a href="{{ url_for('register') }}" class="btn btn-outline-secondary">Create New Account</a>
+                        <a href="{{ url_for('register') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-person-plus me-2"></i>Create New Account
+                        </a>
                     </div>
                 </div>
             </div>
@@ -153,5 +178,33 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Password visibility toggle
+        document.getElementById('togglePassword').addEventListener('click', function() {
+            const passwordInput = document.getElementById('password');
+            const icon = this.querySelector('i');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            }
+        });
+        
+        // Form validation
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            
+            if (!username || !password) {
+                event.preventDefault();
+                alert('Please enter both username/email and password');
+            }
+        });
+    </script>
 </body>
 </html>
