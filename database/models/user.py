@@ -43,7 +43,7 @@ class User:
     
     def hash_password(self, password):
         """
-        Hash a password using passlib.
+        Hash a password using passlib with improved security parameters.
         
         Args:
             password (str): Plain text password
@@ -51,7 +51,8 @@ class User:
         Returns:
             str: Hashed password
         """
-        return pbkdf2_sha256.hash(password)
+        # Use stronger hashing parameters (more rounds)
+        return pbkdf2_sha256.using(rounds=350000).hash(password)
     
     def verify_password(self, plain_password, hashed_password):
         """

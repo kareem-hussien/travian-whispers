@@ -17,7 +17,57 @@ class SubscriptionPlan:
         """
         Create a new subscription plan.
         
-        return None
+        Args:
+            name (str): Plan name
+            description (str): Plan description
+            monthly_price (float): Monthly price
+            yearly_price (float): Yearly price
+            features (dict): Plan features
+            
+        Returns:
+            dict: Created plan document or None if failed
+        """
+        if not self.collection:
+            return None
+            
+        # Validate inputs
+        if not name or not isinstance(monthly_price, (int, float)) or not isinstance(yearly_price, (int, float)):
+            return None
+            
+        # Check if plan name already exists
+        if self.collection.find_one({"name": name}):
+            return None
+        
+        # Validate features
+        required_features = ["autoFarm", "trainer", "notification", "maxVillages", "maxTasks"]
+        for feature in required_features:
+            if feature not in features:
+                if feature in ["maxVillages", "maxTasks"]:
+                    features[feature] = 1  # Default value
+                else:
+                    features[feature] = False  # Default value
+        
+        # Create plan document
+        plan = {
+            "name": name,
+            "description": description,
+            "price": {
+                "monthly": float(monthly_price),
+                "yearly": float(yearly_price)
+            },
+            "features": features,
+            "createdAt": datetime.utcnow(),
+            "updatedAt": datetime.utcnow()
+        }
+        
+        try:
+            result = self.collection.insert_one(plan)
+            if result.inserted_id:
+                plan["_id"] = result.inserted_id
+                return plan
+        except Exception as e:
+            print(f"Error creating plan: {e}")
+            return None
     
     def get_plan_by_id(self, plan_id):
         """
@@ -199,55 +249,3 @@ class SubscriptionPlan:
         except Exception as e:
             print(f"Error creating default plans: {e}")
             return False
-Args:
-            name (str): Plan name
-            description (str): Plan description
-            monthly_price (float): Monthly price
-            yearly_price (float): Yearly price
-            features (dict): Plan features
-            
-        Returns:
-            dict: Created plan document or None if failed
-        """
-        if not self.collection:
-            return None
-            
-        # Validate inputs
-        if not name or not isinstance(monthly_price, (int, float)) or not isinstance(yearly_price, (int, float)):
-            return None
-            
-        # Check if plan name already exists
-        if self.collection.find_one({"name": name}):
-            return None
-        
-        # Validate features
-        required_features = ["autoFarm", "trainer", "notification", "maxVillages", "maxTasks"]
-        for feature in required_features:
-            if feature not in features:
-                if feature in ["maxVillages", "maxTasks"]:
-                    features[feature] = 1  # Default value
-                else:
-                    features[feature] = False  # Default value
-        
-        # Create plan document
-        plan = {
-            "name": name,
-            "description": description,
-            "price": {
-                "monthly": float(monthly_price),
-                "yearly": float(yearly_price)
-            },
-            "features": features,
-            "createdAt": datetime.utcnow(),
-            "updatedAt": datetime.utcnow()
-        }
-        
-        try:
-            result = self.collection.insert_one(plan)
-            if result.inserted_id:
-                plan["_id"] = result.inserted_id
-                return plan
-        except Exception as e:
-            print(f"Error creating plan: {e}")
-        
-        

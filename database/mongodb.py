@@ -53,10 +53,17 @@ class MongoDB:
             db_name = config.MONGODB_DB_NAME
         
         try:
-            self.client = MongoClient(connection_string, 
-                                     serverSelectionTimeoutMS=5000,
-                                     connectTimeoutMS=10000,
-                                     socketTimeoutMS=45000)
+            # Use a connection pool for better performance
+            self.client = MongoClient(
+                connection_string, 
+                serverSelectionTimeoutMS=5000,
+                connectTimeoutMS=10000,
+                socketTimeoutMS=45000,
+                maxPoolSize=50,  # Connection pool size
+                waitQueueTimeoutMS=2500,
+                retryWrites=True,
+                retryReads=True
+            )
             # Ping the server to test connection
             self.client.admin.command('ping')
             self.db = self.client[db_name]

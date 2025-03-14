@@ -34,67 +34,6 @@ def verify_email_token(token):
         tuple: (success, message, user_data)
     """
     if not token:
-        logger.error("Empty verification token provided")
-        return False, "Invalid verification token", None
-    
-    user_model = User()
-    
-    # Check if collection is initialized
-    if user_model.collection is None:
-        logger.error("Database connection not available")
-        return False, "Database not available, please try again later", None
-    
-    # Debug: Log token
-    logger.info(f"Attempting to verify token: {token}")
-    
-    # Find the user with this token
-    user = user_model.get_user_by_verification_token(token)
-    
-    if user is None:
-        logger.error(f"No user found with verification token: {token}")
-        return False, "Invalid or expired verification token", None
-    
-    if user.get("isVerified", False):
-        logger.info(f"User {user['username']} is already verified")
-        return True, "Your email is already verified", {
-            "username": user["username"],
-            "email": user["email"]
-        }
-    
-    # Update user verification status
-    success = user_model.verify_user(token)
-    if success:
-        logger.info(f"Successfully verified user {user['username']}")
-        
-        # Send welcome email
-        try:
-            send_welcome_email(user["email"], user["username"])
-            logger.info(f"Welcome email sent to {user['email']}")
-        except Exception as e:
-            logger.error(f"Failed to send welcome email: {e}")
-            # Continue as this is not critical
-        
-        return True, "Email verified successfully! You can now log in.", {
-            "username": user["username"],
-            "email": user["email"]
-        }
-    
-    logger.error(f"Failed to update verification status for user: {user['_id']}")
-    return False, "Failed to verify email", None
-
-@handle_operation_error
-@log_database_activity("verification")
-def verify_email_token(token):
-    """
-    Verify a user's email with token.
-    
-    Args:
-        token (str): Verification token
-        
-    Returns:
-        tuple: (success, message, user_data)
-    """
-    if not token:
         raise VerificationError("Invalid verification token")
     
     user_model = User()

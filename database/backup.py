@@ -212,4 +212,51 @@ def cleanup_old_backups(backup_dir="backups", keep_last=5):
         logger.error(f"Error cleaning up old backups: {e}")
         return 0
 
-def create_backup(connection
+def create_backup(connection_string=None, db_name=None):
+    """
+    Create a database backup.
+    
+    Args:
+        connection_string (str, optional): MongoDB connection string
+        db_name (str, optional): Database name
+        
+    Returns:
+        tuple: (success, backup_path)
+    """
+    try:
+        # Create backup directory
+        backup_path = create_backup_directory()
+        
+        # Try mongodump first (preferred method)
+        if connection_string is None:
+            connection_string = config.MONGODB_URI
+        
+        if db_name is None:
+            db_name = config.MONGODB_DB_NAME
+        
+        if backup_using_mongodump(connection_string, backup_path, db_name):
+            logger.info("Backup created successfully using mongodump")
+        else:
+            # Fall back to PyMongo method
+            logger.info("Falling back to PyMongo backup method")
+            if not backup_using_pymongo(backup_path):
+                logger.error("Both backup methods failed")
+                return False, None
+        
+        # Compress backup
+        tarball_path = compress_backup(backup_path)
+        
+        # Clean up old backups
+        num_deleted = cleanup_old_backups()
+        if num_deleted > 0:
+            logger.info(f"Cleaned up {num_deleted} old backups")
+        
+        return True, tarball_path
+    except BackupError as e:
+        logger.error(f"Backup error: {e}")
+        if e.original_error:
+            logger.error(f"Original error: {e.original_error}")
+        return False, None
+    except Exception as e:
+        logger.error(f"Unexpected error during backup: {e}")
+        return False, None

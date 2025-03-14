@@ -6,6 +6,7 @@ import logging
 from datetime import datetime, timedelta
 import config
 from database.models.user import User
+from flask import session
 
 # Configure logger
 logging.basicConfig(
