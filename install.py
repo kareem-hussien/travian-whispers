@@ -205,7 +205,7 @@ def create_env_file():
         return True
     
     env_content = """# Application settings
-SECRET_KEY=change-this-in-production
+SECRET_KEY=inweb
 FLASK_ENV=development
 
 # MongoDB settings
@@ -214,13 +214,13 @@ MONGODB_URI=mongodb+srv://whispers:eZAafCQTrjKKcZua@cluster0.9josw.mongodb.net/w
 # Email settings
 SMTP_SERVER=smtp.gmail.com
 SMTP_PORT=587
-SMTP_USERNAME=your-email@gmail.com
-SMTP_PASSWORD=your-app-password
-EMAIL_FROM=Travian Whispers <your-email@gmail.com>
+SMTP_USERNAME=traviahub.com@gmail.com
+SMTP_PASSWORD=Ka19835251!@#$%
+EMAIL_FROM=Travian Hub <traviahub.com@gmail.com>
 
 # PayPal settings
-PAYPAL_CLIENT_ID=your-paypal-client-id
-PAYPAL_SECRET=your-paypal-secret
+PAYPAL_CLIENT_ID=AXHCLWcZ_sDcEI2dmoiznLOkosiMpGrAFezn4jR2jr7Hx89vzXgAJBOvVVr6z3yMk_7agGMk9nHvA-C9
+PAYPAL_SECRET=EFobbN4yuKjRuuENC6O9nRD2MGnwBs2LJfKCMIoMIQNRTQQANji6gGvoO_twZ-TAMDeDZbZAO4a4r20n
 PAYPAL_MODE=sandbox
 """
     

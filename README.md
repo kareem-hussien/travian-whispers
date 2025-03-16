@@ -59,6 +59,17 @@ pip install -r requirements.txt
 cp .env.example .env
 # Edit .env with your settings
 ```
+### Development Helpers
+```bash
+# Run setup procedure to create directories
+python main.py --setup
+
+# Check Python imports
+python main.py --check-imports
+
+# Enable debug logging
+python main.py --debug
+```
 
 ### Configuration
 The application uses environment variables for configuration. Copy the `.env.example` file to `.env` and update the values:
@@ -97,18 +108,6 @@ This will start the Flask web server on http://localhost:5000
 python main.py --user-id <user_id>
 ```
 This will run the automation bot for the specified user.
-
-#### Development Helpers
-```bash
-# Run setup procedure to create directories
-python main.py --setup
-
-# Check Python imports
-python main.py --check-imports
-
-# Enable debug logging
-python main.py --debug
-```
 
 ---
 
