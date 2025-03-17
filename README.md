@@ -30,18 +30,54 @@ Travian Whispers is a comprehensive automation suite for the browser-based game 
 ✅ **Cron Jobs** - Scheduled tasks for maintenance  
 ✅ **Responsive Design** - Works on desktop and mobile devices  
 ✅ **API Endpoints** - For advanced integrations  
+✅ **Docker Support** - Containerized deployment for easy setup  
 
 ---
 
 ## Getting Started
 
-### Prerequisites
+### Option 1: Docker Setup (Recommended)
+
+The easiest way to run Travian Whispers is using Docker and Docker Compose.
+
+#### Prerequisites
+- [Docker](https://docs.docker.com/get-docker/)
+- [Docker Compose](https://docs.docker.com/compose/install/)
+
+#### Quick Start
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/username/travian-whispers.git
+   cd travian-whispers
+   ```
+
+2. Run the setup script:
+   ```bash
+   chmod +x setup-docker.sh
+   ./setup-docker.sh
+   ```
+
+3. Edit the `.env` file with your configuration.
+
+4. Start the application:
+   ```bash
+   docker-compose up -d
+   ```
+
+5. Access the web interface at http://localhost:5000
+
+For more detailed Docker instructions, see [DOCKER.md](DOCKER.md).
+
+### Option 2: Traditional Setup
+
+#### Prerequisites
 - Python 3.8+ (Python 3.10 recommended)
 - Chrome/Chromium browser
 - MongoDB database
 - PayPal developer account (for payment processing)
 
-### Installation
+#### Installation
 
 ```bash
 # Clone the repository
@@ -59,7 +95,8 @@ pip install -r requirements.txt
 cp .env.example .env
 # Edit .env with your settings
 ```
-### Development Helpers
+
+#### Development Helpers
 ```bash
 # Run setup procedure to create directories
 python main.py --setup
@@ -71,39 +108,19 @@ python main.py --check-imports
 python main.py --debug
 ```
 
-### Configuration
-The application uses environment variables for configuration. Copy the `.env.example` file to `.env` and update the values:
+---
 
-```
-# Application settings
-SECRET_KEY=your-secret-key
-FLASK_ENV=development
-
-# MongoDB settings
-MONGODB_URI=mongodb+srv://whispers:eZAafCQTrjKKcZua@cluster0.9josw.mongodb.net/whispers
-
-# Email settings (optional during development)
-SMTP_SERVER=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USERNAME=your-email@gmail.com
-SMTP_PASSWORD=your-app-password
-
-# PayPal settings (optional during development)
-PAYPAL_CLIENT_ID=your-client-id
-PAYPAL_SECRET=your-secret
-```
-
-### Running the Application
+## Running the Application
 
 The application can run in two modes:
 
-#### Web Application Mode
+### Web Application Mode
 ```bash
 python main.py --web
 ```
 This will start the Flask web server on http://localhost:5000
 
-#### Bot Mode (for a specific user)
+### Bot Mode (for a specific user)
 ```bash
 python main.py --user-id <user_id>
 ```
@@ -118,6 +135,8 @@ travian-whispers/
 ├── main.py                  # Main entry point
 ├── signal_handler.py        # Graceful shutdown
 ├── cron_jobs.py             # Scheduled tasks
+├── Dockerfile               # Docker configuration
+├── docker-compose.yml       # Multi-container setup
 │
 ├── database/                # Database integration
 │   ├── mongodb.py           # MongoDB connection
@@ -206,32 +225,20 @@ The automation bot provides powerful features for Travian gameplay:
 
 ---
 
-## Development Notes
+## Docker Deployment
 
-### Current Status
-The project is currently in active development with the following components completed:
-- ✅ Core bot functionality
-- ✅ Database integration
-- ✅ Authentication system
-- ✅ User dashboard UI
-- ✅ Error handling system
-- ⏳ Payment processing (partially implemented)
-- ⏳ Email notifications (temporarily disabled)
+The Docker setup includes:
 
-### Known Issues
-- The email system is currently disabled for development
-- Some links in the dashboard are placeholders
-- The PayPal integration needs proper configuration
+- **Web application container**: Runs the Flask web interface
+- **Bot container**: Runs the automation bot
+- **MongoDB container**: Provides the database
+- **MongoDB Express container**: Optional web interface for MongoDB
 
-### Next Steps
-1. Complete the payment processing integration
-2. Finalize the admin dashboard functionality
-3. Implement email notifications
-4. Add more robust error handling for the bot
+For detailed Docker instructions, refer to the [DOCKER.md](DOCKER.md) file.
 
 ---
 
-## Running in Production
+## Production Deployment
 
 For production deployment, the following additional steps are recommended:
 
@@ -243,7 +250,7 @@ For production deployment, the following additional steps are recommended:
 
 Example Gunicorn command:
 ```bash
-gunicorn -w 4 -b 0.0.0.0:8000 "web.app:app"
+gunicorn -w 4 -b 0.0.0.0:8000 "web.app:create_app()"
 ```
 
 Example Nginx configuration snippet:

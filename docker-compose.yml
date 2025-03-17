@@ -1,0 +1,82 @@
+services:
+  # Web application
+  web:
+    build: .
+    command: gunicorn --bind 0.0.0.0:5000 "web.app:create_app()"
+    volumes:
+      - ./:/app
+      - logs:/app/logs
+      - backups:/app/backups
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - MONGODB_URI=mongodb://mongodb:27017/whispers
+      - MONGODB_DB_NAME=whispers
+      - SECRET_KEY=${SECRET_KEY:-defaultsecretkey}
+      - JWT_SECRET=${JWT_SECRET:-defaultjwtsecret}
+      - PAYPAL_MODE=${PAYPAL_MODE:-sandbox}
+      - PAYPAL_CLIENT_ID=${PAYPAL_CLIENT_ID:-}
+      - PAYPAL_SECRET=${PAYPAL_SECRET:-}
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+    networks:
+      - travian-network
+
+  # Bot service for automation tasks
+  bot:
+    build: .
+    command: python main.py --user-id ${USER_ID:-} --headless
+    volumes:
+      - ./:/app
+      - logs:/app/logs
+      - backups:/app/backups
+      - ./info:/app/info
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/whispers
+      - MONGODB_DB_NAME=whispers
+      - HEADLESS=true
+      - SECRET_KEY=${SECRET_KEY:-defaultsecretkey}
+      - JWT_SECRET=${JWT_SECRET:-defaultjwtsecret}
+      - USER_ID=${USER_ID:-}
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+    networks:
+      - travian-network
+
+  # MongoDB database
+  mongodb:
+    image: mongo:5.0
+    volumes:
+      - mongodb_data:/data/db
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=whispers
+    restart: unless-stopped
+    networks:
+      - travian-network
+
+  # MongoDB admin interface (optional)
+  mongo-express:
+    image: mongo-express
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+    depends_on:
+      - mongodb
+    networks:
+      - travian-network
+
+volumes:
+  mongodb_data:
+  logs:
+  backups:
+
+networks:
+  travian-network:
+    driver: bridge

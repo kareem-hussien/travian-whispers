@@ -173,3 +173,4 @@ villages_list.txt
 tribe.txt
 credentials.txt
 /web/static/img
+/flask_session
