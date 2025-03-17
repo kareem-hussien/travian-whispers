@@ -48,24 +48,27 @@ The easiest way to run Travian Whispers is using Docker and Docker Compose.
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/username/travian-whispers.git
+   git clone https://github.com/yourusername/travian-whispers.git
    cd travian-whispers
    ```
 
-2. Run the setup script:
+2. Create the required `http_utils.py` module:
    ```bash
-   chmod +x setup-docker.sh
-   ./setup-docker.sh
+   # Download the setup script
+   curl -O https://raw.githubusercontent.com/yourusername/travian-whispers/main/fix-http-utils.sh
+   
+   # Make it executable and run it
+   chmod +x fix-http-utils.sh
+   ./fix-http-utils.sh
    ```
 
-3. Edit the `.env` file with your configuration.
-
-4. Start the application:
+3. Start the application with Docker Compose:
    ```bash
    docker-compose up -d
    ```
 
-5. Access the web interface at http://localhost:5000
+4. Access the web interface at http://localhost:5000
+   Access the MongoDB admin interface at http://localhost:8081
 
 For more detailed Docker instructions, see [DOCKER.md](DOCKER.md).
 
@@ -81,7 +84,7 @@ For more detailed Docker instructions, see [DOCKER.md](DOCKER.md).
 
 ```bash
 # Clone the repository
-git clone https://github.com/username/travian-whispers.git
+git clone https://github.com/yourusername/travian-whispers.git
 cd travian-whispers
 
 # Create and activate virtual environment
@@ -90,6 +93,9 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
+
+# Create the required http_utils module
+./fix-http-utils.sh
 
 # Set up configuration
 cp .env.example .env
@@ -128,6 +134,56 @@ This will run the automation bot for the specified user.
 
 ---
 
+## Troubleshooting
+
+### Common Issues
+
+#### Docker Startup Issues
+If you encounter "services.networks must be a mapping" or similar YAML errors:
+```bash
+# Create a backup of your current file
+mv docker-compose.yml docker-compose.yml.bak
+
+# Create a new clean file
+nano docker-compose.yml
+# Paste the example from DOCKER.md, save and exit
+
+# Restart containers
+docker-compose down
+docker-compose up -d
+```
+
+#### MongoDB CPU Compatibility Issue
+If MongoDB fails with an error about AVX support, modify your docker-compose.yml file to use MongoDB 4.4 instead of 5.0:
+```yaml
+mongodb:
+  image: mongo:4.4
+  # rest of configuration...
+```
+
+#### Missing HTTP Utils Module
+If you see a "ModuleNotFoundError: No module named 'http_utils'" error:
+```bash
+# Run the fix script
+./fix-http-utils.sh
+
+# Restart the containers
+docker-compose down
+docker-compose up -d
+```
+
+#### Bot Mode User ID Error
+If the bot service fails with a "MongoDB user ID for bot mode" error, try temporarily configuring it to run in web mode:
+```yaml
+# In docker-compose.yml
+bot:
+  build: .
+  command: python main.py --web  # Change this line
+  # rest of configuration...
+```
+
+---
+
 ## Project Structure
 
 ```
@@ -135,6 +191,7 @@ travian-whispers/
 ├── main.py                  # Main entry point
 ├── signal_handler.py        # Graceful shutdown
 ├── cron_jobs.py             # Scheduled tasks
+├── http_utils.py            # HTTP utilities
 ├── Dockerfile               # Docker configuration
 ├── docker-compose.yml       # Multi-container setup
 │
@@ -154,24 +211,16 @@ travian-whispers/
 │   └── templates/           # Email templates
 │
 ├── payment/                 # Payment processing
-│   └── paypal.py            # PayPal integration
+│   ├── paypal.py            # PayPal integration
+│   └── http_utils.py        # HTTP utilities for payment
 │
 ├── web/                     # Web application
 │   ├── app.py               # Flask application
 │   ├── static/              # Static assets
-│   │   ├── css/             # Stylesheets
-│   │   ├── js/              # JavaScript
-│   │   └── img/             # Images
 │   └── templates/           # HTML templates
-│       ├── auth/            # Authentication
-│       ├── admin/           # Admin panel
-│       ├── user/            # User dashboard
-│       └── errors/          # Error pages
 │
 ├── startup/                 # Bot initialization
-│   ├── welcome_messages.py  # Welcome screen
 │   ├── browser_profile.py   # Browser setup
-│   ├── villages_list.py     # Village data
 │   └── tasks.py             # Task management
 │
 ├── tasks/                   # Bot automation
@@ -191,7 +240,7 @@ travian-whispers/
 
 ### Authentication System
 The authentication system provides secure registration, login, and account management:
-- **Registration** with email verification (optional during development)
+- **Registration** with email verification
 - **Login** with session management using JWT tokens
 - **Password Reset** functionality
 - **Role-based access** (admin/user)
@@ -215,66 +264,6 @@ The subscription system offers tiered plans with different features:
 - **Basic Plan** ($4.99/month) - Auto-Farm and 2 villages
 - **Standard Plan** ($9.99/month) - Auto-Farm, Trainer, and 5 villages
 - **Premium Plan** ($19.99/month) - All features and 15 villages
-
-### Bot Automation
-The automation bot provides powerful features for Travian gameplay:
-- **Auto-Farming** for resource collection
-- **Troop Training** for army building
-- **Multi-tasking** for running multiple automations
-- **Error recovery** for handling game interruptions
-
----
-
-## Docker Deployment
-
-The Docker setup includes:
-
-- **Web application container**: Runs the Flask web interface
-- **Bot container**: Runs the automation bot
-- **MongoDB container**: Provides the database
-- **MongoDB Express container**: Optional web interface for MongoDB
-
-For detailed Docker instructions, refer to the [DOCKER.md](DOCKER.md) file.
-
----
-
-## Production Deployment
-
-For production deployment, the following additional steps are recommended:
-
-1. **Use HTTPS** with a proper SSL certificate
-2. **Set up a reverse proxy** (Nginx, Apache) in front of the Flask app
-3. **Use Gunicorn** as the WSGI server
-4. **Configure proper logging** to a file or log management service
-5. **Set up monitoring** for the application and database
-
-Example Gunicorn command:
-```bash
-gunicorn -w 4 -b 0.0.0.0:8000 "web.app:create_app()"
-```
-
-Example Nginx configuration snippet:
-```nginx
-server {
-    listen 80;
-    server_name your-domain.com;
-    return 301 https://$host$request_uri;
-}
-
-server {
-    listen 443 ssl;
-    server_name your-domain.com;
-
-    ssl_certificate /path/to/cert.pem;
-    ssl_certificate_key /path/to/key.pem;
-
-    location / {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-}
-```
 
 ---
 

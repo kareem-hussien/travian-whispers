@@ -15,15 +15,95 @@ This document provides instructions for setting up and running Travian Whispers 
    cd travian-whispers
    ```
 
-2. Run the setup script:
+2. Create the required HTTP utils module:
    ```bash
-   chmod +x setup-docker.sh
-   ./setup-docker.sh
+   # Download and run the fix script
+   chmod +x fix-http-utils.sh
+   ./fix-http-utils.sh
    ```
 
-3. Edit the `.env` file in your home directory with your configuration:
+3. Create a clean docker-compose.yml file:
    ```bash
-   nano ~/travian-whispers-env/.env
+   nano docker-compose.yml
+   ```
+   
+   Paste the following content:
+   ```yaml
+   services:
+     mongodb:
+       image: mongo:4.4
+       volumes:
+         - mongodb_data:/data/db
+       ports:
+         - "27017:27017"
+       environment:
+         - MONGO_INITDB_DATABASE=whispers
+       networks:
+         - travian-network
+       restart: always
+   
+     mongo-express:
+       image: mongo-express
+       ports:
+         - "8081:8081"
+       environment:
+         - ME_CONFIG_MONGODB_SERVER=mongodb
+       depends_on:
+         - mongodb
+       networks:
+         - travian-network
+       restart: always
+   
+     web:
+       build: .
+       command: gunicorn --bind 0.0.0.0:5000 "web.app:create_app()"
+       volumes:
+         - ./:/app
+         - logs:/app/logs
+         - backups:/app/backups
+       ports:
+         - "5000:5000"
+       environment:
+         - FLASK_ENV=production
+         - MONGODB_URI=mongodb://mongodb:27017/whispers
+         - MONGODB_DB_NAME=whispers
+         - SECRET_KEY=defaultsecretkey
+         - JWT_SECRET=defaultjwtsecret
+       depends_on:
+         - mongodb
+       networks:
+         - travian-network
+       restart: always
+   
+     # Bot service (optional, can enable after web service is working)
+     bot:
+       build: .
+       command: python main.py --web
+       volumes:
+         - ./:/app
+         - logs:/app/logs
+         - backups:/app/backups
+         - ./info:/app/info
+       environment:
+         - MONGODB_URI=mongodb://mongodb:27017/whispers
+         - MONGODB_DB_NAME=whispers
+         - HEADLESS=true
+         - SECRET_KEY=defaultsecretkey
+         - JWT_SECRET=defaultjwtsecret
+       depends_on:
+         - mongodb
+       networks:
+         - travian-network
+       restart: always
+   
+   volumes:
+     mongodb_data:
+     logs:
+     backups:
+   
+   networks:
+     travian-network:
+       driver: bridge
    ```
 
 4. Start the application:
@@ -37,53 +117,64 @@ This document provides instructions for setting up and running Travian Whispers 
 
 The Docker setup consists of the following services:
 
+- **mongodb**: MongoDB 4.4 database (compatible with older CPUs without AVX support)
+- **mongo-express**: Web interface for MongoDB administration
 - **web**: The Flask web application
-- **bot**: The Travian automation bot
-- **mongodb**: MongoDB database
-- **mongo-express**: Web interface for MongoDB (optional)
+- **bot**: The Travian automation bot (can be enabled or disabled as needed)
 
-## Configuration
+## Troubleshooting Docker Issues
 
-### Environment Variables
+### 1. YAML Parsing Errors
 
-Edit the `.env` file in your home directory (`~/travian-whispers-env/.env`) to configure the application:
+If you encounter errors like "services.networks must be a mapping" or "services.volumes must be a mapping":
 
-- `SECRET_KEY`: Flask secret key
-- `JWT_SECRET`: JWT token secret key
-- `MONGODB_URI`: MongoDB connection string
-- `PAYPAL_CLIENT_ID` and `PAYPAL_SECRET`: PayPal API credentials
-- `USER_ID`: MongoDB user ID for bot mode
+- Use the exact format shown above, with proper indentation
+- Avoid copying from PDF or websites that might add invisible characters
+- Type the configuration manually if needed
 
-Note: The `.env` file is stored in your home directory instead of the project directory to avoid permission issues with NTFS drives.
+### 2. Container Permission Issues
 
-### Volumes
-
-The Docker setup uses the following volumes:
-
-- **mongodb_data**: Persists MongoDB data
-- **logs**: Stores application logs
-- **backups**: Stores database backups
-
-## Running Different Modes
-
-### Web Application Only
+If you encounter permission errors when trying to stop containers:
 
 ```bash
-docker-compose up -d web mongodb
-```
+# First try to stop the Docker service
+sudo systemctl stop docker
 
-### Bot Mode Only
+# If that doesn't work, try a more aggressive approach
+sudo killall -9 docker
+sudo killall -9 containerd
 
-```bash
-# Make sure to set USER_ID in .env file first
-docker-compose up -d bot mongodb
-```
+# Then restart Docker
+sudo systemctl start docker
 
-### Full Stack
-
-```bash
+# And start the containers again
 docker-compose up -d
 ```
+
+### 3. MongoDB CPU Compatibility
+
+If MongoDB 5.0+ fails with errors about AVX support, the provided configuration uses MongoDB 4.4 which is compatible with older CPUs.
+
+### 4. Missing HTTP Utils Module
+
+The `http_utils.py` module is required for the payment system. If it's missing, run:
+
+```bash
+./fix-http-utils.sh
+```
+
+### 5. Bot Service Issues
+
+The bot service may continuously restart if not properly configured. The provided configuration runs it in web mode for testing. To run in bot mode with a specific user:
+
+```yaml
+bot:
+  build: .
+  command: python main.py --user-id <YOUR_USER_ID_HERE>
+  # rest of configuration...
+```
+
+Replace `<YOUR_USER_ID_HERE>` with an actual MongoDB user ID.
 
 ## Managing Containers
 
@@ -109,75 +200,29 @@ docker-compose down
 docker-compose restart
 ```
 
+### Check Container Status
+
+```bash
+docker ps -a
+```
+
+### Access Container Shell
+
+```bash
+docker exec -it travian-whispers-web-1 bash
+```
+
 ## Database Management
 
 ### Access MongoDB Shell
 
 ```bash
-docker-compose exec mongodb mongo
+docker exec -it travian-whispers-mongodb-1 mongo
 ```
 
 ### MongoDB Web Interface
 
 Access MongoDB Express at http://localhost:8081
-
-## Backups
-
-Database backups are stored in the `backups` volume. You can access them from the host system.
-
-To create a manual backup:
-
-```bash
-docker-compose exec web python -c "from database.backup import create_backup; create_backup()"
-```
-
-## Troubleshooting
-
-### NTFS Filesystem Considerations
-
-If your project is located on an NTFS drive (common when working with external drives or Windows partitions), you might encounter permission issues. This setup addresses this by:
-
-1. Storing the `.env` file in your Linux home directory (`~/travian-whispers-env/.env`)
-2. Using Docker volumes for persistent data (logs, backups)
-
-If you encounter permission issues with other files, you might need to:
-
-```bash
-# Check your drive mount settings
-mount | grep ntfs
-
-# Create directories with proper permissions before Docker tries to access them
-mkdir -p info/maps info/profile
-chmod 777 info info/maps info/profile
-```
-
-### Selenium/Chrome Issues
-
-If the bot has issues with Chrome, you may need to update the Chrome configuration:
-
-```bash
-docker-compose exec bot google-chrome --version
-```
-
-Check that the ChromeDriver version matches Chrome's version:
-
-```bash
-docker-compose exec bot chromedriver --version
-```
-
-### Connection Issues
-
-If services can't connect to each other:
-
-1. Ensure all containers are on the same network:
-   ```bash
-   docker network inspect travian-whispers_travian-network
-   ```
-
-2. Check if MongoDB is accessible:
-   ```bash
-   docker-compose exec web ping mongodb
-   ```
 
 ## Updating the Application
 
@@ -195,9 +240,45 @@ To update the application:
    docker-compose up -d
    ```
 
+## Custom Configuration
+
+### Using Environment Variables
+
+For better security, use environment variables instead of hardcoded values:
+
+1. Create a `.env` file:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Edit the file with your settings:
+   ```bash
+   nano .env
+   ```
+
+3. Modify docker-compose.yml to use these variables:
+   ```yaml
+   environment:
+     - SECRET_KEY=${SECRET_KEY:-defaultsecretkey}
+     - JWT_SECRET=${JWT_SECRET:-defaultjwtsecret}
+     # more environment variables...
+   ```
+
+## Special Notes for Z400 Workstations
+
+If running on an HP Z400 workstation or similar older hardware:
+
+1. Use MongoDB 4.4 instead of newer versions that require AVX support
+2. Avoid running the Selenium bot in headless mode if experiencing issues
+3. Consider limiting Docker memory usage if the system becomes unresponsive
+
 ## Security Considerations
 
 1. **Never** expose MongoDB directly to the internet (port 27017)
 2. Change default credentials in the `.env` file
 3. Use a reverse proxy like Nginx with SSL for production deployments
 4. Consider using Docker Secrets for sensitive information in production
+
+## Advanced Configuration
+
+For advanced setups like multi-node deployments, load balancing, or high availability, refer to the Docker Swarm and Docker Compose documentation.
