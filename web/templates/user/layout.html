@@ -254,62 +254,62 @@
     <!-- Sidebar -->
     <div class="sidebar">
         <div class="sidebar-header">
-            <a href="{{ url_for('dashboard') }}" class="sidebar-logo">
+            <a href="{{ url_for('user.dashboard') }}" class="sidebar-logo">
                 <i class="bi bi-robot"></i> Travian Whispers
             </a>
         </div>
         <div class="sidebar-content">
             <ul class="nav flex-column">
                 <li class="nav-item">
-                    <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                    <a href="{{ url_for('user.dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
                         <span class="nav-icon"><i class="bi bi-speedometer2"></i></span>
                         Dashboard
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ url_for('profile') }}" class="nav-link {% if request.endpoint == 'profile' %}active{% endif %}">
+                    <a href="{{ url_for('user.profile') }}" class="nav-link {% if request.endpoint == 'profile' %}active{% endif %}">
                         <span class="nav-icon"><i class="bi bi-person"></i></span>
                         Profile
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ url_for('travian_settings') }}" class="nav-link {% if request.endpoint == 'travian_settings' %}active{% endif %}">
+                    <a href="{{ url_for('user.travian_settings') }}" class="nav-link {% if request.endpoint == 'travian_settings' %}active{% endif %}">
                         <span class="nav-icon"><i class="bi bi-gear"></i></span>
                         Travian Settings
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ url_for('villages') }}" class="nav-link {% if request.endpoint == 'villages' %}active{% endif %}">
+                    <a href="{{ url_for('user.villages') }}" class="nav-link {% if request.endpoint == 'villages' %}active{% endif %}">
                         <span class="nav-icon"><i class="bi bi-buildings"></i></span>
                         Villages
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ url_for('auto_farm') }}" class="nav-link {% if request.endpoint == 'auto_farm' %}active{% endif %}">
+                    <a href="{{ url_for('user.auto_farm') }}" class="nav-link {% if request.endpoint == 'auto_farm' %}active{% endif %}">
                         <span class="nav-icon"><i class="bi bi-robot"></i></span>
                         Auto Farm
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ url_for('troop_trainer') }}" class="nav-link {% if request.endpoint == 'troop_trainer' %}active{% endif %}">
+                    <a href="{{ url_for('user.troop_trainer') }}" class="nav-link {% if request.endpoint == 'troop_trainer' %}active{% endif %}">
                         <span class="nav-icon"><i class="bi bi-shield"></i></span>
                         Troop Trainer
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ url_for('activity_logs') }}" class="nav-link {% if request.endpoint == 'activity_logs' %}active{% endif %}">
+                    <a href="{{ url_for('user.activity_logs') }}" class="nav-link {% if request.endpoint == 'activity_logs' %}active{% endif %}">
                         <span class="nav-icon"><i class="bi bi-clock-history"></i></span>
                         Activity Logs
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ url_for('subscription') }}" class="nav-link {% if request.endpoint == 'subscription' %}active{% endif %}">
+                    <a href="{{ url_for('user.subscription') }}" class="nav-link {% if request.endpoint == 'subscription' %}active{% endif %}">
                         <span class="nav-icon"><i class="bi bi-credit-card"></i></span>
                         Subscription
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ url_for('support') }}" class="nav-link {% if request.endpoint == 'support' %}active{% endif %}">
+                    <a href="{{ url_for('user.support') }}" class="nav-link {% if request.endpoint == 'support' %}active{% endif %}">
                         <span class="nav-icon"><i class="bi bi-question-circle"></i></span>
                         Help & Support
                     </a>
@@ -317,7 +317,7 @@
             </ul>
         </div>
         <div class="sidebar-footer">
-            <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm w-100">
+            <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-light btn-sm w-100">
                 <i class="bi bi-box-arrow-right"></i> Logout
             </a>
         </div>
@@ -333,7 +333,7 @@
             
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('user.dashboard') }}">Home</a></li>
                     {% block breadcrumb %}{% endblock %}
                 </ol>
             </nav>
@@ -343,10 +343,10 @@
                     <i class="bi bi-person-circle"></i> {{ current_user.username }}
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenuButton">
-                    <li><a class="dropdown-item" href="{{ url_for('profile') }}"><i class="bi bi-person"></i> Profile</a></li>
-                    <li><a class="dropdown-item" href="{{ url_for('travian_settings') }}"><i class="bi bi-gear"></i> Settings</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('user.profile') }}"><i class="bi bi-person"></i> Profile</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('user.travian_settings') }}"><i class="bi bi-gear"></i> Settings</a></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
                 </ul>
             </div>
         </div>

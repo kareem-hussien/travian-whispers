@@ -1,382 +1,403 @@
+docker exec -it travian-whispers-web-1 bash
+
+cat > /app/web/templates/index.html << 'EOF'
 {% extends "base.html" %}
 
 {% block title %}Travian Whispers - Advanced Travian Automation{% endblock %}
 
-{% block styles %}
-
+{% block navbar %}
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+        <a class="navbar-brand" href="{{ url_for('public.index') }}">
+            <i class="bi bi-robot"></i> Travian Whispers
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link active" href="{{ url_for('public.index') }}">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#features">Features</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#pricing">Pricing</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#how-it-works">How It Works</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#contact">Contact</a>
+                </li>
+            </ul>
+            {% if current_user and current_user.is_authenticated %}
+            <div class="dropdown">
+                <button class="btn btn-outline-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-person-circle"></i> {{ current_user.username }}
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                    <li><a class="dropdown-item" href="{{ url_for('user.dashboard') }}"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('user.profile') }}"><i class="bi bi-person"></i> Profile</a></li>
+                    {% if current_user.is_admin %}
+                    <li><a class="dropdown-item" href="{{ url_for('admin.dashboard') }}"><i class="bi bi-shield-lock"></i> Admin Panel</a></li>
+                    {% endif %}
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                </ul>
+            </div>
+            {% else %}
+            <div class="d-flex">
+                <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light me-2">Login</a>
+                <a href="{{ url_for('auth.register') }}" class="btn btn-warning">Register</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</nav>
 {% endblock %}
 
 {% block content %}
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container">
-            <a class="navbar-brand" href="{{ url_for('public.index') }}">
-                <i class="bi bi-robot"></i> Travian Whispers
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="{{ url_for('public.index') }}">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#features">Features</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#pricing">Pricing</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#how-it-works">How It Works</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#contact">Contact</a>
-                    </li>
-                </ul>
-                {% if current_user and current_user.is_authenticated %}
-                <div class="dropdown">
-                    <button class="btn btn-outline-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-person-circle"></i> {{ current_user.username }}
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                        <li><a class="dropdown-item" href="{{ url_for('user.dashboard') }}"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
-                        <li><a class="dropdown-item" href="{{ url_for('user.profile') }}"><i class="bi bi-person"></i> Profile</a></li>
-                        {% if current_user.is_admin %}
-                        <li><a class="dropdown-item" href="{{ url_for('admin.dashboard') }}"><i class="bi bi-shield-lock"></i> Admin Panel</a></li>
-                        {% endif %}
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
-                    </ul>
-                </div>
-                {% else %}
-                <div class="d-flex">
-                    <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light me-2">Login</a>
-                    <a href="{{ url_for('auth.register') }}" class="btn btn-warning">Register</a>
-                </div>
-                {% endif %}
-            </div>
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <h1>Automate Your Travian Empire</h1>
+        <p>Travian Whispers is an advanced automation suite that helps you manage your villages, farm resources, and train troops efficiently - even when you're offline.</p>
+        <div class="d-flex justify-content-center gap-3">
+            <a href="#pricing" class="btn btn-primary btn-lg">Get Started</a>
+            <a href="#how-it-works" class="btn btn-outline-light btn-lg">Learn More</a>
         </div>
-    </nav>
+    </div>
+</section>
 
-    <!-- Hero Section -->
-    <section class="hero-section">
-        <div class="container">
-            <h1>Automate Your Travian Empire</h1>
-            <p>Travian Whispers is an advanced automation suite that helps you manage your villages, farm resources, and train troops efficiently - even when you're offline.</p>
-            <div class="d-flex justify-content-center gap-3">
-                <a href="#pricing" class="btn btn-primary btn-lg">Get Started</a>
-                <a href="#how-it-works" class="btn btn-outline-light btn-lg">Learn More</a>
+<!-- Features Section -->
+<section id="features" class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Powerful Features</h2>
+            <p class="lead">Our suite of tools helps you dominate the Travian world</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="bi bi-robot"></i>
+                    </div>
+                    <h3>Auto-Farming</h3>
+                    <p>Automatically send farm lists at regular intervals to maximize resource collection without constant monitoring.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="bi bi-shield"></i>
+                    </div>
+                    <h3>Troop Training</h3>
+                    <p>Automate troop training based on your tribe, ensuring your army continues to grow even when you're away.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="bi bi-grid-3x3"></i>
+                    </div>
+                    <h3>Multi-Tasking</h3>
+                    <p>Run multiple automation processes simultaneously with our advanced multi-tasking system.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="bi bi-lock"></i>
+                    </div>
+                    <h3>Secure Access</h3>
+                    <p>Your Travian account credentials are securely stored and encrypted in our database.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="bi bi-buildings"></i>
+                    </div>
+                    <h3>Village Management</h3>
+                    <p>Extract and store village data to efficiently manage multiple villages across your empire.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="bi bi-lightning"></i>
+                    </div>
+                    <h3>Lightning Fast</h3>
+                    <p>Our advanced algorithms ensure the bot runs efficiently without draining your system resources.</p>
+                </div>
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
-    <!-- Features Section -->
-    <section id="features" class="py-5">
-        <div class="container">
-            <div class="text-center mb-5">
-                <h2 class="fw-bold">Powerful Features</h2>
-                <p class="lead">Our suite of tools helps you dominate the Travian world</p>
-            </div>
-            
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="bi bi-robot"></i>
-                        </div>
-                        <h3>Auto-Farming</h3>
-                        <p>Automatically send farm lists at regular intervals to maximize resource collection without constant monitoring.</p>
-                    </div>
-                </div>
-                
-                <div class="col-md-4">
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="bi bi-shield"></i>
-                        </div>
-                        <h3>Troop Training</h3>
-                        <p>Automate troop training based on your tribe, ensuring your army continues to grow even when you're away.</p>
-                    </div>
-                </div>
-                
-                <div class="col-md-4">
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="bi bi-grid-3x3"></i>
-                        </div>
-                        <h3>Multi-Tasking</h3>
-                        <p>Run multiple automation processes simultaneously with our advanced multi-tasking system.</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="bi bi-lock"></i>
-                        </div>
-                        <h3>Secure Access</h3>
-                        <p>Your Travian account credentials are securely stored and encrypted in our database.</p>
-                    </div>
-                </div>
-                
-                <div class="col-md-4">
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="bi bi-buildings"></i>
-                        </div>
-                        <h3>Village Management</h3>
-                        <p>Extract and store village data to efficiently manage multiple villages across your empire.</p>
-                    </div>
-                </div>
-                
-                <div class="col-md-4">
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="bi bi-lightning"></i>
-                        </div>
-                        <h3>Lightning Fast</h3>
-                        <p>Our advanced algorithms ensure the bot runs efficiently without draining your system resources.</p>
-                    </div>
-                </div>
-            </div>
+<!-- How It Works Section -->
+<section id="how-it-works" class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">How It Works</h2>
+            <p class="lead">Get started with Travian Whispers in just a few steps</p>
         </div>
-    </section>
-    
-    <!-- How It Works Section -->
-    <section id="how-it-works" class="py-5 bg-light">
-        <div class="container">
-            <div class="text-center mb-5">
-                <h2 class="fw-bold">How It Works</h2>
-                <p class="lead">Get started with Travian Whispers in just a few steps</p>
-            </div>
-            
-            <div class="row">
-                <div class="col-lg-8 mx-auto">
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-body p-4">
-                            <div class="d-flex mb-4">
-                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                    <h4 class="m-0">1</h4>
-                                </div>
-                                <div class="ms-3">
-                                    <h4>Create an Account</h4>
-                                    <p>Register on our platform and choose a subscription plan that fits your needs.</p>
-                                </div>
+        
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex mb-4">
+                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                <h4 class="m-0">1</h4>
                             </div>
-                            
-                            <div class="d-flex mb-4">
-                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                    <h4 class="m-0">2</h4>
-                                </div>
-                                <div class="ms-3">
-                                    <h4>Enter Your Travian Credentials</h4>
-                                    <p>Securely provide your Travian account information, which we encrypt and store safely.</p>
-                                </div>
+                            <div class="ms-3">
+                                <h4>Create an Account</h4>
+                                <p>Register on our platform and choose a subscription plan that fits your needs.</p>
                             </div>
-                            
-                            <div class="d-flex mb-4">
-                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                    <h4 class="m-0">3</h4>
-                                </div>
-                                <div class="ms-3">
-                                    <h4>Configure Automation Settings</h4>
-                                    <p>Set up your preferred automation tasks like farming, troop training, and more.</p>
-                                </div>
+                        </div>
+                        
+                        <div class="d-flex mb-4">
+                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                <h4 class="m-0">2</h4>
                             </div>
-                            
-                            <div class="d-flex">
-                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                    <h4 class="m-0">4</h4>
-                                </div>
-                                <div class="ms-3">
-                                    <h4>Let the Bot Work for You</h4>
-                                    <p>Our system will handle the repetitive tasks while you focus on strategy and planning.</p>
-                                </div>
+                            <div class="ms-3">
+                                <h4>Enter Your Travian Credentials</h4>
+                                <p>Securely provide your Travian account information, which we encrypt and store safely.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex mb-4">
+                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                <h4 class="m-0">3</h4>
+                            </div>
+                            <div class="ms-3">
+                                <h4>Configure Automation Settings</h4>
+                                <p>Set up your preferred automation tasks like farming, troop training, and more.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex">
+                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                <h4 class="m-0">4</h4>
+                            </div>
+                            <div class="ms-3">
+                                <h4>Let the Bot Work for You</h4>
+                                <p>Our system will handle the repetitive tasks while you focus on strategy and planning.</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </section>
-    
-    <!-- Pricing Section -->
-    <section id="pricing" class="py-5">
-        <div class="container">
-            <div class="text-center mb-5">
-                <h2 class="fw-bold">Subscription Plans</h2>
-                <p class="lead">Choose the plan that's right for your kingdom</p>
-            </div>
-            
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <div class="pricing-card">
-                        <h3 class="pricing-header">Basic Plan</h3>
-                        <div class="pricing-price">$4.99<small class="text-muted">/month</small></div>
-                        <ul class="list-unstyled">
-                            <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> Auto-Farm feature</li>
-                            <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> Support for 2 villages</li>
-                            <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> 1 concurrent task</li>
-                            <li class="pricing-feature"><i class="bi bi-x-circle-fill text-muted me-2"></i> Troop training</li>
-                            <li class="pricing-feature"><i class="bi bi-x-circle-fill text-muted me-2"></i> Advanced features</li>
-                        </ul>
-                        <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary w-100 mt-4">Get Started</a>
-                    </div>
-                </div>
-                
-                <div class="col-md-4">
-                    <div class="pricing-card" style="border: 2px solid var(--primary-color);">
-                        <div class="position-absolute top-0 start-50 translate-middle">
-                            <span class="badge bg-primary px-3 py-2">Most Popular</span>
-                        </div>
-                        <h3 class="pricing-header">Standard Plan</h3>
-                        <div class="pricing-price">$9.99<small class="text-muted">/month</small></div>
-                        <ul class="list-unstyled">
-                            <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> Auto-Farm feature</li>
-                            <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> Troop training</li>
-                            <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> Support for 5 villages</li>
-                            <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> 2 concurrent tasks</li>
-                            <li class="pricing-feature"><i class="bi bi-x-circle-fill text-muted me-2"></i> Advanced features</li>
-                        </ul>
-                        <a href="{{ url_for('auth.register') }}" class="btn btn-primary w-100 mt-4">Get Started</a>
-                    </div>
-                </div>
-                
-                <div class="col-md-4">
-                    <div class="pricing-card">
-                        <h3 class="pricing-header">Premium Plan</h3>
-                        <div class="pricing-price">$19.99<small class="text-muted">/month</small></div>
-                        <ul class="list-unstyled">
-                            <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> Auto-Farm feature</li>
-                            <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> Troop training</li>
-                            <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> Support for 15 villages</li>
-                            <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> 5 concurrent tasks</li>
-                            <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> Advanced features</li>
-                        </ul>
-                        <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary w-100 mt-4">Get Started</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+    </div>
+</section>
 
-    <!-- Contact Section -->
-    <section id="contact" class="py-5 bg-light">
-        <div class="container">
-            <div class="text-center mb-5">
-                <h2 class="fw-bold">Contact Us</h2>
-                <p class="lead">Have questions? Get in touch with our team</p>
-            </div>
-            
-            <div class="row">
-                <div class="col-lg-6 mx-auto">
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-body p-4">
-                            <form>
-                                <div class="mb-3">
-                                    <label for="name" class="form-label">Your Name</label>
-                                    <input type="text" class="form-control" id="name" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="email" class="form-label">Email Address</label>
-                                    <input type="email" class="form-control" id="email" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="subject" class="form-label">Subject</label>
-                                    <input type="text" class="form-control" id="subject" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="message" class="form-label">Your Message</label>
-                                    <textarea class="form-control" id="message" rows="4" required></textarea>
-                                </div>
-                                <button type="submit" class="btn btn-primary w-100">Send Message</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="row mt-5">
-                <div class="col-md-4 text-center">
-                    <i class="bi bi-envelope-fill fs-2 mb-3 text-primary"></i>
-                    <h5>Email</h5>
-                    <p><a href="mailto:contact@travianwhispers.com" class="text-decoration-none">contact@travianwhispers.com</a></p>
-                </div>
-                <div class="col-md-4 text-center">
-                    <i class="bi bi-whatsapp fs-2 mb-3 text-primary"></i>
-                    <h5>WhatsApp</h5>
-                    <p><a href="https://wa.me/00201099339393" class="text-decoration-none">+20 109 933 9393</a></p>
-                </div>
-                <div class="col-md-4 text-center">
-                    <i class="bi bi-clock-fill fs-2 mb-3 text-primary"></i>
-                    <h5>Support Hours</h5>
-                    <p>Mon-Fri: 9AM - 6PM EET</p>
-                </div>
-            </div>
+<!-- Pricing Section -->
+<section id="pricing" class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Subscription Plans</h2>
+            <p class="lead">Choose the plan that's right for your kingdom</p>
         </div>
-    </section>
-    
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-4 mb-4 mb-lg-0">
-                    <h5 class="footer-heading">Travian Whispers</h5>
-                    <p>Advanced automation suite for the browser-based game Travian. Simplify your gameplay and dominate the world of Travian.</p>
-                    <div class="mt-3">
-                        <a href="#" class="social-icon"><i class="bi bi-facebook"></i></a>
-                        <a href="#" class="social-icon"><i class="bi bi-twitter"></i></a>
-                        <a href="#" class="social-icon"><i class="bi bi-instagram"></i></a>
-                        <a href="#" class="social-icon"><i class="bi bi-github"></i></a>
-                    </div>
-                </div>
-                
-                <div class="col-lg-2 col-md-4 mb-4 mb-md-0">
-                    <h5 class="footer-heading">Quick Links</h5>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="pricing-card">
+                    <h3 class="pricing-header">Basic Plan</h3>
+                    <div class="pricing-price">$4.99<small class="text-muted">/month</small></div>
                     <ul class="list-unstyled">
-                        <li class="mb-2"><a href="#" class="footer-link">Home</a></li>
-                        <li class="mb-2"><a href="#features" class="footer-link">Features</a></li>
-                        <li class="mb-2"><a href="#pricing" class="footer-link">Pricing</a></li>
-                        <li class="mb-2"><a href="#how-it-works" class="footer-link">How It Works</a></li>
-                        <li><a href="#contact" class="footer-link">Contact</a></li>
+                        <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> Auto-Farm feature</li>
+                        <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> Support for 2 villages</li>
+                        <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> 1 concurrent task</li>
+                        <li class="pricing-feature"><i class="bi bi-x-circle-fill text-muted me-2"></i> Troop training</li>
+                        <li class="pricing-feature"><i class="bi bi-x-circle-fill text-muted me-2"></i> Advanced features</li>
                     </ul>
-                </div>
-                
-                <div class="col-lg-2 col-md-4 mb-4 mb-md-0">
-                    <h5 class="footer-heading">Resources</h5>
-                    <ul class="list-unstyled">
-                        <li class="mb-2"><a href="#" class="footer-link">FAQ</a></li>
-                        <li class="mb-2"><a href="#" class="footer-link">Documentation</a></li>
-                        <li class="mb-2"><a href="#" class="footer-link">Blog</a></li>
-                        <li class="mb-2"><a href="#" class="footer-link">Support</a></li>
-                        <li><a href="#" class="footer-link">Community</a></li>
-                    </ul>
-                </div>
-                
-                <div class="col-lg-4 col-md-4">
-                    <h5 class="footer-heading">Subscribe</h5>
-                    <p>Stay updated with our latest features and news.</p>
-                    <form class="mt-3">
-                        <div class="input-group">
-                            <input type="email" class="form-control" placeholder="Your email address" required>
-                            <button class="btn btn-primary" type="submit">Subscribe</button>
-                        </div>
-                    </form>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary w-100 mt-4">Get Started</a>
                 </div>
             </div>
             
-            <hr class="mt-4 mb-4" style="border-color: rgba(255,255,255,0.1);">
-            
-            <div class="row">
-                <div class="col-md-6 mb-3 mb-md-0">
-                    <p class="mb-0">&copy; {{ current_year }} Travian Whispers. All rights reserved.</p>
+            <div class="col-md-4">
+                <div class="pricing-card" style="border: 2px solid var(--primary-color);">
+                    <div class="position-absolute top-0 start-50 translate-middle">
+                        <span class="badge bg-primary px-3 py-2">Most Popular</span>
+                    </div>
+                    <h3 class="pricing-header">Standard Plan</h3>
+                    <div class="pricing-price">$9.99<small class="text-muted">/month</small></div>
+                    <ul class="list-unstyled">
+                        <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> Auto-Farm feature</li>
+                        <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> Troop training</li>
+                        <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> Support for 5 villages</li>
+                        <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> 2 concurrent tasks</li>
+                        <li class="pricing-feature"><i class="bi bi-x-circle-fill text-muted me-2"></i> Advanced features</li>
+                    </ul>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-primary w-100 mt-4">Get Started</a>
                 </div>
-                <div class="col-md-6 text-md-end">
-                    <a href="#" class="footer-link me-3">Privacy Policy</a>
-                    <a href="#" class="footer-link me-3">Terms of Service</a>
-                    <a href="#" class="footer-link">Cookie Policy</a>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="pricing-card">
+                    <h3 class="pricing-header">Premium Plan</h3>
+                    <div class="pricing-price">$19.99<small class="text-muted">/month</small></div>
+                    <ul class="list-unstyled">
+                        <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> Auto-Farm feature</li>
+                        <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> Troop training</li>
+                        <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> Support for 15 villages</li>
+                        <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> 5 concurrent tasks</li>
+                        <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> Advanced features</li>
+                    </ul>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary w-100 mt-4">Get Started</a>
                 </div>
             </div>
         </div>
-    </footer>
+    </div>
+</section>
+
+<!-- Contact Section -->
+<section id="contact" class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Contact Us</h2>
+            <p class="lead">Have questions? Get in touch with our team</p>
+        </div>
+        
+        <div class="row">
+            <div class="col-lg-6 mx-auto">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <form action="{{ url_for('public.contact') }}" method="post">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Your Name</label>
+                                <input type="text" class="form-control" id="name" name="name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email Address</label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="subject" class="form-label">Subject</label>
+                                <input type="text" class="form-control" id="subject" name="subject" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="message" class="form-label">Your Message</label>
+                                <textarea class="form-control" id="message" name="message" rows="4" required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Send Message</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-5">
+            <div class="col-md-4 text-center">
+                <i class="bi bi-envelope-fill fs-2 mb-3 text-primary"></i>
+                <h5>Email</h5>
+                <p><a href="mailto:contact@travianwhispers.com" class="text-decoration-none">contact@travianwhispers.com</a></p>
+            </div>
+            <div class="col-md-4 text-center">
+                <i class="bi bi-whatsapp fs-2 mb-3 text-primary"></i>
+                <h5>WhatsApp</h5>
+                <p><a href="https://wa.me/00201099339393" class="text-decoration-none">+20 109 933 9393</a></p>
+            </div>
+            <div class="col-md-4 text-center">
+                <i class="bi bi-clock-fill fs-2 mb-3 text-primary"></i>
+                <h5>Support Hours</h5>
+                <p>Mon-Fri: 9AM - 6PM EET</p>
+            </div>
+        </div>
+    </div>
+</section>
 {% endblock %}
+
+{% block footer %}
+<!-- Footer -->
+<footer class="footer">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-4 mb-4 mb-lg-0">
+                <h5 class="footer-heading">Travian Whispers</h5>
+                <p>Advanced automation suite for the browser-based game Travian. Simplify your gameplay and dominate the world of Travian.</p>
+                <div class="mt-3">
+                    <a href="#" class="social-icon"><i class="bi bi-facebook"></i></a>
+                    <a href="#" class="social-icon"><i class="bi bi-twitter"></i></a>
+                    <a href="#" class="social-icon"><i class="bi bi-instagram"></i></a>
+                    <a href="#" class="social-icon"><i class="bi bi-github"></i></a>
+                </div>
+            </div>
+            
+            <div class="col-lg-2 col-md-4 mb-4 mb-md-0">
+                <h5 class="footer-heading">Quick Links</h5>
+                <ul class="list-unstyled">
+                    <li class="mb-2"><a href="{{ url_for('public.index') }}" class="footer-link">Home</a></li>
+                    <li class="mb-2"><a href="#features" class="footer-link">Features</a></li>
+                    <li class="mb-2"><a href="#pricing" class="footer-link">Pricing</a></li>
+                    <li class="mb-2"><a href="#how-it-works" class="footer-link">How It Works</a></li>
+                    <li><a href="#contact" class="footer-link">Contact</a></li>
+                </ul>
+            </div>
+            
+            <div class="col-lg-2 col-md-4 mb-4 mb-md-0">
+                <h5 class="footer-heading">Resources</h5>
+                <ul class="list-unstyled">
+                    <li class="mb-2"><a href="{{ url_for('public.faq') }}" class="footer-link">FAQ</a></li>
+                    <li class="mb-2"><a href="#" class="footer-link">Documentation</a></li>
+                    <li class="mb-2"><a href="#" class="footer-link">Blog</a></li>
+                    <li class="mb-2"><a href="#" class="footer-link">Support</a></li>
+                    <li><a href="#" class="footer-link">Community</a></li>
+                </ul>
+            </div>
+            
+            <div class="col-lg-4 col-md-4">
+                <h5 class="footer-heading">Subscribe</h5>
+                <p>Stay updated with our latest features and news.</p>
+                <form class="mt-3">
+                    <div class="input-group">
+                        <input type="email" class="form-control" placeholder="Your email address" required>
+                        <button class="btn btn-primary" type="submit">Subscribe</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <hr class="mt-4 mb-4" style="border-color: rgba(255,255,255,0.1);">
+        
+        <div class="row">
+            <div class="col-md-6 mb-3 mb-md-0">
+                <p class="mb-0">&copy; {{ current_year }} Travian Whispers. All rights reserved.</p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <a href="{{ url_for('public.privacy') }}" class="footer-link me-3">Privacy Policy</a>
+                <a href="{{ url_for('public.terms') }}" class="footer-link me-3">Terms of Service</a>
+                <a href="#" class="footer-link">Cookie Policy</a>
+            </div>
+        </div>
+    </div>
+</footer>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            document.querySelector(this.getAttribute('href')).scrollIntoView({
+                behavior: 'smooth'
+            });
+        });
+    });
+</script>
+{% endblock %}
+EOF
+
+echo "Index.html has been completely rewritten!"

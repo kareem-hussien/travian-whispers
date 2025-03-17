@@ -274,50 +274,50 @@
     <!-- Sidebar -->
     <div class="sidebar">
         <div class="sidebar-header">
-            <a href="{{ url_for('admin_dashboard') }}" class="sidebar-logo">
+            <a href="{{ url_for('admin.admin_dashboard') }}" class="sidebar-logo">
                 <i class="bi bi-shield-lock"></i> Admin Panel
             </a>
         </div>
         <div class="sidebar-content">
             <ul class="nav flex-column">
                 <li class="nav-item">
-                    <a href="{{ url_for('admin_dashboard') }}" class="nav-link active">
+                    <a href="{{ url_for('admin.admin_dashboard') }}" class="nav-link active">
                         <span class="nav-icon"><i class="bi bi-speedometer2"></i></span>
                         Dashboard
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ url_for('admin_users') }}" class="nav-link">
+                    <a href="{{ url_for('admin.admin_users') }}" class="nav-link">
                         <span class="nav-icon"><i class="bi bi-people"></i></span>
                         User Management
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ url_for('admin_subscriptions') }}" class="nav-link">
+                    <a href="{{ url_for('admin.admin_subscriptions') }}" class="nav-link">
                         <span class="nav-icon"><i class="bi bi-credit-card"></i></span>
                         Subscription Plans
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ url_for('admin_transactions') }}" class="nav-link">
+                    <a href="{{ url_for('admin.admin_transactions') }}" class="nav-link">
                         <span class="nav-icon"><i class="bi bi-cash-stack"></i></span>
                         Transactions
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ url_for('admin_maintenance') }}" class="nav-link">
+                    <a href="{{ url_for('admin.admin_maintenance') }}" class="nav-link">
                         <span class="nav-icon"><i class="bi bi-tools"></i></span>
                         Maintenance
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ url_for('admin_logs') }}" class="nav-link">
+                    <a href="{{ url_for('admin.admin_logs') }}" class="nav-link">
                         <span class="nav-icon"><i class="bi bi-journal-text"></i></span>
                         System Logs
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ url_for('admin_settings') }}" class="nav-link">
+                    <a href="{{ url_for('admin.admin_settings') }}" class="nav-link">
                         <span class="nav-icon"><i class="bi bi-gear"></i></span>
                         Settings
                     </a>
@@ -328,7 +328,7 @@
             <a href="{{ url_for('public.index') }}" class="btn btn-sm btn-outline-light w-100 mb-2">
                 <i class="bi bi-house-door"></i> Main Site
             </a>
-            <a href="{{ url_for('logout') }}" class="btn btn-sm btn-outline-light w-100">
+            <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-outline-light w-100">
                 <i class="bi bi-box-arrow-right"></i> Logout
             </a>
         </div>
@@ -344,7 +344,7 @@
             
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Admin</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin.admin_dashboard') }}">Admin</a></li>
                     <li class="breadcrumb-item active" aria-current="page">Dashboard</li>
                 </ol>
             </nav>
@@ -354,10 +354,10 @@
                     <i class="bi bi-person-circle"></i> {{ current_user.username }}
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenuButton">
-                    <li><a class="dropdown-item" href="{{ url_for('profile') }}"><i class="bi bi-person"></i> Profile</a></li>
-                    <li><a class="dropdown-item" href="{{ url_for('admin_settings') }}"><i class="bi bi-gear"></i> Settings</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('admin.admin.profile') }}"><i class="bi bi-person"></i> Profile</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('admin.admin_settings') }}"><i class="bi bi-gear"></i> Settings</a></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
                 </ul>
             </div>
         </div>
@@ -486,7 +486,7 @@
                     <div class="dashboard-card">
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <h5 class="mb-0">Recent Activity</h5>
-                            <a href="{{ url_for('admin_logs') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                            <a href="{{ url_for('admin.admin_logs') }}" class="btn btn-sm btn-outline-primary">View All</a>
                         </div>
                         
                         <div class="table-responsive">
@@ -521,7 +521,7 @@
                     <div class="dashboard-card">
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <h5 class="mb-0">Recent Users</h5>
-                            <a href="{{ url_for('admin_users') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                            <a href="{{ url_for('admin.admin_users') }}" class="btn btn-sm btn-outline-primary">View All</a>
                         </div>
                         
                         <div class="list-group">
@@ -538,7 +538,7 @@
                                     <span class="badge {{ user.status_class }}">{{ user.status }}</span>
                                 </div>
                                 <div class="ms-3">
-                                    <a href="{{ url_for('admin_user_edit', user_id=user.id) }}" class="btn btn-sm btn-outline-secondary">
+                                    <a href="{{ url_for('admin.admin_user_edit', user_id=user.id) }}" class="btn btn-sm btn-outline-secondary">
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                 </div>
@@ -556,7 +556,7 @@
                     <div class="dashboard-card h-100">
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <h5 class="mb-0">Recent Transactions</h5>
-                            <a href="{{ url_for('admin_transactions') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                            <a href="{{ url_for('admin.admin_transactions') }}" class="btn btn-sm btn-outline-primary">View All</a>
                         </div>
                         
                         <div class="table-responsive">
@@ -632,13 +632,13 @@
                         <h5 class="mb-4">Quick Actions</h5>
                         <div class="row">
                             <div class="col-md-3 col-sm-6 mb-3 mb-md-0">
-                                <a href="{{ url_for('admin_user_create') }}" class="btn btn-outline-primary d-block p-3">
+                                <a href="{{ url_for('admin.admin_user_create') }}" class="btn btn-outline-primary d-block p-3">
                                     <i class="bi bi-person-plus fs-4 d-block mb-2"></i>
                                     Add New User
                                 </a>
                             </div>
                             <div class="col-md-3 col-sm-6 mb-3 mb-md-0">
-                                <a href="{{ url_for('admin_create_plan') }}" class="btn btn-outline-info d-block p-3">
+                                <a href="{{ url_for('admin.admin_create_plan') }}" class="btn btn-outline-info d-block p-3">
                                     <i class="bi bi-plus-circle fs-4 d-block mb-2"></i>
                                     Create Plan
                                 </a>
@@ -673,7 +673,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="reportForm" action="{{ url_for('admin_generate_report') }}" method="post">
+                    <form id="reportForm" action="{{ url_for('admin.admin_generate_report') }}" method="post">
                         <div class="mb-3">
                             <label for="reportType" class="form-label">Report Type</label>
                             <select class="form-select" id="reportType" name="report_type" required>

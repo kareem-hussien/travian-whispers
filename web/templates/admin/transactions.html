@@ -172,38 +172,38 @@
     <!-- Sidebar -->
     <div class="sidebar">
         <div class="sidebar-header">
-            <a href="{{ url_for('admin_dashboard') }}" class="sidebar-logo">
+            <a href="{{ url_for('admin.admin_dashboard') }}" class="sidebar-logo">
                 <i class="bi bi-shield-lock"></i> Admin Panel
             </a>
         </div>
         <div class="sidebar-content">
             <ul class="nav flex-column">
                 <li class="nav-item">
-                    <a href="{{ url_for('admin_dashboard') }}" class="nav-link {{ 'active' if request.endpoint == 'admin_dashboard' else '' }}">
+                    <a href="{{ url_for('admin.admin_dashboard') }}" class="nav-link {{ 'active' if request.endpoint == 'admin_dashboard' else '' }}">
                         <span class="nav-icon"><i class="bi bi-speedometer2"></i></span>
                         Dashboard
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ url_for('admin_users') }}" class="nav-link {{ 'active' if request.endpoint == 'admin_users' else '' }}">
+                    <a href="{{ url_for('admin.admin_users') }}" class="nav-link {{ 'active' if request.endpoint == 'admin_users' else '' }}">
                         <span class="nav-icon"><i class="bi bi-people"></i></span>
                         User Management
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ url_for('admin_subscriptions') }}" class="nav-link {{ 'active' if request.endpoint == 'admin_subscriptions' else '' }}">
+                    <a href="{{ url_for('admin.admin_subscriptions') }}" class="nav-link {{ 'active' if request.endpoint == 'admin_subscriptions' else '' }}">
                         <span class="nav-icon"><i class="bi bi-credit-card"></i></span>
                         Subscription Plans
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ url_for('admin_transactions') }}" class="nav-link {{ 'active' if request.endpoint == 'admin_transactions' else '' }}">
+                    <a href="{{ url_for('admin.admin_transactions') }}" class="nav-link {{ 'active' if request.endpoint == 'admin_transactions' else '' }}">
                         <span class="nav-icon"><i class="bi bi-cash-stack"></i></span>
                         Transactions
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ url_for('admin_settings') }}" class="nav-link {{ 'active' if request.endpoint == 'admin_settings' else '' }}">
+                    <a href="{{ url_for('admin.admin_settings') }}" class="nav-link {{ 'active' if request.endpoint == 'admin_settings' else '' }}">
                         <span class="nav-icon"><i class="bi bi-gear"></i></span>
                         System Settings
                     </a>
@@ -211,7 +211,7 @@
             </ul>
         </div>
         <div class="sidebar-footer">
-            <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm w-100">
+            <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-light btn-sm w-100">
                 <i class="bi bi-box-arrow-right"></i> Logout
             </a>
         </div>
@@ -227,7 +227,7 @@
             
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Admin</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin.admin_dashboard') }}">Admin</a></li>
                     <li class="breadcrumb-item active" aria-current="page">Transactions</li>
                 </ol>
             </nav>
@@ -237,10 +237,10 @@
                     <i class="bi bi-person-circle"></i> {{ current_user.username }}
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenuButton">
-                    <li><a class="dropdown-item" href="{{ url_for('profile') }}"><i class="bi bi-person"></i> Profile</a></li>
-                    <li><a class="dropdown-item" href="{{ url_for('admin_settings') }}"><i class="bi bi-gear"></i> Settings</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('admin.admin.profile') }}"><i class="bi bi-person"></i> Profile</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('admin.admin_settings') }}"><i class="bi bi-gear"></i> Settings</a></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
                 </ul>
             </div>
         </div>

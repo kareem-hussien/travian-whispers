@@ -249,20 +249,19 @@
     <!-- Sidebar -->
     <div class="sidebar">
         <div class="sidebar-header">
-            <a href="{{ url_for('dashboard') }}" class="sidebar-logo">
-                <i class="bi bi-robot"></i> Travian Whispers
+            <a href="{{ url_for('user.dashboard') }}" class="sidebar-logo">                <i class="bi bi-robot"></i> Travian Whispers
             </a>
         </div>
         <div class="sidebar-content">
             <ul class="nav flex-column">
                 <li class="nav-item">
-                    <a href="{{ url_for('dashboard') }}" class="nav-link active">
+                    <a href="{{ url_for('user.dashboard') }}" class="nav-link active">
                         <span class="nav-icon"><i class="bi bi-speedometer2"></i></span>
                         Dashboard
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="{{ url_for('profile') }}" class="nav-link">
+                    <a href="{{ url_for('user.profile') }}" class="nav-link">
                         <span class="nav-icon"><i class="bi bi-person"></i></span>
                         Profile
                     </a>
@@ -311,8 +310,9 @@
                 </li>
             </ul>
         </div>
+        
         <div class="sidebar-footer">
-            <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm w-100">
+            <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-light btn-sm w-100">
                 <i class="bi bi-box-arrow-right"></i> Logout
             </a>
         </div>
@@ -328,7 +328,7 @@
             
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('user.dashboard') }}">Home</a></li>
                     <li class="breadcrumb-item active" aria-current="page">Dashboard</li>
                 </ol>
             </nav>
@@ -338,10 +338,10 @@
                     <i class="bi bi-person-circle"></i> {{ current_user.username }}
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenuButton">
-                    <li><a class="dropdown-item" href="{{ url_for('profile') }}"><i class="bi bi-person"></i> Profile</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('user.profile') }}"><i class="bi bi-person"></i> Profile</a></li>
                     <li><a class="dropdown-item" href="#"><i class="bi bi-gear"></i> Settings</a></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
                 </ul>
             </div>
         </div>

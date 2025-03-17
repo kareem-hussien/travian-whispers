@@ -33,7 +33,7 @@
             <div class="dashboard-card">
                 <h4 class="mb-4">Account Information</h4>
                 
-                <form action="{{ url_for('profile') }}" method="post">
+                <form action="{{ url_for('user.profile') }}" method="post">
                     <input type="hidden" name="form_type" value="profile">
                     <div class="mb-3">
                         <label for="username" class="form-label">Username</label>
@@ -66,7 +66,7 @@
             <div class="dashboard-card">
                 <h4 class="mb-4">Change Password</h4>
                 
-                <form action="{{ url_for('profile') }}" method="post" id="passwordForm">
+                <form action="{{ url_for('user.profile') }}" method="post" id="passwordForm">
                     <input type="hidden" name="form_type" value="password">
                     <div class="mb-3">
                         <label for="current_password" class="form-label">Current Password</label>
@@ -155,7 +155,7 @@
                 </div>
                 
                 <div class="mt-4">
-                    <a href="{{ url_for('subscription') }}" class="btn btn-primary">Manage Subscription</a>
+                    <a href="{{ url_for('user.subscription') }}" class="btn btn-primary">Manage Subscription</a>
                 </div>
             </div>
         </div>
