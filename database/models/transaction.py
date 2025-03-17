@@ -15,7 +15,9 @@ class Transaction:
     def __init__(self):
         """Initialize the Transaction model."""
         self.db = MongoDB().get_db()
-        self.collection = self.db["transactions"] if self.db else None
+        self.collection = None
+        if self.db is not None:  # Explicit None check
+            self.collection = self.db["transactions"]
     
     def create_transaction(self, user_id, plan_id, payment_id, amount, status, payment_type, 
                            payment_method, billing_period):
@@ -35,7 +37,7 @@ class Transaction:
         Returns:
             dict: Created transaction document or None if failed
         """
-        if not self.collection:
+        if self.collection is None:  # Explicit None check
             return None
         
         # Validate inputs
@@ -84,7 +86,7 @@ class Transaction:
         Returns:
             dict: Transaction document or None if not found
         """
-        if not self.collection:
+        if self.collection is None:  # Explicit None check
             return None
         
         try:
@@ -102,7 +104,7 @@ class Transaction:
         Returns:
             dict: Transaction document or None if not found
         """
-        if not self.collection:
+        if self.collection is None:  # Explicit None check
             return None
         
         return self.collection.find_one({"paymentId": payment_id})
@@ -118,7 +120,7 @@ class Transaction:
         Returns:
             bool: True if successful, False otherwise
         """
-        if not self.collection or status not in self.STATUS_OPTIONS:
+        if self.collection is None or status not in self.STATUS_OPTIONS:  # Explicit None check
             return False
         
         try:
@@ -142,7 +144,7 @@ class Transaction:
         Returns:
             bool: True if successful, False otherwise
         """
-        if not self.collection:
+        if self.collection is None:  # Explicit None check
             return False
         
         try:
@@ -166,7 +168,7 @@ class Transaction:
         Returns:
             list: List of transaction documents
         """
-        if not self.collection:
+        if self.collection is None:  # Explicit None check
             return []
         
         try:
@@ -190,7 +192,7 @@ class Transaction:
         Returns:
             list: List of transaction documents
         """
-        if not self.collection:
+        if self.collection is None:  # Explicit None check
             return []
         
         query = {}

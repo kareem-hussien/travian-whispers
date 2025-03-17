@@ -11,7 +11,9 @@ class SubscriptionPlan:
     def __init__(self):
         """Initialize the SubscriptionPlan model."""
         self.db = MongoDB().get_db()
-        self.collection = self.db["subscriptionPlans"] if self.db else None
+        self.collection = None
+        if self.db is not None:  # Explicit None check
+            self.collection = self.db["subscriptionPlans"]
     
     def create_plan(self, name, description, monthly_price, yearly_price, features):
         """
@@ -27,7 +29,7 @@ class SubscriptionPlan:
         Returns:
             dict: Created plan document or None if failed
         """
-        if not self.collection:
+        if self.collection is None:  # Explicit None check
             return None
             
         # Validate inputs
@@ -79,12 +81,13 @@ class SubscriptionPlan:
         Returns:
             dict: Plan document or None if not found
         """
-        if not self.collection:
+        if self.collection is None:  # Explicit None check
             return None
             
         try:
             return self.collection.find_one({"_id": ObjectId(plan_id)})
-        except:
+        except Exception as e:
+            print(f"Error getting plan by ID: {e}")
             return None
     
     def get_plan_by_name(self, name):
@@ -97,7 +100,7 @@ class SubscriptionPlan:
         Returns:
             dict: Plan document or None if not found
         """
-        if not self.collection:
+        if self.collection is None:  # Explicit None check
             return None
         
         return self.collection.find_one({"name": name})
@@ -113,7 +116,7 @@ class SubscriptionPlan:
         Returns:
             bool: True if successful, False otherwise
         """
-        if not self.collection:
+        if self.collection is None:  # Explicit None check
             return False
             
         try:
@@ -145,7 +148,7 @@ class SubscriptionPlan:
         Returns:
             bool: True if successful, False otherwise
         """
-        if not self.collection:
+        if self.collection is None:  # Explicit None check
             return False
             
         try:
@@ -162,7 +165,7 @@ class SubscriptionPlan:
         Returns:
             list: List of plan documents
         """
-        if not self.collection:
+        if self.collection is None:  # Explicit None check
             return []
             
         try:
@@ -179,7 +182,7 @@ class SubscriptionPlan:
         Returns:
             bool: True if successful, False otherwise
         """
-        if not self.collection:
+        if self.collection is None:  # Explicit None check
             return False
         
         # Check if plans already exist

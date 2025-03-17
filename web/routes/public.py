@@ -3,6 +3,7 @@ Public routes for Travian Whispers web application.
 This module defines the blueprint for public-facing routes.
 """
 import logging
+import os
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from database.models.subscription import SubscriptionPlan
 
@@ -16,12 +17,23 @@ public_bp = Blueprint('public', __name__)
 @public_bp.route('/')
 def index():
     """Landing page route."""
-    # Get subscription plans for pricing section
-    plan_model = SubscriptionPlan()
-    plans = plan_model.list_plans()
-    
-    # Render index template
-    return render_template('index.html', plans=plans, title='Home')
+    try:
+        # Get subscription plans for pricing section
+        plan_model = SubscriptionPlan()
+        plans = plan_model.list_plans()
+        
+        # Check if base template exists
+        base_template_exists = os.path.exists(os.path.join(current_app.template_folder, 'base.html'))
+        
+        # Render index template
+        return render_template('index.html', 
+                             plans=plans, 
+                             title='Home', 
+                             base_template_exists=base_template_exists)
+    except Exception as e:
+        logger.error(f"Error rendering index page: {e}")
+        # Render a simple fallback page if there's an error
+        return render_template('errors/500.html')
 
 
 @public_bp.route('/about')

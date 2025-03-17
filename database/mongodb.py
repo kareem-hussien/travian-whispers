@@ -71,6 +71,8 @@ class MongoDB:
             return True
         except Exception as e:
             logger.error(f"Failed to connect to MongoDB: {e}")
+            self.client = None
+            self.db = None
             # Re-raise to let the decorator handle it
             raise
     
@@ -83,7 +85,12 @@ class MongoDB:
         """
         if self.client is None or self.db is None:
             logger.warning("Database not connected. Call connect() first.")
-            return None
+            try:
+                # Attempt to connect if not already connected
+                self.connect()
+            except Exception as e:
+                logger.error(f"Auto-connection attempt failed: {e}")
+                return None
         return self.db
     
     def get_collection(self, collection_name):
@@ -96,10 +103,11 @@ class MongoDB:
         Returns:
             pymongo.collection.Collection: Collection instance or None if not found
         """
-        if self.db is None:
+        db = self.get_db()
+        if db is None:
             logger.warning("Database not connected. Call connect() first.")
             return None
-        return self.db[collection_name]
+        return db[collection_name]
     
     @handle_operation_error
     @log_database_activity("index creation")
@@ -111,22 +119,27 @@ class MongoDB:
             bool: True if successful, False otherwise
         """
         try:
+            db = self.get_db()
+            if db is None:
+                logger.error("Database not connected. Cannot create indexes.")
+                return False
+                
             # User collection indexes
-            self.db.users.create_index([("username", pymongo.ASCENDING)], unique=True)
-            self.db.users.create_index([("email", pymongo.ASCENDING)], unique=True)
-            self.db.users.create_index([("verificationToken", pymongo.ASCENDING)])
-            self.db.users.create_index([("resetPasswordToken", pymongo.ASCENDING)])
-            self.db.users.create_index([("subscription.status", pymongo.ASCENDING)])
-            self.db.users.create_index([("subscription.endDate", pymongo.ASCENDING)])
+            db.users.create_index([("username", pymongo.ASCENDING)], unique=True)
+            db.users.create_index([("email", pymongo.ASCENDING)], unique=True)
+            db.users.create_index([("verificationToken", pymongo.ASCENDING)])
+            db.users.create_index([("resetPasswordToken", pymongo.ASCENDING)])
+            db.users.create_index([("subscription.status", pymongo.ASCENDING)])
+            db.users.create_index([("subscription.endDate", pymongo.ASCENDING)])
             
             # Subscription plans indexes
-            self.db.subscriptionPlans.create_index([("name", pymongo.ASCENDING)], unique=True)
+            db.subscriptionPlans.create_index([("name", pymongo.ASCENDING)], unique=True)
             
             # Transactions indexes
-            self.db.transactions.create_index([("userId", pymongo.ASCENDING)])
-            self.db.transactions.create_index([("paymentId", pymongo.ASCENDING)], unique=True)
-            self.db.transactions.create_index([("createdAt", pymongo.DESCENDING)])
-            self.db.transactions.create_index([("status", pymongo.ASCENDING)])
+            db.transactions.create_index([("userId", pymongo.ASCENDING)])
+            db.transactions.create_index([("paymentId", pymongo.ASCENDING)], unique=True)
+            db.transactions.create_index([("createdAt", pymongo.DESCENDING)])
+            db.transactions.create_index([("status", pymongo.ASCENDING)])
             
             logger.info("All database indexes created successfully")
             return True
@@ -139,6 +152,8 @@ class MongoDB:
         """Close the MongoDB connection."""
         if self.client:
             self.client.close()
+            self.client = None
+            self.db = None
             logger.info("Disconnected from MongoDB")
     
     def __enter__(self):
@@ -148,4 +163,3 @@ class MongoDB:
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit."""
         self.disconnect()
-

@@ -97,7 +97,7 @@
         <div class="register-container">
             <!-- Logo and Title -->
             <div class="text-center mb-4">
-                <a href="{{ url_for('index') }}">
+                <a href="{{ url_for('public.index') }}">
                     <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Travian Whispers Logo" height="60">
                 </a>
             </div>
@@ -121,7 +121,7 @@
                     {% endwith %}
                     
                     <!-- Registration Form -->
-                    <form action="{{ url_for('register') }}" method="post" id="registrationForm">
+                    <form action="{{ url_for('auth.register') }}" method="post" id="registrationForm">
                         <div class="mb-3">
                             <label for="username" class="form-label">Username</label>
                             <div class="input-group">
@@ -191,7 +191,7 @@
                     </div>
                     
                     <div class="d-grid">
-                        <a href="{{ url_for('login') }}" class="btn btn-outline-secondary">Already Have an Account? Login</a>
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-outline-secondary">Already Have an Account? Login</a>
                     </div>
                 </div>
             </div>
@@ -200,7 +200,7 @@
             <div class="register-footer">
                 <p class="mb-0 text-muted">&copy; 2025 Travian Whispers. All rights reserved.</p>
                 <p class="mb-0 mt-2">
-                    <a href="{{ url_for('index') }}" class="text-decoration-none">Home</a> | 
+                    <a href="{{ url_for('public.index') }}" class="text-decoration-none">Home</a> | 
                     <a href="#" class="text-decoration-none">Privacy Policy</a> | 
                     <a href="#" class="text-decoration-none">Terms of Service</a>
                 </p>

@@ -32,7 +32,11 @@ def inject_user():
         user_data['email'] = session.get('email')
         user_data['is_admin'] = session.get('role') == 'admin'
     
-    return user_data
+    # Return both user_data and current_user to maintain compatibility
+    return {
+        'user_data': user_data,
+        'current_user': user_data  # This ensures current_user is always defined
+    }
 
 
 def inject_helpers():

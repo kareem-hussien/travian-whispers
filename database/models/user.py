@@ -307,5 +307,3 @@ class User:
         except Exception as e:
             logger.error(f"Error verifying user: {e}")
             return False
-    
-    # Add logger to other methods as needed...

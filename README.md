@@ -172,6 +172,86 @@ docker-compose down
 docker-compose up -d
 ```
 
+#### Flask Template Errors
+If you see errors related to templates like "jinja2.exceptions.UndefinedError" or "AttributeError: 'NoneType' object has no attribute 'split'":
+
+```bash
+# Connect to the web container
+docker exec -it travian-whispers-web-1 bash
+
+# Create base.html template if it doesn't exist
+mkdir -p /app/web/templates
+touch /app/web/templates/base.html
+cat > /app/web/templates/base.html << 'EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Travian Whispers{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block styles %}{% endblock %}
+</head>
+<body>
+    {% block content %}{% endblock %}
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
+EOF
+
+# Fix context processor to ensure current_user is available
+cat > /app/web/utils/context_processors.py << 'EOF'
+"""
+Context processors for Travian Whispers web application.
+"""
+import logging
+from flask import session
+from datetime import datetime
+
+# Initialize logger
+logger = logging.getLogger(__name__)
+
+def inject_user():
+    """Inject user data into templates."""
+    user_data = {
+        'is_authenticated': False,
+        'is_admin': False,
+        'username': None,
+        'email': None
+    }
+    
+    if 'user_id' in session:
+        user_data['is_authenticated'] = True
+        user_data['username'] = session.get('username')
+        user_data['email'] = session.get('email')
+        user_data['is_admin'] = session.get('role') == 'admin'
+    
+    return {
+        'user_data': user_data,
+        'current_user': user_data
+    }
+
+def inject_helpers():
+    """Inject helper functions into templates."""
+    return {
+        'current_year': datetime.now().year
+    }
+
+def register_context_processors(app):
+    app.context_processor(inject_user)
+    app.context_processor(inject_helpers)
+    logger.info("Context processors registered")
+EOF
+
+# Exit and restart the container
+exit
+docker-compose restart web
+```
+
 #### Bot Mode User ID Error
 If the bot service fails with a "MongoDB user ID for bot mode" error, try temporarily configuring it to run in web mode:
 ```yaml
@@ -233,6 +313,36 @@ travian-whispers/
 ├── logs/                    # Application logs
 └── backups/                 # Database backups
 ```
+
+---
+
+## Special Considerations
+
+### Database Models
+When working with MongoDB models, always use explicit `is None` checks instead of implicit boolean tests:
+
+```python
+# CORRECT: Explicit None check
+if self.db is not None:
+    self.collection = self.db["collectionName"]
+    
+# INCORRECT: Will raise NotImplementedError
+if self.db:  # Don't do this with PyMongo objects
+    self.collection = self.db["collectionName"]
+```
+
+### Jinja Templates
+All templates should follow proper template inheritance patterns:
+
+```html
+{% extends "base.html" %}
+
+{% block content %}
+   <!-- Your content here -->
+{% endblock %}
+```
+
+Make sure the base.html template exists and defines all necessary blocks.
 
 ---
 
