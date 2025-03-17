@@ -1,32 +1,74 @@
 """
-Custom JSON encoder for Travian Whispers web application.
-This module provides a custom JSON encoder for Flask.
+JSON utilities for Travian Whispers web application.
+This module provides utility functions for JSON serialization.
 """
+import logging
 import json
 from bson import ObjectId
 from datetime import datetime
 
-class TravianJSONEncoder(json.JSONEncoder):
-    """Custom JSON encoder that handles ObjectId and datetime objects."""
-    def default(self, obj):
-        if isinstance(obj, ObjectId):
-            return str(obj)
-        if isinstance(obj, datetime):
-            return obj.isoformat()
-        return super(TravianJSONEncoder, self).default(obj)
+# Initialize logger
+logger = logging.getLogger(__name__)
 
-def setup_json_encoder(app):
+def to_json(obj):
     """
-    Configure the Flask app to use the custom JSON encoder.
-    This approach works with all Flask versions.
+    Convert an object to a JSON-compatible format.
     
     Args:
-        app: Flask application instance
-    """
-    # Method 1: For Flask 2.x+, use app.json.encoder
-    if hasattr(app, 'json') and hasattr(app.json, 'encoder'):
-        app.json.encoder = TravianJSONEncoder
-        return
+        obj: Object to convert
         
-    # Method 2: For older Flask, use app.json_encoder
-    app.json_encoder = TravianJSONEncoder
+    Returns:
+        JSON-compatible object
+    """
+    if isinstance(obj, ObjectId):
+        return str(obj)
+    if isinstance(obj, datetime):
+        return obj.isoformat() if obj else None
+    # Let the default encoder handle it
+    raise TypeError(f"Type {type(obj)} not serializable")
+
+def dumps(obj, **kwargs):
+    """
+    Serialize an object to a JSON string.
+    
+    Args:
+        obj: Object to serialize
+        **kwargs: Additional arguments for json.dumps()
+        
+    Returns:
+        str: JSON string
+    """
+    return json.dumps(obj, default=to_json, **kwargs)
+
+def loads(s, **kwargs):
+    """
+    Deserialize a JSON string to a Python object.
+    
+    Args:
+        s: JSON string
+        **kwargs: Additional arguments for json.loads()
+        
+    Returns:
+        Deserialized Python object
+    """
+    return json.loads(s, **kwargs)
+
+def jsonify_custom(obj):
+    """
+    Create a Flask JSON response with custom serialization.
+    
+    Args:
+        obj: Object to serialize
+        
+    Returns:
+        JSON response object
+    """
+    from flask import Response
+    
+    # First serialize the object to a JSON string
+    json_str = dumps(obj)
+    
+    # Create a Response object with the correct content type
+    response = Response(json_str, mimetype='application/json')
+    
+    return response

@@ -1,8 +1,8 @@
 """
 PayPal integration for Travian Whispers subscription payments.
+Modified to avoid using charset_normalizer dependency.
 """
 import logging
-import requests
 import json
 from datetime import datetime, timedelta
 import config
@@ -10,6 +10,7 @@ from database.models.transaction import Transaction
 from database.models.user import User
 from database.models.subscription import SubscriptionPlan
 from email_module.sender import send_subscription_confirmation_email
+from http_utils import perform_request, basic_auth_header, urlencode
 
 # Configure logger
 logging.basicConfig(
@@ -29,21 +30,23 @@ def get_access_token():
         url = f"{config.PAYPAL_BASE_URL}/v1/oauth2/token"
         headers = {
             "Accept": "application/json",
-            "Accept-Language": "en_US"
+            "Accept-Language": "en_US",
+            **basic_auth_header(config.PAYPAL_CLIENT_ID, config.PAYPAL_SECRET)
         }
         data = "grant_type=client_credentials"
         
-        response = requests.post(
+        status, _, content = perform_request(
             url,
-            auth=(config.PAYPAL_CLIENT_ID, config.PAYPAL_SECRET),
+            method="POST",
             headers=headers,
             data=data
         )
         
-        if response.status_code == 200:
-            return response.json().get("access_token")
+        if status == 200:
+            response_data = json.loads(content.decode('utf-8'))
+            return response_data.get("access_token")
         
-        logger.error(f"Failed to get PayPal access token: {response.text}")
+        logger.error(f"Failed to get PayPal access token: Status {status}, Response: {content.decode('utf-8', errors='replace')}")
         return None
     except Exception as e:
         logger.error(f"Error getting PayPal access token: {e}")
@@ -82,7 +85,7 @@ def create_subscription_order(plan_id, user_id, success_url, cancel_url):
         return False, None, None
     
     try:
-        url = f"{PAYPAL_BASE_URL}/v2/checkout/orders"
+        url = f"{config.PAYPAL_BASE_URL}/v2/checkout/orders"
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {access_token}"
@@ -111,21 +114,23 @@ def create_subscription_order(plan_id, user_id, success_url, cancel_url):
             }
         }
         
-        response = requests.post(
+        status, _, content = perform_request(
             url,
+            method="POST",
             headers=headers,
-            data=json.dumps(payload)
+            data=payload
         )
         
-        if response.status_code in (200, 201):
-            data = response.json()
+        if status in (200, 201):
+            data = json.loads(content.decode('utf-8'))
             order_id = data.get("id")
             
             # Find approval URL
-            approval_url = next(
-                (link["href"] for link in data.get("links", []) if link["rel"] == "approve"),
-                None
-            )
+            approval_url = None
+            for link in data.get("links", []):
+                if link.get("rel") == "approve":
+                    approval_url = link.get("href")
+                    break
             
             if order_id and approval_url:
                 # Create transaction record
@@ -147,7 +152,7 @@ def create_subscription_order(plan_id, user_id, success_url, cancel_url):
             logger.error(f"Failed to extract order details from PayPal response: {data}")
             return False, None, None
         
-        logger.error(f"Failed to create PayPal order: {response.text}")
+        logger.error(f"Failed to create PayPal order: Status {status}, Response: {content.decode('utf-8', errors='replace')}")
         return False, None, None
     except Exception as e:
         logger.error(f"Error creating PayPal order: {e}")
@@ -169,16 +174,20 @@ def capture_payment(order_id):
         return False, None
     
     try:
-        url = f"{PAYPAL_BASE_URL}/v2/checkout/orders/{order_id}/capture"
+        url = f"{config.PAYPAL_BASE_URL}/v2/checkout/orders/{order_id}/capture"
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {access_token}"
         }
         
-        response = requests.post(url, headers=headers)
+        status, _, content = perform_request(
+            url,
+            method="POST",
+            headers=headers
+        )
         
-        if response.status_code in (200, 201):
-            data = response.json()
+        if status in (200, 201):
+            data = json.loads(content.decode('utf-8'))
             capture_id = data.get("id")
             
             if capture_id:
@@ -187,7 +196,7 @@ def capture_payment(order_id):
             logger.error(f"Failed to extract capture_id from PayPal response: {data}")
             return False, None
         
-        logger.error(f"Failed to capture PayPal payment: {response.text}")
+        logger.error(f"Failed to capture PayPal payment: Status {status}, Response: {content.decode('utf-8', errors='replace')}")
         return False, None
     except Exception as e:
         logger.error(f"Error capturing PayPal payment: {e}")

@@ -11,7 +11,7 @@ from web.utils.helpers import (
     format_datetime, format_currency,
     get_subscription_status_badge, get_transaction_status_badge
 )
-from web.utils.json_encoder import TravianJSONEncoder
+from web.utils.json_encoder import to_json, dumps
 from web.utils.error_handlers import ApiError, register_error_handlers
 from web.utils.context_processors import register_context_processors
 
@@ -34,7 +34,8 @@ __all__ = [
     'format_currency',
     'get_subscription_status_badge',
     'get_transaction_status_badge',
-    'TravianJSONEncoder',
+    'to_json',
+    'dumps',
     'ApiError',
     'register_error_handlers',
     'register_context_processors'

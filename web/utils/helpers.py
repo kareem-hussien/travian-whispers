@@ -6,20 +6,23 @@ import logging
 import json
 from bson import ObjectId
 from flask import request, session, render_template, current_app
+from datetime import datetime
 
 # Initialize logger
 logger = logging.getLogger(__name__)
 
 
-class JSONEncoder(json.JSONEncoder):
-    """Custom JSON encoder that handles ObjectId and datetime objects."""
-    def default(self, obj):
-        from datetime import datetime
-        if isinstance(obj, ObjectId):
-            return str(obj)
-        if isinstance(obj, datetime):
-            return obj.isoformat()
-        return super(JSONEncoder, self).default(obj)
+def json_serialize(obj):
+    """
+    JSON serialization helper that handles ObjectId and datetime objects.
+    Replacement for the custom JSONEncoder class.
+    """
+    if isinstance(obj, ObjectId):
+        return str(obj)
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    # Let the default JSON serializer handle it (may raise a TypeError)
+    return obj
 
 
 def get_ip_address():

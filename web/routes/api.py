@@ -12,6 +12,18 @@ from database.models.subscription import SubscriptionPlan
 from database.models.transaction import Transaction
 from payment.paypal import create_subscription_order, process_successful_payment
 
+def jsonify_custom(obj):
+    """Custom jsonify function that handles ObjectId and datetime objects."""
+    from flask import jsonify
+    from web.utils.json_encoder import to_json
+    import json
+    
+    # Convert the object to JSON-serializable data using our custom converter
+    serializable_obj = json.loads(json.dumps(obj, default=to_json))
+    
+    # Use Flask's jsonify with pre-serialized data
+    return jsonify(serializable_obj)
+
 # Initialize logger
 logger = logging.getLogger(__name__)
 
