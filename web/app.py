@@ -13,6 +13,7 @@ from web.routes import register_blueprints
 from web.utils.error_handlers import register_error_handlers
 from web.utils.context_processors import register_context_processors
 from web.utils.json_encoder import TravianJSONEncoder
+from web.utils.json_encoder import setup_json_encoder
 
 def create_app(config_object=None):
     """
@@ -37,7 +38,7 @@ def create_app(config_object=None):
     app.wsgi_app = ProxyFix(app.wsgi_app)
     
     # Set custom JSON encoder
-    app.json_encoder = TravianJSONEncoder
+    setup_json_encoder(app)
     
     # Register extensions
     register_extensions(app)
