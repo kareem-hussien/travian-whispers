@@ -1,0 +1,32 @@
+<!-- troop_card.html -->
+<!--
+  Troop Card Component - For displaying troop training settings
+  Parameters:
+  - troop: Troop object with properties (name, enabled, quantity, priority)
+-->
+<div class="card">
+    <div class="card-body">
+        <div class="d-flex align-items-center mb-3">
+            <img src="{{ url_for('static', filename='img/troops/' + troop.name|lower + '.png') }}" alt="{{ troop.name }}" width="40" class="me-2">
+            <h6 class="mb-0">{{ troop.name }}</h6>
+        </div>
+        <div class="form-check form-switch mb-2">
+            <input class="form-check-input" type="checkbox" id="train{{ troop.name }}" 
+                  name="train{{ troop.name }}" {{ 'checked' if troop.enabled else '' }}>
+            <label class="form-check-label" for="train{{ troop.name }}">Enable</label>
+        </div>
+        <div class="mb-2">
+            <label class="form-label">Quantity</label>
+            <input type="number" class="form-control form-control-sm" 
+                  name="quantity{{ troop.name }}" min="1" value="{{ troop.quantity }}">
+        </div>
+        <div class="mb-0">
+            <label class="form-label">Priority</label>
+            <select class="form-select form-select-sm" name="priority{{ troop.name }}">
+                <option value="1" {{ 'selected' if troop.priority == 1 else '' }}>High</option>
+                <option value="2" {{ 'selected' if troop.priority == 2 else '' }}>Normal</option>
+                <option value="3" {{ 'selected' if troop.priority == 3 else '' }}>Low</option>
+            </select>
+        </div>
+    </div>
+</div>

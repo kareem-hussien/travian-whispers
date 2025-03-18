@@ -1,0 +1,72 @@
+<!-- sidebar.html -->
+<!-- Sidebar navigation component -->
+<div class="sidebar">
+    <div class="sidebar-header">
+        <a href="{{ url_for('user.dashboard') }}" class="sidebar-logo">
+            <i class="bi bi-robot"></i> Travian Whispers
+        </a>
+    </div>
+    <div class="sidebar-content">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a href="{{ url_for('user.dashboard') }}" class="nav-link {% if request.endpoint == 'user.dashboard' %}active{% endif %}">
+                    <span class="nav-icon"><i class="bi bi-speedometer2"></i></span>
+                    Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('user.profile') }}" class="nav-link {% if request.endpoint == 'user.profile' %}active{% endif %}">
+                    <span class="nav-icon"><i class="bi bi-person"></i></span>
+                    Profile
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('user.travian_settings') }}" class="nav-link {% if request.endpoint == 'user.travian_settings' %}active{% endif %}">
+                    <span class="nav-icon"><i class="bi bi-gear"></i></span>
+                    Travian Settings
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('user.villages') }}" class="nav-link {% if request.endpoint == 'user.villages' %}active{% endif %}">
+                    <span class="nav-icon"><i class="bi bi-buildings"></i></span>
+                    Villages
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('user.auto_farm') }}" class="nav-link {% if request.endpoint == 'user.auto_farm' %}active{% endif %}">
+                    <span class="nav-icon"><i class="bi bi-robot"></i></span>
+                    Auto Farm
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('user.troop_trainer') }}" class="nav-link {% if request.endpoint == 'user.troop_trainer' %}active{% endif %}">
+                    <span class="nav-icon"><i class="bi bi-shield"></i></span>
+                    Troop Trainer
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('user.activity_logs') }}" class="nav-link {% if request.endpoint == 'user.activity_logs' %}active{% endif %}">
+                    <span class="nav-icon"><i class="bi bi-clock-history"></i></span>
+                    Activity Logs
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('user.subscription') }}" class="nav-link {% if request.endpoint == 'user.subscription' %}active{% endif %}">
+                    <span class="nav-icon"><i class="bi bi-credit-card"></i></span>
+                    Subscription
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('user.support') }}" class="nav-link {% if request.endpoint == 'user.support' %}active{% endif %}">
+                    <span class="nav-icon"><i class="bi bi-question-circle"></i></span>
+                    Help & Support
+                </a>
+            </li>
+        </ul>
+    </div>
+    <div class="sidebar-footer">
+        <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-light btn-sm w-100">
+            <i class="bi bi-box-arrow-right"></i> Logout
+        </a>
+    </div>
+</div>

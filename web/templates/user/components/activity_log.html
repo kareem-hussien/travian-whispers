@@ -1,0 +1,56 @@
+<!-- activity_log.html -->
+<!--
+  Activity Log Component - For displaying activity history
+  Parameters:
+  - activities: List of activity objects with properties (timestamp, activity, details, status)
+-->
+<div class="dashboard-card">
+    <h5 class="mb-4">Activity Log</h5>
+    
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Date & Time</th>
+                    <th>Activity</th>
+                    <th>Details</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if activities %}
+                    {% for activity in activities %}
+                    <tr class="activity-row">
+                        <td>{{ activity.timestamp }}</td>
+                        <td>{{ activity.activity }}</td>
+                        <td>{{ activity.details }}</td>
+                        <td>
+                            {% if activity.status|lower == 'success' %}
+                            <span class="badge bg-success">Success</span>
+                            {% elif activity.status|lower == 'warning' %}
+                            <span class="badge bg-warning">Warning</span>
+                            {% elif activity.status|lower == 'failed' %}
+                            <span class="badge bg-danger">Failed</span>
+                            {% elif activity.status|lower == 'info' %}
+                            <span class="badge bg-info">Info</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ activity.status }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center">No activity logs found</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    
+    {% if activities|length > 0 %}
+    <div class="d-flex justify-content-center mt-3">
+        <button class="btn btn-outline-primary btn-sm" id="loadMoreBtn">Load More</button>
+    </div>
+    {% endif %}
+</div>

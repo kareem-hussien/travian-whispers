@@ -1,0 +1,28 @@
+<!-- form_field.html -->
+<!--
+  Form Field Component - For displaying form fields with a consistent style
+  Parameters:
+  - field_type: Type of field (text, email, password, etc.)
+  - field_id: HTML ID for the field
+  - field_name: Name attribute for the field
+  - field_label: Label text
+  - field_value: Current value of the field (optional)
+  - field_placeholder: Placeholder text (optional)
+  - field_required: Whether field is required (optional, default: false)
+  - field_readonly: Whether field is readonly (optional, default: false)
+  - field_help: Help text to display under the field (optional)
+-->
+<div class="mb-3">
+    <label for="{{ field_id }}" class="form-label">{{ field_label }}</label>
+    <input type="{{ field_type }}" 
+           class="form-control" 
+           id="{{ field_id }}" 
+           name="{{ field_name }}" 
+           value="{{ field_value|default('') }}"
+           {% if field_placeholder %}placeholder="{{ field_placeholder }}"{% endif %}
+           {% if field_required %}required{% endif %}
+           {% if field_readonly %}readonly{% endif %}>
+    {% if field_help %}
+    <small class="form-text text-muted">{{ field_help }}</small>
+    {% endif %}
+</div>

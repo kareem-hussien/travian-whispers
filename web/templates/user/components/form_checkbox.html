@@ -1,0 +1,17 @@
+<!-- form_checkbox.html -->
+<!--
+  Form Checkbox Component - For displaying checkboxes with a consistent style
+  Parameters:
+  - checkbox_id: HTML ID for the checkbox
+  - checkbox_name: Name attribute for the checkbox
+  - checkbox_label: Label text
+  - checkbox_checked: Whether checkbox is checked (optional, default: false)
+-->
+<div class="mb-3 form-check">
+    <input type="checkbox" 
+           class="form-check-input" 
+           id="{{ checkbox_id }}" 
+           name="{{ checkbox_name }}" 
+           {% if checkbox_checked %}checked{% endif %}>
+    <label class="form-check-label" for="{{ checkbox_id }}">{{ checkbox_label }}</label>
+</div>

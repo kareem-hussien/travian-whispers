@@ -1,0 +1,200 @@
+/* 
+ * dashboard.css
+ * Specific styles for dashboard pages
+ */
+
+/* Dashboard overview cards */
+.overview-card {
+    text-align: center;
+    padding: 1.5rem;
+}
+
+.overview-card h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0.5rem 0;
+}
+
+.overview-card p {
+    margin-bottom: 0;
+    color: #6c757d;
+}
+
+/* Resource indicators */
+.resource-indicator {
+    display: flex;
+    align-items: center;
+    margin-right: 1rem;
+}
+
+.resource-indicator i {
+    margin-right: 0.5rem;
+}
+
+.resource-indicator:last-child {
+    margin-right: 0;
+}
+
+/* Resource types */
+.resource-wood i {
+    color: var(--success-color);
+}
+
+.resource-clay i {
+    color: var(--danger-color);
+}
+
+.resource-iron i {
+    color: #6c757d; /* grey */
+}
+
+.resource-crop i {
+    color: var(--warning-color);
+}
+
+/* Chart containers */
+.chart-container {
+    position: relative;
+    height: 300px;
+}
+
+/* Activity log rows */
+.activity-row:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* Village list */
+.village-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.village-item:last-child {
+    border-bottom: none;
+}
+
+.village-item .village-icon {
+    width: 32px;
+    height: 32px;
+    margin-right: 1rem;
+}
+
+.village-item .village-info {
+    flex-grow: 1;
+}
+
+.village-item .village-name {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.village-item .village-coords {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.village-item .village-status {
+    margin-left: 1rem;
+}
+
+/* Task cards */
+.task-card {
+    border-radius: var(--border-radius);
+    border: 1px solid #eee;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    transition: background-color 0.3s ease;
+}
+
+.task-card:hover {
+    background-color: rgba(0,0,0,0.02);
+}
+
+.task-card .task-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.task-card .task-title {
+    font-weight: 600;
+    margin-bottom: 0;
+}
+
+.task-card .task-details {
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+.task-card .task-controls {
+    margin-top: 0.5rem;
+}
+
+/* Trainer cards */
+.troop-card {
+    border: 1px solid #eee;
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    transition: all 0.3s ease;
+}
+
+.troop-card:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+.troop-card .troop-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.troop-card .troop-icon {
+    width: 40px;
+    height: 40px;
+    margin-right: 1rem;
+}
+
+.troop-card .troop-name {
+    font-weight: 600;
+    margin-bottom: 0;
+}
+
+/* Countdown timer */
+.countdown-timer {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.countdown-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+/* Feature list (for subscription page) */
+.feature-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.feature-list li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.feature-list li:last-child {
+    border-bottom: none;
+}
+
+.feature-list .feature-available i {
+    color: var(--success-color);
+}
+
+.feature-list .feature-unavailable i {
+    color: #6c757d;
+}

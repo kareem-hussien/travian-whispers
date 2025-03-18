@@ -1,0 +1,20 @@
+<!-- stat_card.html -->
+<!--
+  Stat Card Component - For displaying statistics on the dashboard
+  Parameters:
+  - icon: Bootstrap icon name (e.g., "buildings", "robot")
+  - icon_bg: Background style for icon (e.g., "bg-primary-light", "bg-success-light")
+  - title: Card title
+  - value: Main statistic value
+  - subtitle: Optional additional information
+-->
+<div class="dashboard-card">
+    <div class="card-icon {{ icon_bg }}">
+        <i class="bi bi-{{ icon }}"></i>
+    </div>
+    <h6 class="text-muted">{{ title }}</h6>
+    <h3>{{ value }}</h3>
+    {% if subtitle %}
+    <small class="text-muted">{{ subtitle }}</small>
+    {% endif %}
+</div>

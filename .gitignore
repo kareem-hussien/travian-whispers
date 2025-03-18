@@ -174,3 +174,4 @@ tribe.txt
 credentials.txt
 /web/static/img
 /flask_session
+/fresh_venv

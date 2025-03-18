@@ -1,0 +1,28 @@
+<!-- form_select.html -->
+<!--
+  Form Select Component - For displaying select dropdowns with a consistent style
+  Parameters:
+  - select_id: HTML ID for the select
+  - select_name: Name attribute for the select
+  - select_label: Label text
+  - select_options: List of options, each with value and text
+  - select_selected: Currently selected value (optional)
+  - select_required: Whether select is required (optional, default: false)
+  - select_help: Help text to display under the select (optional)
+-->
+<div class="mb-3">
+    <label for="{{ select_id }}" class="form-label">{{ select_label }}</label>
+    <select class="form-select" 
+            id="{{ select_id }}" 
+            name="{{ select_name }}"
+            {% if select_required %}required{% endif %}>
+        {% for option in select_options %}
+        <option value="{{ option.value }}" {% if option.value == select_selected %}selected{% endif %}>
+            {{ option.text }}
+        </option>
+        {% endfor %}
+    </select>
+    {% if select_help %}
+    <small class="form-text text-muted">{{ select_help }}</small>
+    {% endif %}
+</div>

@@ -1,0 +1,189 @@
+/* 
+ * components.css
+ * Reusable UI components for Travian Whispers
+ */
+
+/* Cards */
+.dashboard-card {
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    padding: 1.5rem;
+    height: 100%;
+    transition: transform var(--transition-speed) ease, 
+                box-shadow var(--transition-speed) ease;
+    position: relative;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--card-shadow-hover);
+}
+
+/* Icons */
+.card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--border-radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+/* Status indicators */
+.task-status {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 0.5rem;
+}
+
+.status-active {
+    background-color: var(--success-color);
+}
+
+.status-paused {
+    background-color: var(--warning-color);
+}
+
+.status-stopped {
+    background-color: var(--danger-color);
+}
+
+/* Subscription badge */
+.subscription-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* Buttons */
+.task-controls button {
+    margin-right: 0.5rem;
+}
+
+.task-controls button:last-child {
+    margin-right: 0;
+}
+
+/* Tables */
+.table-responsive {
+    overflow-x: auto;
+}
+
+.villages-table img {
+    width: 24px;
+    height: 24px;
+    margin-right: 0.5rem;
+}
+
+/* Background colors */
+.bg-primary-light {
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+}
+
+.bg-success-light {
+    background-color: var(--success-light);
+    color: var(--success-color);
+}
+
+.bg-warning-light {
+    background-color: var(--warning-light);
+    color: var(--secondary-color);
+}
+
+.bg-danger-light {
+    background-color: var(--danger-light);
+    color: var(--danger-color);
+}
+
+.bg-info-light {
+    background-color: var(--info-light);
+    color: var(--info-color);
+}
+
+/* Statistics */
+.stat-title {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+}
+
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.stat-change {
+    font-size: 0.8125rem;
+}
+
+/* Password strength meter */
+.password-strength {
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+}
+
+.strength-meter {
+    height: 4px;
+    border-radius: 2px;
+    margin-top: 0.25rem;
+    background-color: #e9ecef;
+    position: relative;
+    overflow: hidden;
+}
+
+.strength-meter-fill {
+    height: 100%;
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.3s, background-color 0.3s;
+}
+
+/* Progress bars */
+.progress {
+    height: 10px;
+    margin-bottom: 0.5rem;
+    border-radius: var(--border-radius-sm);
+}
+
+/* Flash messages */
+.alert {
+    margin-bottom: 1.5rem;
+    border-radius: var(--border-radius);
+}
+
+/* Form elements */
+.form-control:focus {
+    box-shadow: 0 0 0 0.25rem rgba(58, 110, 165, 0.25);
+    border-color: var(--primary-color);
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover, .btn-primary:focus {
+    background-color: #31598a;
+    border-color: #31598a;
+}
+
+.btn-secondary {
+    background-color: var(--secondary-color);
+    border-color: var(--secondary-color);
+}
+
+.btn-secondary:hover, .btn-secondary:focus {
+    background-color: #e58c35;
+    border-color: #e58c35;
+}

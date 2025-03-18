@@ -1,0 +1,42 @@
+/* 
+ * variables.css
+ * Global CSS variables for Travian Whispers
+ */
+
+:root {
+    /* Core colors */
+    --primary-color: #3a6ea5;
+    --secondary-color: #ff9a3c;
+    --dark-color: #344055;
+    --light-color: #f4f4f9;
+    --success-color: #28a745;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --info-color: #17a2b8;
+    
+    /* Light variants for backgrounds */
+    --primary-light: rgba(58, 110, 165, 0.1);
+    --success-light: rgba(40, 167, 69, 0.1);
+    --warning-light: rgba(255, 154, 60, 0.1);
+    --danger-light: rgba(220, 53, 69, 0.1);
+    --info-light: rgba(23, 162, 184, 0.1);
+    
+    /* Layout measurements */
+    --sidebar-width: 250px;
+    --topbar-height: 60px;
+    
+    /* Font settings */
+    --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    
+    /* Shadows */
+    --card-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    --card-shadow-hover: 0 5px 15px rgba(0, 0, 0, 0.1);
+    
+    /* Border radius */
+    --border-radius-sm: 4px;
+    --border-radius: 8px;
+    --border-radius-lg: 12px;
+    
+    /* Transitions */
+    --transition-speed: 0.3s;
+}

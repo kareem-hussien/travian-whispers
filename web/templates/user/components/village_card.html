@@ -1,0 +1,55 @@
+<!-- village_card.html -->
+<!--
+  Village Card Component - For displaying village information
+  Parameters:
+  - village: Village object with properties (name, coordinates, population, status, resources)
+-->
+<div class="village-item">
+    <div class="village-icon">
+        <img src="{{ url_for('static', filename='img/icon/village-icon.png') }}" alt="Village" width="32" height="32">
+    </div>
+    <div class="village-info">
+        <div class="village-name">{{ village.name }}</div>
+        <div class="village-coords">{{ village.coordinates }}</div>
+    </div>
+    <div class="village-population">
+        <small class="text-muted">Population:</small>
+        <div>{{ village.population }}</div>
+    </div>
+    <div class="village-status ms-3">
+        {% if village.status == 'active' %}
+        <span class="badge bg-success">Active</span>
+        {% else %}
+        <span class="badge bg-secondary">Inactive</span>
+        {% endif %}
+    </div>
+    <div class="village-resources ms-3">
+        <div class="d-flex">
+            <span class="resource-indicator resource-wood" data-bs-toggle="tooltip" title="Wood">
+                <i class="bi bi-tree"></i> {{ village.resources.wood if village.resources else 'N/A' }}
+            </span>
+            <span class="resource-indicator resource-clay" data-bs-toggle="tooltip" title="Clay">
+                <i class="bi bi-circle-fill"></i> {{ village.resources.clay if village.resources else 'N/A' }}
+            </span>
+            <span class="resource-indicator resource-iron" data-bs-toggle="tooltip" title="Iron">
+                <i class="bi bi-circle-half"></i> {{ village.resources.iron if village.resources else 'N/A' }}
+            </span>
+            <span class="resource-indicator resource-crop" data-bs-toggle="tooltip" title="Crop">
+                <i class="bi bi-flower1"></i> {{ village.resources.crop if village.resources else 'N/A' }}
+            </span>
+        </div>
+    </div>
+    <div class="village-actions ms-3">
+        <div class="btn-group btn-group-sm">
+            <button class="btn btn-outline-primary" data-bs-toggle="tooltip" title="View Details">
+                <i class="bi bi-eye"></i>
+            </button>
+            <button class="btn btn-outline-success" data-bs-toggle="tooltip" title="Enable Auto Farm" {% if not village.auto_farm_enabled %}style="display:none"{% endif %}>
+                <i class="bi bi-robot"></i>
+            </button>
+            <button class="btn btn-outline-warning" data-bs-toggle="tooltip" title="Edit Settings">
+                <i class="bi bi-gear"></i>
+            </button>
+        </div>
+    </div>
+</div>

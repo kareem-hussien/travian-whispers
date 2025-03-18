@@ -1,4 +1,5 @@
-<!-- layout.html -->
+<!-- header.html -->
+<!-- This component includes the necessary head tags and CSS imports -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,7 +13,7 @@
     
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style_dashboard.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
@@ -25,22 +26,6 @@
     {% block head_extra %}{% endblock %}
 </head>
 <body>
-    <!-- Sidebar -->
-    {% include 'user/components/sidebar.html' %}
-
-    <!-- Main Content -->
-    <div class="main-content">
-        <!-- Top Bar -->
-        {% include 'user/components/topbar.html' %}
-        
-        <!-- Page Content -->
-        {% block content %}{% endblock %}
-    </div>
-
-    <!-- Modals -->
-    {% block modals %}{% endblock %}
-
-    <!-- Footer & Scripts -->
-    {% include 'user/components/footer.html' %}
+    <!-- Content will be inserted here in the layout -->
 </body>
 </html>

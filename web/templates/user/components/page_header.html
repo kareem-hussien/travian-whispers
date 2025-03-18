@@ -1,0 +1,34 @@
+<!-- page_header.html -->
+<!--
+  Page Header Component - For displaying consistent page headers
+  Parameters:
+  - title: Page title
+  - subtitle: Optional subtitle or description
+  - show_buttons: Whether to show action buttons (optional, default: false)
+  - primary_button_text: Text for primary action button (optional)
+  - primary_button_icon: Icon for primary action button (optional)
+  - primary_button_id: ID for primary action button (optional)
+-->
+<div class="row mb-4">
+    <div class="col-12 {% if show_buttons %}d-flex justify-content-between align-items-center{% endif %}">
+        <div>
+            <h2 class="mb-1">{{ title }}</h2>
+            {% if subtitle %}
+            <p class="text-muted mb-0">{{ subtitle }}</p>
+            {% endif %}
+        </div>
+        
+        {% if show_buttons and primary_button_text %}
+        <button class="btn btn-primary" id="{{ primary_button_id|default('primaryAction') }}">
+            {% if primary_button_icon %}
+            <i class="bi bi-{{ primary_button_icon }} me-2"></i>
+            {% endif %}
+            {{ primary_button_text }}
+        </button>
+        {% endif %}
+    </div>
+    
+    <div class="col-12 mt-2">
+        {% include 'user/components/flash_messages.html' %}
+    </div>
+</div>

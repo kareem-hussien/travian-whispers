@@ -1,0 +1,53 @@
+<!-- auto_farm_status.html -->
+<!--
+  Auto Farm Status Component - For displaying auto farm status
+  Parameters:
+  - auto_farm: Auto farm object with properties (status, last_run, next_run)
+-->
+<div class="dashboard-card">
+    <h4 class="mb-3">Auto Farm Status</h4>
+    
+    <div class="d-flex align-items-center mb-4">
+        <div class="pe-3">
+            <span class="d-inline-block rounded-circle" style="width: 24px; height: 24px; background-color: {{ 'green' if auto_farm.status == 'active' else 'orange' if auto_farm.status == 'paused' else 'red' }};"></span>
+        </div>
+        <div>
+            <h5 class="mb-0">{{ auto_farm.status|capitalize }}</h5>
+            <p class="text-muted mb-0">Last run: {{ auto_farm.last_run }}</p>
+        </div>
+    </div>
+    
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <span>Next farm run in:</span>
+        <div class="d-flex align-items-center">
+            <div class="spinner-border spinner-border-sm text-primary me-2" role="status" aria-hidden="true"></div>
+            <span id="countdownTimer">Loading...</span>
+        </div>
+    </div>
+    
+    <div class="progress mb-4" style="height: 10px;">
+        <div class="progress-bar bg-primary" role="progressbar" style="width: 65%;" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+    
+    <div class="d-flex justify-content-between">
+        {% if auto_farm.status == 'active' %}
+        <button class="btn btn-warning" id="pauseAutoFarm">
+            <i class="bi bi-pause-fill"></i> Pause
+        </button>
+        <button class="btn btn-danger" id="stopAutoFarm">
+            <i class="bi bi-stop-fill"></i> Stop
+        </button>
+        {% elif auto_farm.status == 'paused' %}
+        <button class="btn btn-success" id="resumeAutoFarm">
+            <i class="bi bi-play-fill"></i> Resume
+        </button>
+        <button class="btn btn-danger" id="stopAutoFarm">
+            <i class="bi bi-stop-fill"></i> Stop
+        </button>
+        {% else %}
+        <button class="btn btn-success" id="startAutoFarm">
+            <i class="bi bi-play-fill"></i> Start
+        </button>
+        {% endif %}
+    </div>
+</div>

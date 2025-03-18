@@ -1,578 +1,222 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Travian Whispers</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <style>
-        :root {
-            --sidebar-width: 250px;
-            --topbar-height: 60px;
-            --primary-color: #3a6ea5;
-            --secondary-color: #ff9a3c;
-            --dark-color: #344055;
-            --light-color: #f4f4f9;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f4f9;
-            overflow-x: hidden;
-        }
-        
-        /* Sidebar */
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: var(--sidebar-width);
-            height: 100vh;
-            background-color: var(--dark-color);
-            color: white;
-            z-index: 1000;
-            transition: left 0.3s ease;
-        }
-        
-        .sidebar-header {
-            height: var(--topbar-height);
-            display: flex;
-            align-items: center;
-            padding: 0 1rem;
-            background-color: rgba(0, 0, 0, 0.2);
-        }
-        
-        .sidebar-logo {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: white;
-            text-decoration: none;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            display: flex;
-            align-items: center;
-        }
-        
-        .sidebar-logo i {
-            margin-right: 0.5rem;
-        }
-        
-        .sidebar-content {
-            padding: 1rem 0;
-            height: calc(100vh - var(--topbar-height));
-            overflow-y: auto;
-        }
-        
-        .nav-item {
-            margin-bottom: 0.25rem;
-        }
-        
-        .nav-link {
-            color: rgba(255, 255, 255, 0.75);
-            padding: 0.75rem 1.5rem;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            border-left: 3px solid transparent;
-        }
-        
-        .nav-link:hover {
-            color: white;
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-        
-        .nav-link.active {
-            color: white;
-            background-color: rgba(255, 255, 255, 0.1);
-            border-left: 3px solid var(--secondary-color);
-        }
-        
-        .nav-icon {
-            margin-right: 0.75rem;
-            font-size: 1.1rem;
-            width: 1.5rem;
-            text-align: center;
-        }
-        
-        .sidebar-footer {
-            padding: 1rem 1.5rem;
-            background-color: rgba(0, 0, 0, 0.2);
-        }
-        
-        /* Main Content */
-        .main-content {
-            margin-left: var(--sidebar-width);
-            min-height: 100vh;
-            transition: margin-left 0.3s ease;
-        }
-        
-        .topbar {
-            height: var(--topbar-height);
-            background-color: white;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            display: flex;
-            align-items: center;
-            padding: 0 1.5rem;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        
-        .menu-toggle {
-            cursor: pointer;
-            margin-right: 1rem;
-            font-size: 1.5rem;
-            color: var(--dark-color);
-            display: none;
-        }
-        
-        .breadcrumb {
-            margin-bottom: 0;
-        }
-        
-        .user-dropdown {
-            margin-left: auto;
-        }
-        
-        .content {
-            padding: 1.5rem;
-        }
-        
-        .dashboard-card {
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-            padding: 1.5rem;
-            height: 100%;
-            transition: transform 0.3s ease;
-        }
-        
-        .dashboard-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-        
-        .card-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-        }
-        
-        .bg-primary-light {
-            background-color: rgba(58, 110, 165, 0.1);
-            color: var(--primary-color);
-        }
-        
-        .bg-success-light {
-            background-color: rgba(40, 167, 69, 0.1);
-            color: #28a745;
-        }
-        
-        .bg-warning-light {
-            background-color: rgba(255, 154, 60, 0.1);
-            color: var(--secondary-color);
-        }
-        
-        .bg-danger-light {
-            background-color: rgba(220, 53, 69, 0.1);
-            color: #dc3545;
-        }
-        
-        .task-status {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 0.5rem;
-        }
-        
-        .status-active {
-            background-color: #28a745;
-        }
-        
-        .status-paused {
-            background-color: #ffc107;
-        }
-        
-        .status-stopped {
-            background-color: #dc3545;
-        }
-        
-        .villages-table img {
-            width: 24px;
-            height: 24px;
-            margin-right: 0.5rem;
-        }
-        
-        .subscription-badge {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            padding: 0.35rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-        
-        .task-controls button {
-            margin-right: 0.5rem;
-        }
-        
-        @media (max-width: 992px) {
-            .sidebar {
-                left: calc(-1 * var(--sidebar-width));
-            }
-            
-            .sidebar.show {
-                left: 0;
-            }
-            
-            .main-content {
-                margin-left: 0;
-            }
-            
-            .menu-toggle {
-                display: block;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="sidebar-header">
-            <a href="{{ url_for('user.dashboard') }}" class="sidebar-logo">                <i class="bi bi-robot"></i> Travian Whispers
-            </a>
-        </div>
-        <div class="sidebar-content">
-            <ul class="nav flex-column">
-                <li class="nav-item">
-                    <a href="{{ url_for('user.dashboard') }}" class="nav-link active">
-                        <span class="nav-icon"><i class="bi bi-speedometer2"></i></span>
-                        Dashboard
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ url_for('user.profile') }}" class="nav-link">
-                        <span class="nav-icon"><i class="bi bi-person"></i></span>
-                        Profile
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <span class="nav-icon"><i class="bi bi-gear"></i></span>
-                        Travian Settings
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <span class="nav-icon"><i class="bi bi-buildings"></i></span>
-                        Villages
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <span class="nav-icon"><i class="bi bi-robot"></i></span>
-                        Auto Farm
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <span class="nav-icon"><i class="bi bi-shield"></i></span>
-                        Troop Trainer
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <span class="nav-icon"><i class="bi bi-clock-history"></i></span>
-                        Activity Logs
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <span class="nav-icon"><i class="bi bi-credit-card"></i></span>
-                        Subscription
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <span class="nav-icon"><i class="bi bi-question-circle"></i></span>
-                        Help & Support
-                    </a>
-                </li>
-            </ul>
-        </div>
-        
-        <div class="sidebar-footer">
-            <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-light btn-sm w-100">
-                <i class="bi bi-box-arrow-right"></i> Logout
-            </a>
+{% extends 'user/layout.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">Dashboard</li>
+{% endblock %}
+
+{% block content %}
+<div class="content">
+    <!-- Welcome Message -->
+    <div class="row mb-4">
+        <div class="col-12">
+            {% with 
+                user=current_user,
+                subscription={
+                    'status': 'active',
+                    'plan': dashboard.subscription.plan,
+                    'end_date': dashboard.subscription.end_date,
+                    'max_villages': 5,
+                    'days_used': 20,
+                    'days_total': 30
+                }
+            %}
+                {% include 'user/components/welcome_card.html' %}
+            {% endwith %}
         </div>
     </div>
-
-    <!-- Main Content -->
-    <div class="main-content">
-        <!-- Top Bar -->
-        <div class="topbar">
-            <div class="menu-toggle" id="menuToggle">
-                <i class="bi bi-list"></i>
-            </div>
-            
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ url_for('user.dashboard') }}">Home</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Dashboard</li>
-                </ol>
-            </nav>
-            
-            <div class="user-dropdown dropdown">
-                <button class="btn dropdown-toggle" type="button" id="userMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-person-circle"></i> {{ current_user.username }}
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenuButton">
-                    <li><a class="dropdown-item" href="{{ url_for('user.profile') }}"><i class="bi bi-person"></i> Profile</a></li>
-                    <li><a class="dropdown-item" href="#"><i class="bi bi-gear"></i> Settings</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
-                </ul>
+    
+    <!-- Status Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            {% with 
+                icon='buildings',
+                icon_bg='bg-primary-light',
+                title='Active Villages',
+                value=dashboard.villages|length,
+                subtitle='Max: 5 villages'
+            %}
+                {% include 'user/components/stat_card.html' %}
+            {% endwith %}
+        </div>
+        
+        <div class="col-md-3">
+            {% with 
+                icon='robot',
+                icon_bg='bg-success-light',
+                title='Auto-Farming Status',
+                value=dashboard.auto_farm.status|capitalize,
+                subtitle='Running for 3 days'
+            %}
+                {% include 'user/components/stat_card.html' %}
+            {% endwith %}
+        </div>
+        
+        <div class="col-md-3">
+            {% with 
+                icon='shield',
+                icon_bg='bg-warning-light',
+                title='Troops Trained',
+                value='450',
+                subtitle='Last 7 days'
+            %}
+                {% include 'user/components/stat_card.html' %}
+            {% endwith %}
+        </div>
+        
+        <div class="col-md-3">
+            {% with 
+                icon='clock-history',
+                icon_bg='bg-danger-light',
+                title='Next Farm Run',
+                value=dashboard.auto_farm.next_run|default('00:18:45'),
+                subtitle='Auto-Farming Enabled'
+            %}
+                {% include 'user/components/stat_card.html' %}
+            {% endwith %}
+        </div>
+    </div>
+    
+    <!-- Running Tasks and Villages -->
+    <div class="row mb-4">
+        <!-- Running Tasks -->
+        <div class="col-md-6">
+            <div class="dashboard-card">
+                <div class="d-flex justify-content-between mb-3">
+                    <h5>Running Tasks</h5>
+                    <button class="btn btn-sm btn-outline-primary">Start New Task</button>
+                </div>
+                
+                <div class="task-list">
+                    {% with 
+                        task_name='Auto-Farming',
+                        task_status='active',
+                        task_duration='3d 05h 12m',
+                        status_class='status-active'
+                    %}
+                        {% include 'user/components/task_card.html' %}
+                    {% endwith %}
+                    
+                    {% with 
+                        task_name='Troop Training',
+                        task_status='paused',
+                        task_duration='1d 12h 45m',
+                        status_class='status-paused'
+                    %}
+                        {% include 'user/components/task_card.html' %}
+                    {% endwith %}
+                </div>
             </div>
         </div>
         
-        <!-- Content -->
-        <div class="content">
-            <!-- Welcome Message -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="dashboard-card">
-                        <div class="subscription-badge bg-warning text-white">
-                            Standard Plan
-                        </div>
-                        <h4>Welcome back, {{ current_user.username }}!</h4>
-                        <p>Your subscription is active until <strong>April 12, 2025</strong>. You have used <strong>2</strong> of <strong>5</strong> available villages.</p>
-                        <div class="d-flex align-items-center mt-3">
-                            <span class="me-3">Subscription Progress:</span>
-                            <div class="progress flex-grow-1" style="height: 10px;">
-                                <div class="progress-bar bg-success" role="progressbar" style="width: 65%;" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-                            <span class="ms-3">65% used</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Status Cards -->
-            <div class="row mb-4">
-                <div class="col-md-3">
-                    <div class="dashboard-card">
-                        <div class="card-icon bg-primary-light">
-                            <i class="bi bi-buildings"></i>
-                        </div>
-                        <h6 class="text-muted">Active Villages</h6>
-                        <h3>2</h3>
-                        <small class="text-muted">Max: 5 villages</small>
-                    </div>
+        <!-- Villages -->
+        <div class="col-md-6">
+            <div class="dashboard-card">
+                <div class="d-flex justify-content-between mb-3">
+                    <h5>Your Villages</h5>
+                    <button class="btn btn-sm btn-outline-primary">Refresh Data</button>
                 </div>
                 
-                <div class="col-md-3">
-                    <div class="dashboard-card">
-                        <div class="card-icon bg-success-light">
-                            <i class="bi bi-robot"></i>
-                        </div>
-                        <h6 class="text-muted">Auto-Farming Status</h6>
-                        <h3>Active</h3>
-                        <small class="text-success">Running for 3 days</small>
+                <div class="villages-list">
+                    {% for village in dashboard.villages %}
+                        {% with village=village %}
+                            {% include 'user/components/village_card.html' %}
+                        {% endwith %}
+                    {% endfor %}
+                    
+                    {% if dashboard.villages|length == 0 %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        No villages found. Click "Refresh Data" to fetch your villages from Travian.
                     </div>
-                </div>
-                
-                <div class="col-md-3">
-                    <div class="dashboard-card">
-                        <div class="card-icon bg-warning-light">
-                            <i class="bi bi-shield"></i>
-                        </div>
-                        <h6 class="text-muted">Troops Trained</h6>
-                        <h3>450</h3>
-                        <small class="text-muted">Last 7 days</small>
-                    </div>
-                </div>
-                
-                <div class="col-md-3">
-                    <div class="dashboard-card">
-                        <div class="card-icon bg-danger-light">
-                            <i class="bi bi-clock-history"></i>
-                        </div>
-                        <h6 class="text-muted">Next Farm Run</h6>
-                        <h3>00:18:45</h3>
-                        <small class="text-muted">Auto-Farming Enabled</small>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Running Tasks -->
-            <div class="row mb-4">
-                <div class="col-md-6">
-                    <div class="dashboard-card">
-                        <div class="d-flex justify-content-between mb-3">
-                            <h5>Running Tasks</h5>
-                            <button class="btn btn-sm btn-outline-primary">Start New Task</button>
-                        </div>
-                        
-                        <div class="table-responsive">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Task</th>
-                                        <th>Status</th>
-                                        <th>Duration</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>Auto-Farming</td>
-                                        <td><span class="task-status status-active"></span> Active</td>
-                                        <td>3d 05h 12m</td>
-                                        <td class="task-controls">
-                                            <button class="btn btn-sm btn-warning"><i class="bi bi-pause-fill"></i></button>
-                                            <button class="btn btn-sm btn-danger"><i class="bi bi-stop-fill"></i></button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Troop Training</td>
-                                        <td><span class="task-status status-paused"></span> Paused</td>
-                                        <td>1d 12h 45m</td>
-                                        <td class="task-controls">
-                                            <button class="btn btn-sm btn-success"><i class="bi bi-play-fill"></i></button>
-                                            <button class="btn btn-sm btn-danger"><i class="bi bi-stop-fill"></i></button>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-md-6">
-                    <div class="dashboard-card">
-                        <div class="d-flex justify-content-between mb-3">
-                            <h5>Your Villages</h5>
-                            <button class="btn btn-sm btn-outline-primary">Refresh Data</button>
-                        </div>
-                        
-                        <div class="table-responsive">
-                            <table class="table villages-table">
-                                <thead>
-                                    <tr>
-                                        <th>Village</th>
-                                        <th>Coordinates</th>
-                                        <th>Population</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td><img src="{{ url_for('static', filename='img/icon/icon/village-icon.png') }}" alt="Village">Main Village</td>
-                                        <td>(24, -35)</td>
-                                        <td>320</td>
-                                        <td><span class="badge bg-success">Active</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td><img src="{{ url_for('static', filename='img/icon/village-icon.png') }}" alt="Village">Second Village</td>
-                                        <td>(22, -40)</td>
-                                        <td>215</td>
-                                        <td><span class="badge bg-success">Active</span></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Recent Activity -->
-            <div class="row">
-                <div class="col-12">
-                    <div class="dashboard-card">
-                        <h5>Recent Activity</h5>
-                        
-                        <div class="table-responsive">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Date & Time</th>
-                                        <th>Activity</th>
-                                        <th>Details</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>2025-03-12 15:30:45</td>
-                                        <td>Auto-Farm</td>
-                                        <td>Sent farm lists from Main Village</td>
-                                        <td><span class="badge bg-success">Success</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>2025-03-12 14:15:22</td>
-                                        <td>Troop Training</td>
-                                        <td>Trained 50 Legionnaires in Main Village</td>
-                                        <td><span class="badge bg-success">Success</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>2025-03-12 12:30:10</td>
-                                        <td>Auto-Farm</td>
-                                        <td>Sent farm lists from Second Village</td>
-                                        <td><span class="badge bg-success">Success</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>2025-03-12 11:05:38</td>
-                                        <td>System</td>
-                                        <td>Bot started after maintenance</td>
-                                        <td><span class="badge bg-info">Info</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>2025-03-12 10:45:15</td>
-                                        <td>System</td>
-                                        <td>Scheduled maintenance began</td>
-                                        <td><span class="badge bg-warning">Warning</span></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        
-                        <div class="text-center mt-3">
-                            <button class="btn btn-outline-primary">Load More</button>
-                        </div>
-                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
+    
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-12">
+            {% with 
+                activities=[
+                    {
+                        'timestamp': '2025-03-12 15:30:45',
+                        'activity': 'Auto-Farm',
+                        'details': 'Sent farm lists from Main Village',
+                        'status': 'Success'
+                    },
+                    {
+                        'timestamp': '2025-03-12 14:15:22',
+                        'activity': 'Troop Training',
+                        'details': 'Trained 50 Legionnaires in Main Village',
+                        'status': 'Success'
+                    },
+                    {
+                        'timestamp': '2025-03-12 12:30:10',
+                        'activity': 'Auto-Farm',
+                        'details': 'Sent farm lists from Second Village',
+                        'status': 'Success'
+                    },
+                    {
+                        'timestamp': '2025-03-12 11:05:38',
+                        'activity': 'System',
+                        'details': 'Bot started after maintenance',
+                        'status': 'Info'
+                    },
+                    {
+                        'timestamp': '2025-03-12 10:45:15',
+                        'activity': 'System',
+                        'details': 'Scheduled maintenance began',
+                        'status': 'Warning'
+                    }
+                ]
+            %}
+                {% include 'user/components/activity_log.html' %}
+            {% endwith %}
+        </div>
+    </div>
+</div>
+{% endblock %}
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Mobile sidebar toggle
-        document.getElementById('menuToggle').addEventListener('click', function() {
-            document.querySelector('.sidebar').classList.toggle('show');
-        });
+{% block scripts %}
+<script>
+    // Dashboard-specific scripts
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize any dashboard-specific functionality
         
-        // Close sidebar when clicking outside on mobile
-        document.addEventListener('click', function(event) {
-            const sidebar = document.querySelector('.sidebar');
-            const menuToggle = document.getElementById('menuToggle');
+        // Example: Countdown timer for next farm run
+        const countdownTimer = document.getElementById('countdownTimer');
+        if (countdownTimer) {
+            // Set the initial time (could be passed from server)
+            let minutes = 18;
+            let seconds = 45;
             
-            if (window.innerWidth < 992 && sidebar.classList.contains('show') && 
-                !sidebar.contains(event.target) && !menuToggle.contains(event.target)) {
-                sidebar.classList.remove('show');
-            }
-        });
-    </script>
-</body>
-</html>
+            // Update every second
+            const timerInterval = setInterval(function() {
+                seconds--;
+                if (seconds < 0) {
+                    minutes--;
+                    seconds = 59;
+                }
+                
+                if (minutes < 0) {
+                    clearInterval(timerInterval);
+                    countdownTimer.textContent = "Any moment now...";
+                } else {
+                    countdownTimer.textContent = minutes + "m " + seconds + "s";
+                }
+            }, 1000);
+        }
+        
+        // Handle "Start New Task" button
+        const startTaskBtn = document.querySelector('.btn-outline-primary');
+        if (startTaskBtn) {
+            startTaskBtn.addEventListener('click', function() {
+                window.location.href = "{{ url_for('user.auto_farm') }}";
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,49 @@
+<!-- subscription_card.html -->
+<!--
+  Subscription Card Component - For displaying subscription plan information
+  Parameters:
+  - plan: Plan object with properties (name, price, features)
+  - current: Boolean to indicate if this is the user's current plan
+-->
+<div class="dashboard-card pricing-card h-100 {{ 'border border-2 border-primary' if current else '' }}">
+    {% if current %}
+    <div class="position-absolute top-0 start-50 translate-middle">
+        <span class="badge bg-primary px-3 py-2">Current Plan</span>
+    </div>
+    {% endif %}
+    
+    <h4 class="pricing-header">{{ plan.name }}</h4>
+    <div class="pricing-price">${{ plan.price.monthly }}<small class="text-muted">/month</small></div>
+    
+    <ul class="feature-list mt-4">
+        {% if plan.features.autoFarm %}
+        <li class="feature-available"><i class="bi bi-check-circle-fill me-2"></i> Auto-Farm feature</li>
+        {% else %}
+        <li class="feature-unavailable"><i class="bi bi-x-circle-fill me-2"></i> Auto-Farm feature</li>
+        {% endif %}
+        
+        {% if plan.features.trainer %}
+        <li class="feature-available"><i class="bi bi-check-circle-fill me-2"></i> Troop training</li>
+        {% else %}
+        <li class="feature-unavailable"><i class="bi bi-x-circle-fill me-2"></i> Troop training</li>
+        {% endif %}
+        
+        <li class="feature-available"><i class="bi bi-check-circle-fill me-2"></i> Support for {{ plan.features.maxVillages }} villages</li>
+        
+        <li class="feature-available"><i class="bi bi-check-circle-fill me-2"></i> {{ plan.features.maxTasks }} concurrent tasks</li>
+        
+        {% if plan.features.advanced %}
+        <li class="feature-available"><i class="bi bi-check-circle-fill me-2"></i> Advanced features</li>
+        {% else %}
+        <li class="feature-unavailable"><i class="bi bi-x-circle-fill me-2"></i> Advanced features</li>
+        {% endif %}
+    </ul>
+    
+    <div class="d-grid gap-2 mt-4">
+        {% if current %}
+        <button type="button" class="btn btn-outline-primary">Manage Subscription</button>
+        {% else %}
+        <button type="button" class="btn btn-primary">Upgrade to {{ plan.name }}</button>
+        {% endif %}
+    </div>
+</div>

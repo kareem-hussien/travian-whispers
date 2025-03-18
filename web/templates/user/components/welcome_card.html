@@ -1,0 +1,25 @@
+<!-- welcome_card.html -->
+<!--
+  Welcome Card Component - For displaying welcome message on dashboard
+  Parameters:
+  - user: User object with properties
+  - subscription: Subscription object with properties
+-->
+<div class="dashboard-card">
+    <div class="subscription-badge {{ 'bg-success' if subscription.status == 'active' else 'bg-secondary' }} text-white">
+        {{ subscription.plan }}
+    </div>
+    <h4>Welcome back, {{ user.username }}!</h4>
+    <p>Your subscription is active until <strong>{{ subscription.end_date }}</strong>. 
+       You have used <strong>{{ user.villages|length }}</strong> of <strong>{{ subscription.max_villages }}</strong> available villages.</p>
+    <div class="d-flex align-items-center mt-3">
+        <span class="me-3">Subscription Progress:</span>
+        <div class="progress flex-grow-1" style="height: 10px;">
+            <div class="progress-bar bg-success" role="progressbar" 
+                 style="width: {{ (subscription.days_used / subscription.days_total * 100)|round|int }}%;" 
+                 aria-valuenow="{{ (subscription.days_used / subscription.days_total * 100)|round|int }}" 
+                 aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+        <span class="ms-3">{{ (subscription.days_used / subscription.days_total * 100)|round|int }}% used</span>
+    </div>
+</div>
