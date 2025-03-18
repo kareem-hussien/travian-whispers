@@ -1,0 +1,30 @@
+<!-- admin-chart-card.html -->
+<!--
+  Admin Chart Card Component - For displaying charts in admin panel
+  Parameters:
+  - chart_id: HTML ID for the chart canvas
+  - chart_title: Title for the chart
+  - chart_subtitle: Subtitle for the chart (optional)
+  - chart_height: Height for the chart container (optional, default: "300px")
+  - show_legend: Whether to show the chart legend (optional, default: true)
+-->
+<div class="dashboard-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h5 class="mb-0">{{ chart_title }}</h5>
+            {% if chart_subtitle %}
+            <p class="text-muted mb-0 small">{{ chart_subtitle }}</p>
+            {% endif %}
+        </div>
+        {% if show_legend|default(true) %}
+        <div class="chart-legend" id="{{ chart_id }}Legend"></div>
+        {% endif %}
+    </div>
+    
+    <div class="chart-container" style="position: relative; height: {{ chart_height|default('300px') }};">
+        <canvas id="{{ chart_id }}"></canvas>
+    </div>
+</div>
+
+<!-- Chart initialization script block (to be filled by template) -->
+{% block chart_script %}{% endblock %}

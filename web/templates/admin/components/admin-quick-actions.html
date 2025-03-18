@@ -1,0 +1,28 @@
+<!-- admin-quick-actions.html -->
+<!--
+  Admin Quick Actions Component - For displaying quick action buttons in admin dashboard
+  Parameters:
+  - actions: List of action objects, each with icon, text, url (or modal), color (optional, default: "primary")
+  - columns: Number of columns for layout (optional, default: 4)
+-->
+<div class="dashboard-card">
+    <h5 class="mb-4">Quick Actions</h5>
+    <div class="row">
+        {% for action in actions %}
+        <div class="col-md-{{ 12 // columns|default(4) }} col-sm-6 mb-3 {{ 'mb-md-0' if not loop.last else '' }}">
+            {% if action.modal %}
+            <button type="button" class="btn btn-outline-{{ action.color|default('primary') }} d-block p-3 w-100"
+                   data-bs-toggle="modal" data-bs-target="#{{ action.modal }}">
+                <i class="bi bi-{{ action.icon }} fs-4 d-block mb-2"></i>
+                {{ action.text }}
+            </button>
+            {% else %}
+            <a href="{{ action.url }}" class="btn btn-outline-{{ action.color|default('primary') }} d-block p-3">
+                <i class="bi bi-{{ action.icon }} fs-4 d-block mb-2"></i>
+                {{ action.text }}
+            </a>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>

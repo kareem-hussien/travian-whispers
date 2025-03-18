@@ -1,0 +1,106 @@
+<!-- admin-maintenance-mode.html -->
+<!--
+  Admin Maintenance Mode Component - For managing site maintenance mode
+  Parameters:
+  - maintenance_mode: Whether maintenance mode is currently enabled
+  - maintenance_message: Current maintenance message
+-->
+<div class="dashboard-card">
+    <h5 class="mb-4">Maintenance Mode</h5>
+    
+    <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <strong>Warning:</strong> Enabling maintenance mode will make the site inaccessible to all users except administrators.
+    </div>
+    
+    <div class="mb-3">
+        <label class="form-label d-block">Current Status</label>
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="maintenanceSwitch" {{ 'checked' if maintenance_mode else '' }}>
+            <label class="form-check-label" for="maintenanceSwitch">
+                Enable Maintenance Mode
+            </label>
+        </div>
+    </div>
+    
+    <div class="mb-3">
+        <label for="maintenanceMessage" class="form-label">Maintenance Message</label>
+        <textarea class="form-control" id="maintenanceMessage" rows="3">{{ maintenance_message }}</textarea>
+        <div class="form-text">This message will be displayed to users during maintenance.</div>
+    </div>
+    
+    <div class="mb-3">
+        <label for="maintenanceDuration" class="form-label">Expected Duration</label>
+        <select class="form-select" id="maintenanceDuration">
+            <option value="30min">30 minutes</option>
+            <option value="1hour">1 hour</option>
+            <option value="2hours">2 hours</option>
+            <option value="4hours">4 hours</option>
+            <option value="indefinite" selected>Indefinite</option>
+        </select>
+    </div>
+    
+    <button id="saveMaintenanceBtn" class="btn btn-primary">Save Changes</button>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Save Maintenance Settings Button
+    const saveMaintenanceBtn = document.getElementById('saveMaintenanceBtn');
+    if (saveMaintenanceBtn) {
+        saveMaintenanceBtn.addEventListener('click', function() {
+            const maintenanceEnabled = document.getElementById('maintenanceSwitch').checked;
+            const maintenanceMessage = document.getElementById('maintenanceMessage').value;
+            const maintenanceDuration = document.getElementById('maintenanceDuration').value;
+            
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
+            
+            // In a real implementation, this would use fetch to update maintenance settings
+            fetch('{{ url_for("admin.update_maintenance") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    enabled: maintenanceEnabled,
+                    message: maintenanceMessage,
+                    duration: maintenanceDuration
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Maintenance settings updated successfully.');
+                    
+                    if (maintenanceEnabled) {
+                        // Add a visual indicator for maintenance mode
+                        const maintenanceBadge = document.createElement('div');
+                        maintenanceBadge.className = 'position-fixed top-0 start-50 translate-middle-x bg-warning text-dark px-3 py-2 rounded-bottom';
+                        maintenanceBadge.style.zIndex = '1050';
+                        maintenanceBadge.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-2"></i> Maintenance Mode Active';
+                        document.body.appendChild(maintenanceBadge);
+                    } else {
+                        // Remove maintenance indicator if it exists
+                        const existingBadge = document.querySelector('.bg-warning.top-0.start-50');
+                        if (existingBadge) {
+                            existingBadge.remove();
+                        }
+                    }
+                } else {
+                    alert('Failed to update maintenance settings: ' + data.message);
+                }
+                this.disabled = false;
+                this.innerHTML = 'Save Changes';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating maintenance settings.');
+                this.disabled = false;
+                this.innerHTML = 'Save Changes';
+            });
+        });
+    }
+});
+</script>

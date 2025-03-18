@@ -1,0 +1,41 @@
+<!-- admin-stat-card.html -->
+<!--
+  Admin Stat Card Component - For displaying statistics on the admin dashboard
+  Parameters:
+  - icon: Bootstrap icon name (e.g., "people", "cash")
+  - icon_bg: Background style for icon (e.g., "bg-primary-light", "bg-success-light")
+  - title: Card title
+  - value: Main statistic value
+  - subtitle: Optional additional information
+  - change_value: Value change indicator (optional)
+  - change_direction: Direction of change ('up' or 'down') (optional)
+  - progress_value: Progress bar value (0-100) (optional)
+  - progress_label: Progress bar label (optional)
+-->
+<div class="dashboard-card">
+    <div class="card-icon {{ icon_bg }}">
+        <i class="bi bi-{{ icon }}"></i>
+    </div>
+    <div class="stat-title">{{ title }}</div>
+    <div class="stat-value">{{ value }}</div>
+    
+    {% if change_value is defined %}
+    <div class="stat-change {% if change_direction == 'up' %}text-success{% elif change_direction == 'down' %}text-danger{% endif %}">
+        <i class="bi bi-graph-{% if change_direction == 'up' %}up{% elif change_direction == 'down' %}down{% else %}up{% endif %}"></i> 
+        {{ change_value }}
+    </div>
+    {% elif subtitle %}
+    <div class="stat-change">{{ subtitle }}</div>
+    {% endif %}
+    
+    {% if progress_value is defined %}
+    <div class="progress">
+        <div class="progress-bar {% if progress_value < 30 %}bg-danger{% elif progress_value < 70 %}bg-warning{% else %}bg-success{% endif %}" 
+             role="progressbar" style="width: {{ progress_value }}%;"
+             aria-valuenow="{{ progress_value }}" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+    {% if progress_label %}
+    <div class="text-muted mt-2 small">{{ progress_label }}</div>
+    {% endif %}
+    {% endif %}
+</div>

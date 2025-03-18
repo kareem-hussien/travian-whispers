@@ -1,0 +1,26 @@
+<!-- admin-alert.html -->
+<!--
+  Admin Alert Component - For displaying alert messages in admin panel
+  Parameters:
+  - alert_type: Type of alert (success, danger, warning, info) (optional, default: "info")
+  - alert_title: Title for the alert (optional)
+  - alert_message: Message for the alert
+  - alert_icon: Icon for the alert (optional)
+  - dismissible: Whether the alert is dismissible (optional, default: true)
+  - alert_class: Additional CSS classes for the alert (optional)
+-->
+<div class="alert alert-{{ alert_type|default('info') }} {{ 'alert-dismissible fade show' if dismissible|default(true) }} {{ alert_class|default('') }}" role="alert">
+    {% if alert_icon %}
+    <i class="bi bi-{{ alert_icon }} me-2"></i>
+    {% endif %}
+    
+    {% if alert_title %}
+    <strong>{{ alert_title }}:</strong>
+    {% endif %}
+    
+    {{ alert_message }}
+    
+    {% if dismissible|default(true) %}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    {% endif %}
+</div>

@@ -1,0 +1,28 @@
+<!-- admin-form-checkbox.html -->
+<!--
+  Admin Form Checkbox Component - For displaying checkboxes with a consistent style
+  Parameters:
+  - checkbox_id: HTML ID for the checkbox
+  - checkbox_name: Name attribute for the checkbox
+  - checkbox_label: Label text
+  - checkbox_checked: Whether checkbox is checked (optional, default: false)
+  - checkbox_disabled: Whether checkbox is disabled (optional, default: false)
+  - checkbox_help: Help text to display under the checkbox (optional)
+  - checkbox_value: Value attribute for the checkbox (optional, default: "1")
+  - checkbox_switch: Whether to display as a switch instead of a checkbox (optional, default: false)
+-->
+<div class="mb-3">
+    <div class="form-check {% if checkbox_switch %}form-switch{% endif %}">
+        <input type="checkbox" 
+               class="form-check-input" 
+               id="{{ checkbox_id }}" 
+               name="{{ checkbox_name }}" 
+               value="{{ checkbox_value|default('1') }}"
+               {% if checkbox_checked %}checked{% endif %}
+               {% if checkbox_disabled %}disabled{% endif %}>
+        <label class="form-check-label" for="{{ checkbox_id }}">{{ checkbox_label }}</label>
+    </div>
+    {% if checkbox_help %}
+    <div class="form-text text-muted">{{ checkbox_help }}</div>
+    {% endif %}
+</div>

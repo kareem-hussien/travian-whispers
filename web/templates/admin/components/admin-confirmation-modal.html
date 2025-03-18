@@ -1,0 +1,95 @@
+<!-- admin-confirmation-modal.html -->
+<!--
+  Admin Confirmation Modal Component - For displaying confirmation dialogs in admin panel
+  Parameters:
+  - modal_id: HTML ID for the modal (optional, default: "confirmationModal")
+  - modal_title: Title for the modal (optional, default: "Confirm Action")
+  - confirm_message: Message to display in the confirmation dialog
+  - confirm_button_text: Text for the confirm button (optional, default: "Confirm")
+  - confirm_button_class: Additional CSS classes for the confirm button (optional, default: "btn-danger")
+  - cancel_button_text: Text for the cancel button (optional, default: "Cancel")
+  - item_type: Type of item being confirmed (optional, default: "item")
+  - show_icon: Whether to show warning icon (optional, default: true)
+  - form_id: ID of the form to submit on confirmation (optional)
+  - form_method: HTTP method for the form (optional, default: "post")
+  - form_action: Action URL for the form (optional)
+-->
+<div class="modal fade" id="{{ modal_id|default('confirmationModal') }}" 
+     tabindex="-1" 
+     aria-labelledby="{{ modal_id|default('confirmationModal') }}Label" 
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="{{ modal_id|default('confirmationModal') }}Label">{{ modal_title|default('Confirm Action') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% if show_icon|default(true) %}
+                <div class="text-center mb-4">
+                    <i class="bi bi-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+                </div>
+                {% endif %}
+                
+                <p>{{ confirm_message }}</p>
+                
+                <p class="mb-0" id="{{ modal_id|default('confirmationModal') }}ItemName"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ cancel_button_text|default('Cancel') }}</button>
+                {% if form_id %}
+                <button type="submit" form="{{ form_id }}" class="btn {{ confirm_button_class|default('btn-danger') }}">
+                    {{ confirm_button_text|default('Confirm') }}
+                </button>
+                {% else %}
+                <button type="button" id="{{ modal_id|default('confirmationModal') }}ConfirmBtn" class="btn {{ confirm_button_class|default('btn-danger') }}">
+                    {{ confirm_button_text|default('Confirm') }}
+                </button>
+                {% endif %}
+            </div>
+            
+            {% if form_id %}
+            <form id="{{ form_id }}" method="{{ form_method|default('post') }}" action="{{ form_action|default('#') }}" style="display:none;">
+                <input type="hidden" name="item_id" id="{{ modal_id|default('confirmationModal') }}ItemId">
+                {% if csrf_token %}
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                {% endif %}
+            </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set up confirmation modal data
+    const confirmModal = document.getElementById('{{ modal_id|default('confirmationModal') }}');
+    if (confirmModal) {
+        confirmModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const itemId = button.getAttribute('data-id');
+            const itemName = button.getAttribute('data-name');
+            
+            // Set item ID in the hidden input
+            const itemIdInput = document.getElementById('{{ modal_id|default('confirmationModal') }}ItemId');
+            if (itemIdInput) {
+                itemIdInput.value = itemId;
+            }
+            
+            // Set item name in the modal
+            const itemNameElement = document.getElementById('{{ modal_id|default('confirmationModal') }}ItemName');
+            if (itemNameElement && itemName) {
+                itemNameElement.textContent = `{{ item_type|default('Item') }}: ${itemName}`;
+            }
+            
+            // Set dynamic form action if needed
+            {% if not form_action %}
+            const form = document.getElementById('{{ form_id }}');
+            if (form && itemId) {
+                form.action = `${form.getAttribute('data-action-base')}/${itemId}`;
+            }
+            {% endif %}
+        });
+    }
+});
+</script>

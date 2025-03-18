@@ -1,0 +1,116 @@
+<!-- admin-table.html -->
+<!--
+  Admin Table Component - For displaying data tables in admin panel
+  Parameters:
+  - table_id: ID for the table element (optional)
+  - columns: List of column objects with properties (key, label, sortable)
+  - data: List of data objects
+  - actions: Whether to show action buttons (optional, default: true)
+  - show_view: Whether to show view button (optional, default: true)
+  - show_edit: Whether to show edit button (optional, default: true)
+  - show_delete: Whether to show delete button (optional, default: true)
+  - view_url_prefix: Prefix for view URLs (optional)
+  - edit_url_prefix: Prefix for edit URLs (optional)
+  - delete_url_prefix: Prefix for delete URLs (optional)
+  - id_field: Field name to use for IDs in URLs (optional, default: 'id')
+  - pagination: Whether to show pagination (optional, default: true)
+  - current_page: Current page number for pagination (optional, default: 1)
+  - total_pages: Total number of pages for pagination (optional, default: 1)
+  - empty_message: Message to display when table is empty (optional)
+-->
+<div class="table-responsive">
+    <table class="table table-hover align-middle" {% if table_id %}id="{{ table_id }}"{% endif %}>
+        <thead>
+            <tr>
+                {% for column in columns %}
+                <th {% if column.sortable %}class="sortable"{% endif %}>{{ column.label }}</th>
+                {% endfor %}
+                {% if actions %}
+                <th>Actions</th>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% if data and data|length > 0 %}
+                {% for item in data %}
+                <tr>
+                    {% for column in columns %}
+                    <td>
+                        {% if column.format == 'badge' %}
+                        <span class="badge {{ item[column.key + '_class']|default('bg-secondary') }}">
+                            {{ item[column.key] }}
+                        </span>
+                        {% elif column.format == 'image' %}
+                        <img src="{{ item[column.key] }}" alt="Image" width="32" height="32" class="rounded-circle">
+                        {% elif column.format == 'datetime' %}
+                        {{ item[column.key]|default('N/A') }}
+                        {% elif column.format == 'currency' %}
+                        ${{ item[column.key]|default('0.00') }}
+                        {% else %}
+                        {{ item[column.key]|default('') }}
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                    
+                    {% if actions %}
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            {% if show_view|default(true) %}
+                            <a href="{{ view_url_prefix|default('#') }}/{{ item[id_field|default('id')] }}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="View Details">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            {% endif %}
+                            
+                            {% if show_edit|default(true) %}
+                            <a href="{{ edit_url_prefix|default('#') }}/{{ item[id_field|default('id')] }}" class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            {% endif %}
+                            
+                            {% if show_delete|default(true) %}
+                            <button type="button" class="btn btn-outline-danger" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#deleteModal" 
+                                    data-id="{{ item[id_field|default('id')] }}"
+                                    data-name="{{ item.name|default(item.username|default('this item')) }}"
+                                    data-bs-toggle="tooltip" title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="{{ columns|length + (1 if actions else 0) }}" class="text-center py-4">
+                        {{ empty_message|default('No data available') }}
+                    </td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+{% if pagination|default(true) and data and data|length > 0 %}
+<nav aria-label="Table pagination" class="mt-4">
+    <ul class="pagination justify-content-center">
+        <li class="page-item {% if current_page|default(1) == 1 %}disabled{% endif %}">
+            <a class="page-link" href="?page={{ current_page|default(1) - 1 }}" tabindex="-1" aria-disabled="{{ 'true' if current_page|default(1) == 1 else 'false' }}">Previous</a>
+        </li>
+        
+        {% for page in range(1, (total_pages|default(1)) + 1) %}
+            {% if page >= (current_page|default(1)) - 2 and page <= (current_page|default(1)) + 2 %}
+            <li class="page-item {% if page == current_page|default(1) %}active{% endif %}">
+                <a class="page-link" href="?page={{ page }}">{{ page }}</a>
+            </li>
+            {% endif %}
+        {% endfor %}
+        
+        <li class="page-item {% if current_page|default(1) == total_pages|default(1) %}disabled{% endif %}">
+            <a class="page-link" href="?page={{ current_page|default(1) + 1 }}">Next</a>
+        </li>
+    </ul>
+</nav>
+{% endif %}

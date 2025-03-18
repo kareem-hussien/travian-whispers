@@ -1,0 +1,41 @@
+<!-- admin-system-status.html -->
+<!--
+  Admin System Status Component - For displaying system status in admin panel
+  Parameters:
+  - system_stats: Object containing system statistics with properties (status, uptime, memory_usage, maintenance_mode)
+-->
+<div class="dashboard-card">
+    <div class="card-icon bg-danger-light">
+        <i class="bi bi-server"></i>
+    </div>
+    
+    <div class="stat-title">System Status</div>
+    <div class="stat-value">{{ system_stats.status }}</div>
+    <div class="stat-change">
+        <i class="bi bi-clock"></i> Uptime: {{ system_stats.uptime }}
+    </div>
+    
+    <div class="progress mt-3 mb-2">
+        <div class="progress-bar 
+                    {{ 'bg-success' if system_stats.memory_usage < 70 else 'bg-warning' if system_stats.memory_usage < 90 else 'bg-danger' }}" 
+             role="progressbar" 
+             style="width: {{ system_stats.memory_usage }}%;" 
+             aria-valuenow="{{ system_stats.memory_usage }}" 
+             aria-valuemin="0" 
+             aria-valuemax="100"></div>
+    </div>
+    <div class="text-muted small">Memory usage: {{ system_stats.memory_usage }}%</div>
+    
+    <div class="maintenance-status mt-3">
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="maintenanceSwitch" 
+                   {{ 'checked' if system_stats.maintenance_mode else '' }}>
+            <label class="form-check-label" for="maintenanceSwitch">
+                Maintenance Mode
+            </label>
+        </div>
+        <div class="text-muted small mt-1">
+            {{ 'Currently in maintenance mode' if system_stats.maintenance_mode else 'Site is publicly accessible' }}
+        </div>
+    </div>
+</div>

@@ -1,0 +1,53 @@
+<!-- admin-user-card.html -->
+<!--
+  Admin User Card Component - For displaying user information in admin panel
+  Parameters:
+  - user: User object with properties (id, username, email, status, status_class, subscription, joined)
+  - show_actions: Whether to show action buttons (optional, default: true)
+  - show_avatar: Whether to show user avatar (optional, default: true)
+-->
+<div class="list-group-item list-group-item-action d-flex align-items-center p-3">
+    {% if show_avatar|default(true) %}
+    <div class="user-avatar me-3">
+        {% if user.avatar %}
+        <img src="{{ user.avatar }}" alt="{{ user.username }}" class="rounded-circle" width="40" height="40">
+        {% else %}
+        <div class="d-flex align-items-center justify-content-center bg-light rounded-circle" style="width: 40px; height: 40px;">
+            <span class="text-secondary">{{ user.username[0]|upper }}</span>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    <div class="flex-grow-1">
+        <div class="d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">{{ user.username }}</h6>
+            <span class="badge {{ user.status_class }}">{{ user.status }}</span>
+        </div>
+        <div class="text-muted small">{{ user.email }}</div>
+        <div class="d-flex mt-1">
+            <div class="me-3 small">
+                <i class="bi bi-calendar3 me-1"></i> {{ user.joined }}
+            </div>
+            {% if user.subscription %}
+            <div class="me-3 small">
+                <i class="bi bi-credit-card me-1"></i> {{ user.subscription }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    {% if show_actions|default(true) %}
+    <div class="ms-3">
+        <div class="btn-group btn-group-sm">
+            <a href="{{ url_for('admin.user_edit', user_id=user.id) }}" class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="Edit User">
+                <i class="bi bi-pencil"></i>
+            </a>
+            <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteUserModal" 
+                    data-id="{{ user.id }}" data-name="{{ user.username }}" data-bs-toggle="tooltip" title="Delete User">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+    </div>
+    {% endif %}
+</div>

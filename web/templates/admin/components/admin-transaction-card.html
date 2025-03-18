@@ -1,0 +1,43 @@
+<!-- admin-transaction-card.html -->
+<!--
+  Admin Transaction Card Component - For displaying transaction information in admin panel
+  Parameters:
+  - transaction: Transaction object with properties (id, username, plan, amount, date, status, status_class)
+-->
+<div class="list-group-item p-3">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <span class="badge {{ transaction.status_class }} me-2">{{ transaction.status }}</span>
+            <a href="{{ url_for('admin.transaction_details', transaction_id=transaction.id) }}" class="text-decoration-none">
+                #{{ transaction.id }}
+            </a>
+        </div>
+        <span class="badge bg-light text-dark">{{ transaction.date }}</span>
+    </div>
+    
+    <div class="d-flex justify-content-between align-items-center mt-2">
+        <div>
+            <div class="fw-medium">{{ transaction.username }}</div>
+            <div class="small text-muted">{{ transaction.plan }}</div>
+        </div>
+        <div class="fw-bold">{{ transaction.amount }}</div>
+    </div>
+    
+    <div class="d-flex justify-content-end mt-2">
+        <div class="btn-group btn-group-sm">
+            <a href="{{ url_for('admin.transaction_details', transaction_id=transaction.id) }}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="View Details">
+                <i class="bi bi-eye"></i>
+            </a>
+            <button class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="Send Receipt">
+                <i class="bi bi-envelope"></i>
+            </button>
+            {% if transaction.status == 'pending' %}
+            <button class="btn btn-outline-success" data-bs-toggle="tooltip" title="Mark as Completed" 
+                    data-bs-toggle="modal" data-bs-target="#updateStatusModal" 
+                    data-id="{{ transaction.id }}" data-status="completed">
+                <i class="bi bi-check-circle"></i>
+            </button>
+            {% endif %}
+        </div>
+    </div>
+</div>

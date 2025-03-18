@@ -1,0 +1,50 @@
+<!-- admin-tab-nav.html -->
+<!--
+  Admin Tab Navigation Component - For displaying tab navigation in admin panel
+  Parameters:
+  - tabs: List of tab objects, each with id, label, icon (optional)
+  - active_tab: ID of the active tab (optional, default: first tab)
+  - tab_content_id: ID of the tab content container (optional, default: "tabContent")
+  - nav_class: Additional CSS classes for the nav (optional)
+  - vertical: Whether tabs should be displayed vertically (optional, default: false)
+  - nav_type: Type of nav (tabs, pills) (optional, default: "tabs")
+-->
+<div class="{% if vertical %}row{% endif %}">
+    {% if vertical %}
+    <div class="col-lg-3 mb-4">
+    {% endif %}
+    
+    <div class="nav {% if vertical %}flex-column{% endif %} nav-{{ nav_type|default('tabs') }} {{ nav_class|default('') }}" 
+         id="myTab" role="tablist" aria-orientation="{% if vertical %}vertical{% else %}horizontal{% endif %}">
+        {% for tab in tabs %}
+        <button class="nav-link {% if active_tab == tab.id or (loop.first and active_tab is not defined) %}active{% endif %}"
+                id="{{ tab.id }}-tab" 
+                data-bs-toggle="tab"
+                data-bs-target="#{{ tab.id }}"
+                type="button"
+                role="tab" 
+                aria-controls="{{ tab.id }}"
+                aria-selected="{% if active_tab == tab.id or (loop.first and active_tab is not defined) %}true{% else %}false{% endif %}">
+            {% if tab.icon %}
+            <i class="bi bi-{{ tab.icon }} me-2"></i>
+            {% endif %}
+            {{ tab.label }}
+        </button>
+        {% endfor %}
+    </div>
+    
+    {% if vertical %}
+    </div>
+    <div class="col-lg-9">
+    {% endif %}
+    
+    <div class="tab-content" id="{{ tab_content_id|default('tabContent') }}">
+        {% block tab_content %}
+        {{ caller() if caller is defined else '' }}
+        {% endblock %}
+    </div>
+    
+    {% if vertical %}
+    </div>
+    {% endif %}
+</div>

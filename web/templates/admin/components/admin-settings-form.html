@@ -1,0 +1,41 @@
+<!-- admin-settings-form.html -->
+<!--
+  Admin Settings Form Component - For displaying settings forms in admin panel
+  Parameters:
+  - form_id: HTML ID for the form
+  - form_title: Title for the form section
+  - form_description: Description for the form section (optional)
+  - form_type: Hidden form type identifier
+  - form_submit_text: Text for the submit button (optional, default: "Save Changes")
+  - form_submit_icon: Icon for the submit button (optional, default: "save")
+  - reset_button: Whether to show a reset button (optional, default: false)
+-->
+<form id="{{ form_id }}" action="{{ url_for('admin.settings') }}" method="post">
+    <input type="hidden" name="form_type" value="{{ form_type }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    
+    <div class="border-bottom pb-3 mb-4">
+        <h5>{{ form_title }}</h5>
+        {% if form_description %}
+        <p class="text-muted mb-0">{{ form_description }}</p>
+        {% endif %}
+    </div>
+    
+    <div class="settings-form-fields">
+        {% block form_fields %}
+        {{ caller() if caller is defined else '' }}
+        {% endblock %}
+    </div>
+    
+    <div class="form-actions mt-4">
+        {% if reset_button %}
+        <button type="reset" class="btn btn-outline-secondary me-2">
+            <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+        </button>
+        {% endif %}
+        
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-{{ form_submit_icon|default('save') }} me-1"></i> {{ form_submit_text|default('Save Changes') }}
+        </button>
+    </div>
+</form>

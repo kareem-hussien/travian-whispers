@@ -1,0 +1,61 @@
+<!-- admin-activity-log.html -->
+<!--
+  Admin Activity Log Component - For displaying activity logs in admin panel
+  Parameters:
+  - activities: List of activity objects with properties (timestamp, username, action, status, status_class)
+  - show_header: Whether to show the card header (optional, default: true)
+  - max_height: Maximum height for the table wrapper (optional)
+  - show_user: Whether to show the user column (optional, default: true)
+  - show_load_more: Whether to show the load more button (optional, default: false)
+-->
+<div class="dashboard-card">
+    {% if show_header|default(true) %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h5 class="mb-0">Recent Activity</h5>
+        <a href="{{ url_for('admin.logs') }}" class="btn btn-sm btn-outline-primary">View All</a>
+    </div>
+    {% endif %}
+    
+    <div class="table-responsive" {% if max_height %}style="max-height: {{ max_height }};"{% endif %}>
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Date & Time</th>
+                    {% if show_user|default(true) %}
+                    <th>User</th>
+                    {% endif %}
+                    <th>Action</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if activities and activities|length > 0 %}
+                    {% for activity in activities %}
+                    <tr>
+                        <td class="text-nowrap">{{ activity.timestamp }}</td>
+                        {% if show_user|default(true) %}
+                        <td>{{ activity.username }}</td>
+                        {% endif %}
+                        <td>{{ activity.action }}</td>
+                        <td>
+                            <span class="badge {{ activity.status_class }}">{{ activity.status }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="{{ 3 + (1 if show_user|default(true) else 0) }}" class="text-center py-3">
+                            No activity logs found
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    
+    {% if show_load_more and activities and activities|length > 0 %}
+    <div class="text-center mt-3">
+        <button class="btn btn-sm btn-outline-primary" id="loadMoreActivity">Load More</button>
+    </div>
+    {% endif %}
+</div>

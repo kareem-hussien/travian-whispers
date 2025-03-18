@@ -1,0 +1,37 @@
+<!-- admin-form-select.html -->
+<!--
+  Admin Form Select Component - For displaying select dropdowns with a consistent style
+  Parameters:
+  - select_id: HTML ID for the select
+  - select_name: Name attribute for the select
+  - select_label: Label text
+  - select_options: List of options, each with value and text
+  - select_selected: Currently selected value (optional)
+  - select_required: Whether select is required (optional, default: false)
+  - select_disabled: Whether select is disabled (optional, default: false)
+  - select_help: Help text to display under the select (optional)
+  - select_class: Additional CSS classes for the select (optional)
+  - select_multiple: Whether multiple selections are allowed (optional, default: false)
+  - select_size: Size attribute for the select (optional)
+-->
+<div class="mb-3">
+    <label for="{{ select_id }}" class="form-label">{{ select_label }}</label>
+    <select class="form-select {{ select_class|default('') }}" 
+            id="{{ select_id }}" 
+            name="{{ select_name }}"
+            {% if select_multiple %}multiple{% endif %}
+            {% if select_size %}size="{{ select_size }}"{% endif %}
+            {% if select_required %}required{% endif %}
+            {% if select_disabled %}disabled{% endif %}>
+        {% for option in select_options %}
+        <option value="{{ option.value }}" 
+                {% if select_multiple and option.value in select_selected %}selected{% endif %}
+                {% if not select_multiple and option.value == select_selected %}selected{% endif %}>
+            {{ option.text }}
+        </option>
+        {% endfor %}
+    </select>
+    {% if select_help %}
+    <div class="form-text text-muted">{{ select_help }}</div>
+    {% endif %}
+</div>

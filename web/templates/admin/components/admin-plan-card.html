@@ -1,0 +1,42 @@
+<!-- admin-plan-card.html -->
+<!--
+  Admin Plan Card Component - For displaying subscription plan information in admin panel
+  Parameters:
+  - plan: Plan object with properties (id, name, price, users, revenue)
+  - show_edit: Whether to show edit button (optional, default: true)
+-->
+<div class="dashboard-card plan-card h-100">
+    {% if show_edit|default(true) %}
+    <button class="btn btn-sm btn-outline-primary edit-btn" data-bs-toggle="modal" data-bs-target="#editPlanModal{{ plan.id }}">
+        <i class="bi bi-pencil"></i>
+    </button>
+    {% endif %}
+    
+    <h4 class="mb-3">{{ plan.name }}</h4>
+    <h2 class="mb-4">{{ plan.price }} <small class="text-muted">/month</small></h2>
+    
+    <div class="row mb-3">
+        <div class="col-6">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-people me-2 text-primary"></i>
+                <div>
+                    <h6 class="mb-0">{{ plan.users }}</h6>
+                    <small class="text-muted">Subscribers</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-cash me-2 text-success"></i>
+                <div>
+                    <h6 class="mb-0">${{ plan.revenue }}</h6>
+                    <small class="text-muted">Revenue</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="d-grid gap-2 mt-4">
+        <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#viewPlanModal{{ plan.id }}">View Details</button>
+    </div>
+</div>

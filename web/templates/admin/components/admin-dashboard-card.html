@@ -1,0 +1,39 @@
+<!-- admin-dashboard-card.html -->
+<!--
+  Admin Dashboard Card Component - For displaying card sections in the admin dashboard
+  Parameters:
+  - card_title: Title for the card (optional)
+  - card_subtitle: Subtitle for the card (optional)
+  - show_header: Whether to show the card header (optional, default: true)
+  - card_padding: Custom padding for the card (optional)
+  - card_class: Additional CSS classes for the card (optional)
+  - header_class: Additional CSS classes for the header (optional)
+  - header_action_text: Text for header action button (optional)
+  - header_action_url: URL for header action button (optional)
+  - header_action_icon: Icon for header action button (optional)
+-->
+<div class="dashboard-card {{ card_class|default('') }}" {% if card_padding %}style="padding: {{ card_padding }};"{% endif %}>
+    {% if show_header|default(true) and card_title %}
+    <div class="d-flex justify-content-between align-items-center mb-4 {{ header_class|default('') }}">
+        <div>
+            <h5 class="mb-0">{{ card_title }}</h5>
+            {% if card_subtitle %}
+            <p class="text-muted mb-0 small">{{ card_subtitle }}</p>
+            {% endif %}
+        </div>
+        
+        {% if header_action_text %}
+        <a href="{{ header_action_url|default('#') }}" class="btn btn-sm btn-outline-primary">
+            {% if header_action_icon %}
+            <i class="bi bi-{{ header_action_icon }} me-1"></i>
+            {% endif %}
+            {{ header_action_text }}
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    {% block card_content %}
+    {{ caller() if caller is defined else '' }}
+    {% endblock %}
+</div>

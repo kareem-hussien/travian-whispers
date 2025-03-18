@@ -1,0 +1,117 @@
+<!-- admin-report-generator.html -->
+<!--
+  Admin Report Generator Component - For generating administrative reports
+  Parameters:
+  - None
+-->
+<div class="dashboard-card">
+    <h5 class="mb-4">Generate Report</h5>
+    
+    <form id="reportForm" action="{{ url_for('admin.generate_report') }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        
+        <div class="mb-3">
+            <label for="reportType" class="form-label">Report Type</label>
+            <select class="form-select" id="reportType" name="report_type" required>
+                <option value="">Select Report Type</option>
+                <option value="users">User Report</option>
+                <option value="transactions">Transaction Report</option>
+                <option value="subscriptions">Subscription Report</option>
+                <option value="system">System Performance Report</option>
+            </select>
+        </div>
+        
+        <div class="mb-3">
+            <label for="dateRange" class="form-label">Date Range</label>
+            <select class="form-select" id="dateRange" name="date_range" required>
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="last7days" selected>Last 7 Days</option>
+                <option value="last30days">Last 30 Days</option>
+                <option value="thisMonth">This Month</option>
+                <option value="lastMonth">Last Month</option>
+                <option value="custom">Custom Range</option>
+            </select>
+        </div>
+        
+        <div id="customDateRange" class="row mb-3" style="display: none;">
+            <div class="col-md-6">
+                <label for="startDate" class="form-label">Start Date</label>
+                <input type="date" class="form-control" id="startDate" name="start_date">
+            </div>
+            <div class="col-md-6">
+                <label for="endDate" class="form-label">End Date</label>
+                <input type="date" class="form-control" id="endDate" name="end_date">
+            </div>
+        </div>
+        
+        <div class="mb-3">
+            <label for="reportFormat" class="form-label">Format</label>
+            <select class="form-select" id="reportFormat" name="report_format" required>
+                <option value="pdf">PDF</option>
+                <option value="csv">CSV</option>
+                <option value="excel">Excel</option>
+            </select>
+        </div>
+        
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-file-earmark-text me-1"></i> Generate Report
+        </button>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Date range toggle for report generation
+    const dateRange = document.getElementById('dateRange');
+    const customDateRange = document.getElementById('customDateRange');
+    
+    if (dateRange && customDateRange) {
+        dateRange.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                customDateRange.style.display = 'flex';
+            } else {
+                customDateRange.style.display = 'none';
+            }
+        });
+    }
+    
+    // Form validation
+    const reportForm = document.getElementById('reportForm');
+    if (reportForm) {
+        reportForm.addEventListener('submit', function(event) {
+            const reportType = document.getElementById('reportType').value;
+            const dateRange = document.getElementById('dateRange').value;
+            
+            if (!reportType) {
+                event.preventDefault();
+                alert('Please select a report type');
+                return;
+            }
+            
+            if (!dateRange) {
+                event.preventDefault();
+                alert('Please select a date range');
+                return;
+            }
+            
+            if (dateRange === 'custom') {
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+                
+                if (!startDate || !endDate) {
+                    event.preventDefault();
+                    alert('Please select both start and end dates for custom range');
+                    return;
+                }
+                
+                if (new Date(startDate) > new Date(endDate)) {
+                    event.preventDefault();
+                    alert('Start date cannot be after end date');
+                    return;
+                }
+            }
+        });
+    }
+});
+</script>

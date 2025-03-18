@@ -1,0 +1,53 @@
+<!-- admin-page-header.html -->
+<!--
+  Page Header Component - For displaying consistent page headers in admin panel
+  Parameters:
+  - title: Page title
+  - subtitle: Optional subtitle or description
+  - show_buttons: Whether to show action buttons (optional, default: false)
+  - primary_button_text: Text for primary action button (optional)
+  - primary_button_icon: Icon for primary action button (optional)
+  - primary_button_id: ID for primary action button (optional)
+  - primary_button_url: URL for primary action button (optional)
+  - secondary_button_text: Text for secondary action button (optional)
+  - secondary_button_icon: Icon for secondary action button (optional)
+  - secondary_button_id: ID for secondary action button (optional)
+-->
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="mb-{% if subtitle %}1{% else %}0{% endif %}">{{ title }}</h2>
+            {% if subtitle %}
+            <p class="text-muted mb-0">{{ subtitle }}</p>
+            {% endif %}
+        </div>
+        
+        {% if show_buttons %}
+        <div>
+            {% if secondary_button_text %}
+            <button class="btn btn-outline-secondary me-2" id="{{ secondary_button_id|default('secondaryAction') }}"
+                {% if secondary_button_url %}onclick="window.location.href='{{ secondary_button_url }}'"{% endif %}>
+                {% if secondary_button_icon %}
+                <i class="bi bi-{{ secondary_button_icon }} me-1"></i>
+                {% endif %}
+                {{ secondary_button_text }}
+            </button>
+            {% endif %}
+            
+            {% if primary_button_text %}
+            <button class="btn btn-primary" id="{{ primary_button_id|default('primaryAction') }}"
+                {% if primary_button_url %}onclick="window.location.href='{{ primary_button_url }}'"{% endif %}>
+                {% if primary_button_icon %}
+                <i class="bi bi-{{ primary_button_icon }} me-1"></i>
+                {% endif %}
+                {{ primary_button_text }}
+            </button>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-12 mt-2">
+        {% include 'admin/components/admin-flash-messages.html' %}
+    </div>
+</div>

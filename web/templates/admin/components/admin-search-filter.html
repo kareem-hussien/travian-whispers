@@ -1,0 +1,65 @@
+<!-- admin-search-filter.html -->
+<!--
+  Admin Search and Filter Component - For displaying search and filter bar in admin panel
+  Parameters:
+  - search_placeholder: Placeholder text for search input (optional)
+  - show_search: Whether to show search input (optional, default: true)
+  - filters: List of filter objects, each with name, label, options (optional)
+  - date_filter: Whether to include date range filter (optional, default: false)
+  - date_filter_label: Label for date range filter (optional, default: "Date Range")
+  - search_value: Current search value (optional)
+  - filter_values: Dictionary of current filter values (optional)
+  - date_from: Current from date (optional)
+  - date_to: Current to date (optional)
+-->
+<div class="dashboard-card mb-4">
+    <form action="" method="get" id="adminFilterForm">
+        <div class="row">
+            {% if show_search|default(true) %}
+            <div class="col-md-{% if filters %}{{ 4 if date_filter else 6 }}{% else %}12{% endif %} mb-3 mb-md-0">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="{{ search_placeholder|default('Search...') }}" 
+                           name="q" value="{{ search_value|default('') }}">
+                    <button class="btn btn-outline-secondary" type="submit">
+                        <i class="bi bi-search"></i>
+                    </button>
+                    {% if search_value %}
+                    <a href="{{ request.path }}" class="btn btn-outline-danger">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if filters %}
+                {% for filter in filters %}
+                <div class="col-md-{% if date_filter %}3{% else %}{{ 12 // (filters|length + (1 if show_search else 0)) }}{% endif %} mb-3 mb-md-0">
+                    <select class="form-select" name="{{ filter.name }}" onchange="document.getElementById('adminFilterForm').submit()">
+                        <option value="">{{ filter.label }}</option>
+                        {% for option in filter.options %}
+                        <option value="{{ option.value }}" {% if filter_values and filter_values[filter.name] == option.value %}selected{% endif %}>
+                            {{ option.text }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endfor %}
+            {% endif %}
+            
+            {% if date_filter %}
+            <div class="col-md-{% if filters or show_search %}{{ 4 if (filters|length < 2 and show_search) or (filters|length < 3 and not show_search) else 5 }}{% else %}12{% endif %} mb-3 mb-md-0">
+                <div class="input-group">
+                    <span class="input-group-text">{{ date_filter_label|default('Date Range') }}</span>
+                    <input type="date" class="form-control" name="date_from" value="{{ date_from|default('') }}">
+                    <span class="input-group-text">to</span>
+                    <input type="date" class="form-control" name="date_to" value="{{ date_to|default('') }}">
+                    <button class="btn btn-outline-secondary" type="submit">
+                        <i class="bi bi-funnel"></i>
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </form>
+</div>

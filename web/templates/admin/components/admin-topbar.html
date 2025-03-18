@@ -1,0 +1,26 @@
+<!-- admin-topbar.html -->
+<!-- Top navigation bar component for admin panel -->
+<div class="topbar">
+    <div class="menu-toggle" id="menuToggle">
+        <i class="bi bi-list"></i>
+    </div>
+    
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Admin</a></li>
+            {% block breadcrumb %}{% endblock %}
+        </ol>
+    </nav>
+    
+    <div class="user-dropdown dropdown">
+        <button class="btn dropdown-toggle" type="button" id="userMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-person-circle"></i> {{ current_user.username }}
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenuButton">
+            <li><a class="dropdown-item" href="{{ url_for('user.profile') }}"><i class="bi bi-person"></i> Profile</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('admin.settings') }}"><i class="bi bi-gear"></i> Settings</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+        </ul>
+    </div>
+</div>
