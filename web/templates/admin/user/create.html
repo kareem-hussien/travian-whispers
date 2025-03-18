@@ -1,0 +1,251 @@
+{% extends 'admin/components/admin-layout.html' %}
+
+{% block title %}Create User{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin.users') }}">User Management</a></li>
+<li class="breadcrumb-item active" aria-current="page">Create User</li>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+{% with 
+    title="Create New User",
+    subtitle="Add a new user account to the system",
+    show_buttons=false
+%}
+    {% include 'admin/components/admin-page-header.html' %}
+{% endwith %}
+
+<!-- User Creation Form -->
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="dashboard-card">
+            <form action="{{ url_for('admin.user_create') }}" method="post" id="createUserForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <!-- Username Field -->
+                {% with 
+                    field_type="text",
+                    field_id="username",
+                    field_name="username",
+                    field_label="Username",
+                    field_placeholder="Enter username (min 3 characters)",
+                    field_required=true,
+                    field_help="Username must be 3-20 characters, start with a letter, and contain only letters, numbers, and underscores."
+                %}
+                    {% include 'admin/components/admin-form-field.html' %}
+                {% endwith %}
+                
+                <!-- Email Field -->
+                {% with 
+                    field_type="email",
+                    field_id="email",
+                    field_name="email",
+                    field_label="Email Address",
+                    field_placeholder="Enter email address",
+                    field_required=true
+                %}
+                    {% include 'admin/components/admin-form-field.html' %}
+                {% endwith %}
+                
+                <!-- Password Field -->
+                {% with 
+                    field_type="password",
+                    field_id="password",
+                    field_name="password",
+                    field_label="Password",
+                    field_placeholder="Enter password",
+                    field_required=true,
+                    field_help="Password must be at least 8 characters long with at least one uppercase letter, one lowercase letter, and one number."
+                %}
+                    {% include 'admin/components/admin-form-field.html' %}
+                {% endwith %}
+                
+                <!-- Role Selection -->
+                {% with 
+                    select_id="role",
+                    select_name="role",
+                    select_label="User Role",
+                    select_options=[
+                        {'value': 'user', 'text': 'User'},
+                        {'value': 'admin', 'text': 'Administrator'}
+                    ],
+                    select_selected='user',
+                    select_required=true,
+                    select_help="Admin users have full access to the admin panel and all functionality."
+                %}
+                    {% include 'admin/components/admin-form-select.html' %}
+                {% endwith %}
+                
+                <!-- Verification Checkbox -->
+                {% with 
+                    checkbox_id="isVerified",
+                    checkbox_name="isVerified",
+                    checkbox_label="Mark Account as Verified",
+                    checkbox_checked=true,
+                    checkbox_help="If checked, the user will not need to verify their email address."
+                %}
+                    {% include 'admin/components/admin-form-checkbox.html' %}
+                {% endwith %}
+                
+                <!-- Subscription Section -->
+                <h5 class="mt-4 mb-3">Subscription Details</h5>
+                
+                <!-- Subscription Status -->
+                {% with 
+                    select_id="subscriptionStatus",
+                    select_name="subscriptionStatus",
+                    select_label="Subscription Status",
+                    select_options=[
+                        {'value': 'inactive', 'text': 'Inactive'},
+                        {'value': 'active', 'text': 'Active'}
+                    ],
+                    select_selected='inactive',
+                    select_required=true
+                %}
+                    {% include 'admin/components/admin-form-select.html' %}
+                {% endwith %}
+                
+                <!-- Subscription Plan -->
+                {% with 
+                    select_id="subscriptionPlan",
+                    select_name="subscriptionPlan",
+                    select_label="Subscription Plan",
+                    select_options=[
+                        {'value': '', 'text': 'None'},
+                        {'value': '1', 'text': 'Basic Plan'},
+                        {'value': '2', 'text': 'Standard Plan'},
+                        {'value': '3', 'text': 'Premium Plan'}
+                    ],
+                    select_selected='',
+                    select_required=false,
+                    select_help="Only applicable if subscription status is set to Active."
+                %}
+                    {% include 'admin/components/admin-form-select.html' %}
+                {% endwith %}
+                
+                <!-- Form Buttons -->
+                <div class="mt-4 d-flex justify-content-between">
+                    <a href="{{ url_for('admin.users') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-person-plus me-1"></i> Create User
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const form = document.getElementById('createUserForm');
+    const username = document.getElementById('username');
+    const email = document.getElementById('email');
+    const password = document.getElementById('password');
+    const subscriptionStatus = document.getElementById('subscriptionStatus');
+    const subscriptionPlan = document.getElementById('subscriptionPlan');
+    
+    form.addEventListener('submit', function(event) {
+        let isValid = true;
+        
+        // Username validation
+        if (username.value.length < 3 || username.value.length > 20) {
+            showError(username, 'Username must be 3-20 characters long');
+            isValid = false;
+        } else if (!/^[a-zA-Z][a-zA-Z0-9_]*$/.test(username.value)) {
+            showError(username, 'Username must start with a letter and contain only letters, numbers, and underscores');
+            isValid = false;
+        } else {
+            clearError(username);
+        }
+        
+        // Email validation
+        if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) {
+            showError(email, 'Please enter a valid email address');
+            isValid = false;
+        } else {
+            clearError(email);
+        }
+        
+        // Password validation
+        if (password.value.length < 8) {
+            showError(password, 'Password must be at least 8 characters long');
+            isValid = false;
+        } else if (!/[A-Z]/.test(password.value)) {
+            showError(password, 'Password must contain at least one uppercase letter');
+            isValid = false;
+        } else if (!/[a-z]/.test(password.value)) {
+            showError(password, 'Password must contain at least one lowercase letter');
+            isValid = false;
+        } else if (!/[0-9]/.test(password.value)) {
+            showError(password, 'Password must contain at least one number');
+            isValid = false;
+        } else {
+            clearError(password);
+        }
+        
+        // Subscription validation
+        if (subscriptionStatus.value === 'active' && !subscriptionPlan.value) {
+            showError(subscriptionPlan, 'Please select a subscription plan for active subscriptions');
+            isValid = false;
+        } else {
+            clearError(subscriptionPlan);
+        }
+        
+        // Prevent form submission if invalid
+        if (!isValid) {
+            event.preventDefault();
+        }
+    });
+    
+    // Toggle subscription plan field based on status
+    subscriptionStatus.addEventListener('change', function() {
+        const planGroup = subscriptionPlan.closest('.mb-3');
+        if (this.value === 'active') {
+            planGroup.style.display = 'block';
+        } else {
+            planGroup.style.display = 'none';
+            subscriptionPlan.value = '';
+        }
+    });
+    
+    // Initialize subscription plan visibility
+    if (subscriptionStatus.value !== 'active') {
+        const planGroup = subscriptionPlan.closest('.mb-3');
+        planGroup.style.display = 'none';
+    }
+    
+    // Helper functions for validation
+    function showError(input, message) {
+        const formGroup = input.closest('.mb-3');
+        const errorDiv = formGroup.querySelector('.invalid-feedback') || document.createElement('div');
+        
+        errorDiv.className = 'invalid-feedback d-block';
+        errorDiv.textContent = message;
+        
+        if (!formGroup.querySelector('.invalid-feedback')) {
+            input.parentNode.appendChild(errorDiv);
+        }
+        
+        input.classList.add('is-invalid');
+    }
+    
+    function clearError(input) {
+        const formGroup = input.closest('.mb-3');
+        const errorDiv = formGroup.querySelector('.invalid-feedback');
+        
+        if (errorDiv) {
+            errorDiv.remove();
+        }
+        
+        input.classList.remove('is-invalid');
+    }
+});
+</script>
+{% endblock %}

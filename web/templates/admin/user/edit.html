@@ -1,0 +1,587 @@
+{% extends 'admin/components/admin-layout.html' %}
+
+{% block title %}Edit User{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin.users') }}">User Management</a></li>
+<li class="breadcrumb-item active" aria-current="page">Edit User</li>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+{% with 
+    title="Edit User: " + user.username,
+    subtitle="Modify user account details and permissions",
+    show_buttons=false
+%}
+    {% include 'admin/components/admin-page-header.html' %}
+{% endwith %}
+
+<!-- User Edit Form -->
+<div class="row">
+    <div class="col-lg-8">
+        <div class="dashboard-card mb-4">
+            <form action="{{ url_for('admin.user_edit', user_id=user.id) }}" method="post" id="editUserForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <!-- Username Field (Readonly) -->
+                {% with 
+                    field_type="text",
+                    field_id="username",
+                    field_name="username",
+                    field_label="Username",
+                    field_value=user.username,
+                    field_readonly=true,
+                    field_help="Username cannot be changed after account creation."
+                %}
+                    {% include 'admin/components/admin-form-field.html' %}
+                {% endwith %}
+                
+                <!-- Email Field -->
+                {% with 
+                    field_type="email",
+                    field_id="email",
+                    field_name="email",
+                    field_label="Email Address",
+                    field_value=user.email,
+                    field_required=true
+                %}
+                    {% include 'admin/components/admin-form-field.html' %}
+                {% endwith %}
+                
+                <!-- Password Field (Optional) -->
+                {% with 
+                    field_type="password",
+                    field_id="new_password",
+                    field_name="new_password",
+                    field_label="New Password",
+                    field_placeholder="Leave blank to keep current password",
+                    field_required=false,
+                    field_help="Password must be at least 8 characters long with at least one uppercase letter, one lowercase letter, and one number."
+                %}
+                    {% include 'admin/components/admin-form-field.html' %}
+                {% endwith %}
+                
+                <!-- Role Selection -->
+                {% with 
+                    select_id="role",
+                    select_name="role",
+                    select_label="User Role",
+                    select_options=[
+                        {'value': 'user', 'text': 'User'},
+                        {'value': 'admin', 'text': 'Administrator'}
+                    ],
+                    select_selected=user.role,
+                    select_required=true,
+                    select_help="Admin users have full access to the admin panel and all functionality."
+                %}
+                    {% include 'admin/components/admin-form-select.html' %}
+                {% endwith %}
+                
+                <!-- Status Selection -->
+                {% with 
+                    select_id="status",
+                    select_name="status",
+                    select_label="Account Status",
+                    select_options=[
+                        {'value': 'active', 'text': 'Active'},
+                        {'value': 'inactive', 'text': 'Inactive'}
+                    ],
+                    select_selected=user.status,
+                    select_required=true,
+                    select_help="Inactive accounts cannot log in to the system."
+                %}
+                    {% include 'admin/components/admin-form-select.html' %}
+                {% endwith %}
+                
+                <!-- Subscription Section -->
+                <h5 class="mt-4 mb-3">Subscription Details</h5>
+                
+                <!-- Subscription Status -->
+                {% with 
+                    select_id="subscriptionStatus",
+                    select_name="subscriptionStatus",
+                    select_label="Subscription Status",
+                    select_options=[
+                        {'value': 'inactive', 'text': 'Inactive'},
+                        {'value': 'active', 'text': 'Active'},
+                        {'value': 'expired', 'text': 'Expired'},
+                        {'value': 'cancelled', 'text': 'Cancelled'}
+                    ],
+                    select_selected=user.subscription.status if user.subscription else 'inactive',
+                    select_required=true
+                %}
+                    {% include 'admin/components/admin-form-select.html' %}
+                {% endwith %}
+                
+                <!-- Subscription Plan -->
+                {% with 
+                    select_id="subscriptionPlan",
+                    select_name="subscriptionPlan",
+                    select_label="Subscription Plan",
+                    select_options=[
+                        {'value': '', 'text': 'None'},
+                        {'value': '1', 'text': 'Basic Plan'},
+                        {'value': '2', 'text': 'Standard Plan'},
+                        {'value': '3', 'text': 'Premium Plan'}
+                    ],
+                    select_selected=user.subscription.planId if user.subscription and user.subscription.planId else '',
+                    select_required=false,
+                    select_help="Only applicable if subscription status is set to Active."
+                %}
+                    {% include 'admin/components/admin-form-select.html' %}
+                {% endwith %}
+                
+                <!-- Subscription Dates -->
+                <div class="row">
+                    <div class="col-md-6">
+                        {% with 
+                            field_type="date",
+                            field_id="startDate",
+                            field_name="startDate",
+                            field_label="Start Date",
+                            field_value=user.subscription.startDate.strftime('%Y-%m-%d') if user.subscription and user.subscription.startDate else '',
+                            field_help="Subscription start date."
+                        %}
+                            {% include 'admin/components/admin-form-field.html' %}
+                        {% endwith %}
+                    </div>
+                    <div class="col-md-6">
+                        {% with 
+                            field_type="date",
+                            field_id="endDate",
+                            field_name="endDate",
+                            field_label="End Date",
+                            field_value=user.subscription.endDate.strftime('%Y-%m-%d') if user.subscription and user.subscription.endDate else '',
+                            field_help="Subscription end date."
+                        %}
+                            {% include 'admin/components/admin-form-field.html' %}
+                        {% endwith %}
+                    </div>
+                </div>
+                
+                <!-- Form Buttons -->
+                <div class="mt-4 d-flex justify-content-between">
+                    <a href="{{ url_for('admin.users') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i> Cancel
+                    </a>
+                    <div>
+                        <button type="button" class="btn btn-outline-danger me-2" data-bs-toggle="modal" data-bs-target="#deleteUserModal" 
+                                data-id="{{ user.id }}" data-name="{{ user.username }}">
+                            <i class="bi bi-trash me-1"></i> Delete User
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save me-1"></i> Save Changes
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- User Information Card -->
+        <div class="dashboard-card mb-4">
+            <h5 class="mb-4">User Information</h5>
+            
+            <div class="d-flex align-items-center mb-4">
+                <div class="d-flex align-items-center justify-content-center bg-light rounded-circle me-3" style="width: 64px; height: 64px;">
+                    <span class="fs-4 text-secondary">{{ user.username[0]|upper }}</span>
+                </div>
+                <div>
+                    <h5 class="mb-1">{{ user.username }}</h5>
+                    <p class="mb-0 text-muted">{{ user.email }}</p>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <small class="text-muted d-block">Account Status</small>
+                <span class="badge {{ 'bg-success' if user.status == 'active' else 'bg-danger' }}">{{ user.status }}</span>
+            </div>
+            
+            <div class="mb-3">
+                <small class="text-muted d-block">Role</small>
+                <span class="badge {{ 'bg-primary' if user.role == 'admin' else 'bg-secondary' }}">{{ user.role }}</span>
+            </div>
+            
+            <div class="mb-3">
+                <small class="text-muted d-block">Joined</small>
+                <span>{{ user.joined }}</span>
+            </div>
+            
+            <div class="mb-3">
+                <small class="text-muted d-block">Last Login</small>
+                <span>{{ user.last_login }}</span>
+            </div>
+        </div>
+        
+        <!-- Subscription Card -->
+        <div class="dashboard-card mb-4">
+            <h5 class="mb-4">Subscription</h5>
+            
+            {% if user.subscription and user.subscription.status == 'active' %}
+                <div class="text-center mb-3">
+                    <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 48px; height: 48px;">
+                        <i class="bi bi-check-lg fs-4"></i>
+                    </div>
+                    <h6 class="mb-0">Active Subscription</h6>
+                </div>
+                
+                <div class="mb-3">
+                    <small class="text-muted d-block">Current Plan</small>
+                    <span class="fw-medium">{{ user.subscription_plan }}</span>
+                </div>
+                
+                <div class="mb-3">
+                    <small class="text-muted d-block">Renewal Date</small>
+                    <span>{{ user.subscription.endDate.strftime('%Y-%m-%d') if user.subscription.endDate else 'N/A' }}</span>
+                </div>
+            {% else %}
+                <div class="text-center mb-3">
+                    <div class="bg-secondary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 48px; height: 48px;">
+                        <i class="bi bi-x-lg fs-4"></i>
+                    </div>
+                    <h6 class="mb-0">No Active Subscription</h6>
+                </div>
+                
+                <div class="d-grid gap-2 mt-3">
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addSubscriptionModal">
+                        <i class="bi bi-plus-circle me-1"></i> Add Subscription
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Activity Log Card -->
+        <div class="dashboard-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">Recent Activity</h5>
+                <a href="#" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            
+            <div class="list-group list-group-flush">
+                <div class="list-group-item px-0 py-2 border-0">
+                    <small class="text-muted">2025-03-15 14:30</small>
+                    <p class="mb-0">Logged in successfully</p>
+                </div>
+                <div class="list-group-item px-0 py-2 border-0">
+                    <small class="text-muted">2025-03-10 09:15</small>
+                    <p class="mb-0">Updated profile information</p>
+                </div>
+                <div class="list-group-item px-0 py-2 border-0">
+                    <small class="text-muted">2025-03-05 16:45</small>
+                    <p class="mb-0">Subscription renewed</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- Delete User Modal -->
+{% with 
+    modal_id="deleteUserModal",
+    modal_title="Delete User",
+    confirm_message="Are you sure you want to delete this user? This action cannot be undone and will remove all data associated with this account.",
+    confirm_button_text="Delete User",
+    confirm_button_class="btn-danger",
+    item_type="User"
+%}
+<div class="modal fade" id="{{ modal_id }}" tabindex="-1" aria-labelledby="{{ modal_id }}Label" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="{{ modal_id }}Label">{{ modal_title }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-4">
+                    <i class="bi bi-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+                </div>
+                
+                <p>{{ confirm_message }}</p>
+                
+                <p class="mb-0 fw-bold">{{ user.username }}</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="{{ url_for('admin.user_delete', user_id=user.id) }}" method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn {{ confirm_button_class }}">{{ confirm_button_text }}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endwith %}
+
+<!-- Add Subscription Modal -->
+<div class="modal fade" id="addSubscriptionModal" tabindex="-1" aria-labelledby="addSubscriptionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addSubscriptionModalLabel">Add Subscription</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addSubscriptionForm" action="{{ url_for('admin.add_subscription', user_id=user.id) }}" method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <!-- Subscription Plan -->
+                    {% with 
+                        select_id="modalSubscriptionPlan",
+                        select_name="subscriptionPlan",
+                        select_label="Subscription Plan",
+                        select_options=[
+                            {'value': '1', 'text': 'Basic Plan - $4.99/month'},
+                            {'value': '2', 'text': 'Standard Plan - $9.99/month'},
+                            {'value': '3', 'text': 'Premium Plan - $19.99/month'}
+                        ],
+                        select_required=true
+                    %}
+                        {% include 'admin/components/admin-form-select.html' %}
+                    {% endwith %}
+                    
+                    <!-- Billing Period -->
+                    {% with 
+                        select_id="billingPeriod",
+                        select_name="billingPeriod",
+                        select_label="Billing Period",
+                        select_options=[
+                            {'value': 'monthly', 'text': 'Monthly'},
+                            {'value': 'yearly', 'text': 'Yearly (Get 2 months free)'}
+                        ],
+                        select_selected='monthly',
+                        select_required=true
+                    %}
+                        {% include 'admin/components/admin-form-select.html' %}
+                    {% endwith %}
+                    
+                    <!-- Subscription Dates -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            {% with 
+                                field_type="date",
+                                field_id="modalStartDate",
+                                field_name="startDate",
+                                field_label="Start Date",
+                                field_value=now.strftime('%Y-%m-%d'),
+                                field_required=true
+                            %}
+                                {% include 'admin/components/admin-form-field.html' %}
+                            {% endwith %}
+                        </div>
+                        <div class="col-md-6">
+                            {% with 
+                                field_type="date",
+                                field_id="modalEndDate",
+                                field_name="endDate",
+                                field_label="End Date",
+                                field_required=true
+                            %}
+                                {% include 'admin/components/admin-form-field.html' %}
+                            {% endwith %}
+                        </div>
+                    </div>
+                    
+                    <!-- Payment Method -->
+                    {% with 
+                        select_id="paymentMethod",
+                        select_name="paymentMethod",
+                        select_label="Payment Method",
+                        select_options=[
+                            {'value': 'manual', 'text': 'Manual (Admin Override)'},
+                            {'value': 'paypal', 'text': 'PayPal'},
+                            {'value': 'credit_card', 'text': 'Credit Card'}
+                        ],
+                        select_selected='manual',
+                        select_required=true,
+                        select_help="Select 'Manual' for admin-created subscriptions without payment."
+                    %}
+                        {% include 'admin/components/admin-form-select.html' %}
+                    {% endwith %}
+                    
+                    <!-- Payment Reference -->
+                    {% with 
+                        field_type="text",
+                        field_id="paymentReference",
+                        field_name="paymentReference",
+                        field_label="Payment Reference",
+                        field_placeholder="Optional reference ID for the payment",
+                        field_required=false
+                    %}
+                        {% include 'admin/components/admin-form-field.html' %}
+                    {% endwith %}
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" form="addSubscriptionForm" class="btn btn-primary">Add Subscription</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const form = document.getElementById('editUserForm');
+    const email = document.getElementById('email');
+    const newPassword = document.getElementById('new_password');
+    const subscriptionStatus = document.getElementById('subscriptionStatus');
+    const subscriptionPlan = document.getElementById('subscriptionPlan');
+    const startDate = document.getElementById('startDate');
+    const endDate = document.getElementById('endDate');
+    
+    form.addEventListener('submit', function(event) {
+        let isValid = true;
+        
+        // Email validation
+        if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) {
+            showError(email, 'Please enter a valid email address');
+            isValid = false;
+        } else {
+            clearError(email);
+        }
+        
+        // Password validation (only if provided)
+        if (newPassword.value) {
+            if (newPassword.value.length < 8) {
+                showError(newPassword, 'Password must be at least 8 characters long');
+                isValid = false;
+            } else if (!/[A-Z]/.test(newPassword.value)) {
+                showError(newPassword, 'Password must contain at least one uppercase letter');
+                isValid = false;
+            } else if (!/[a-z]/.test(newPassword.value)) {
+                showError(newPassword, 'Password must contain at least one lowercase letter');
+                isValid = false;
+            } else if (!/[0-9]/.test(newPassword.value)) {
+                showError(newPassword, 'Password must contain at least one number');
+                isValid = false;
+            } else {
+                clearError(newPassword);
+            }
+        }
+        
+        // Subscription validation
+        if (subscriptionStatus.value === 'active') {
+            if (!subscriptionPlan.value) {
+                showError(subscriptionPlan, 'Please select a subscription plan for active subscriptions');
+                isValid = false;
+            } else {
+                clearError(subscriptionPlan);
+            }
+            
+            // Date validation for active subscriptions
+            if (!startDate.value) {
+                showError(startDate, 'Please enter a subscription start date');
+                isValid = false;
+            } else {
+                clearError(startDate);
+            }
+            
+            if (!endDate.value) {
+                showError(endDate, 'Please enter a subscription end date');
+                isValid = false;
+            } else if (new Date(startDate.value) >= new Date(endDate.value)) {
+                showError(endDate, 'End date must be after start date');
+                isValid = false;
+            } else {
+                clearError(endDate);
+            }
+        }
+        
+        // Prevent form submission if invalid
+        if (!isValid) {
+            event.preventDefault();
+        }
+    });
+    
+    // Toggle subscription fields based on status
+    subscriptionStatus.addEventListener('change', function() {
+        const planGroup = subscriptionPlan.closest('.mb-3');
+        const datesContainer = startDate.closest('.row');
+        
+        if (this.value === 'active') {
+            planGroup.style.display = 'block';
+            datesContainer.style.display = 'flex';
+        } else {
+            planGroup.style.display = 'none';
+            datesContainer.style.display = 'none';
+            subscriptionPlan.value = '';
+            startDate.value = '';
+            endDate.value = '';
+        }
+    });
+    
+    // Initialize subscription fields visibility
+    if (subscriptionStatus.value !== 'active') {
+        const planGroup = subscriptionPlan.closest('.mb-3');
+        const datesContainer = startDate.closest('.row');
+        planGroup.style.display = 'none';
+        datesContainer.style.display = 'none';
+    }
+    
+    // Subscription modal date calculation
+    const billingPeriod = document.getElementById('billingPeriod');
+    const modalStartDate = document.getElementById('modalStartDate');
+    const modalEndDate = document.getElementById('modalEndDate');
+    
+    function calculateEndDate() {
+        if (!modalStartDate.value) return;
+        
+        const start = new Date(modalStartDate.value);
+        let end = new Date(start);
+        
+        if (billingPeriod.value === 'monthly') {
+            // Add 1 month
+            end.setMonth(end.getMonth() + 1);
+        } else {
+            // Add 1 year
+            end.setFullYear(end.getFullYear() + 1);
+        }
+        
+        // Format date as YYYY-MM-DD
+        modalEndDate.value = end.toISOString().split('T')[0];
+    }
+    
+    // Calculate end date when start date or billing period changes
+    modalStartDate.addEventListener('change', calculateEndDate);
+    billingPeriod.addEventListener('change', calculateEndDate);
+    
+    // Calculate initial end date
+    if (modalStartDate.value) {
+        calculateEndDate();
+    }
+    
+    // Helper functions for validation
+    function showError(input, message) {
+        const formGroup = input.closest('.mb-3');
+        const errorDiv = formGroup.querySelector('.invalid-feedback') || document.createElement('div');
+        
+        errorDiv.className = 'invalid-feedback d-block';
+        errorDiv.textContent = message;
+        
+        if (!formGroup.querySelector('.invalid-feedback')) {
+            input.parentNode.appendChild(errorDiv);
+        }
+        
+        input.classList.add('is-invalid');
+    }
+    
+    function clearError(input) {
+        const formGroup = input.closest('.mb-3');
+        const errorDiv = formGroup.querySelector('.invalid-feedback');
+        
+        if (errorDiv) {
+            errorDiv.remove();
+        }
+        
+        input.classList.remove('is-invalid');
+    }
+});
+</script>
+{% endblock %}

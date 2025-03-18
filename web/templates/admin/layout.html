@@ -14,7 +14,7 @@
     
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style_dashboard.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
@@ -28,15 +28,110 @@
 </head>
 <body>
     <!-- Sidebar -->
-    {% include 'admin_components/sidebar.html' %}
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <a href="{{ url_for('admin.dashboard') }}" class="sidebar-logo">
+                <i class="bi bi-shield-lock"></i> Admin Panel
+            </a>
+        </div>
+        <div class="sidebar-content">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a href="{{ url_for('admin.dashboard') }}" class="nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+                        <span class="nav-icon"><i class="bi bi-speedometer2"></i></span>
+                        Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('admin.users') }}" class="nav-link {% if request.endpoint == 'admin.users' %}active{% endif %}">
+                        <span class="nav-icon"><i class="bi bi-people"></i></span>
+                        User Management
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('admin.subscriptions') }}" class="nav-link {% if request.endpoint == 'admin.subscriptions' %}active{% endif %}">
+                        <span class="nav-icon"><i class="bi bi-credit-card"></i></span>
+                        Subscription Plans
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('admin.transactions') }}" class="nav-link {% if request.endpoint == 'admin.transactions' %}active{% endif %}">
+                        <span class="nav-icon"><i class="bi bi-cash-stack"></i></span>
+                        Transactions
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('admin.maintenance') }}" class="nav-link {% if request.endpoint == 'admin.maintenance' %}active{% endif %}">
+                        <span class="nav-icon"><i class="bi bi-tools"></i></span>
+                        Maintenance
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('admin.logs') }}" class="nav-link {% if request.endpoint == 'admin.logs' %}active{% endif %}">
+                        <span class="nav-icon"><i class="bi bi-journal-text"></i></span>
+                        System Logs
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('admin.settings') }}" class="nav-link {% if request.endpoint == 'admin.settings' %}active{% endif %}">
+                        <span class="nav-icon"><i class="bi bi-gear"></i></span>
+                        Settings
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <div class="sidebar-footer">
+            <a href="{{ url_for('public.index') }}" class="btn btn-sm btn-outline-light w-100 mb-2">
+                <i class="bi bi-house-door"></i> Main Site
+            </a>
+            <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-outline-light w-100">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+        </div>
+    </div>
 
     <!-- Main Content -->
     <div class="main-content">
         <!-- Top Bar -->
-        {% include 'admin_components/topbar.html' %}
+        <div class="topbar">
+            <div class="menu-toggle" id="menuToggle">
+                <i class="bi bi-list"></i>
+            </div>
+            
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Admin</a></li>
+                    {% block breadcrumb %}{% endblock %}
+                </ol>
+            </nav>
+            
+            <div class="user-dropdown dropdown">
+                <button class="btn dropdown-toggle" type="button" id="userMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-person-circle"></i> {{ current_user.username if current_user else 'Admin' }}
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenuButton">
+                    <li><a class="dropdown-item" href="{{ url_for('user.profile') }}"><i class="bi bi-person"></i> Profile</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('admin.settings') }}"><i class="bi bi-gear"></i> Settings</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                </ul>
+            </div>
+        </div>
         
-        <!-- Page Content -->
+        <!-- Flash Messages -->
         <div class="content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <!-- Page Content -->
             {% block content %}{% endblock %}
         </div>
     </div>
@@ -44,7 +139,42 @@
     <!-- Modals -->
     {% block modals %}{% endblock %}
 
-    <!-- Footer & Scripts -->
-    {% include 'admin_components/footer.html' %}
+    <!-- Common Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Common JavaScript -->
+    <script>
+        // Mobile sidebar toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuToggle = document.getElementById('menuToggle');
+            if (menuToggle) {
+                menuToggle.addEventListener('click', function() {
+                    document.querySelector('.sidebar').classList.toggle('show');
+                });
+            }
+            
+            // Close sidebar when clicking outside on mobile
+            document.addEventListener('click', function(event) {
+                const sidebar = document.querySelector('.sidebar');
+                const menuToggle = document.getElementById('menuToggle');
+                
+                if (window.innerWidth < 992 && 
+                    sidebar && sidebar.classList.contains('show') && 
+                    menuToggle && !sidebar.contains(event.target) && !menuToggle.contains(event.target)) {
+                    sidebar.classList.remove('show');
+                }
+            });
+            
+            // Initialize Bootstrap tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+    </script>
+    
+    <!-- Page specific scripts -->
+    {% block scripts %}{% endblock %}
 </body>
 </html>
