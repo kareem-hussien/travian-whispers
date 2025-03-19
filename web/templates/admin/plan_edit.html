@@ -1,0 +1,439 @@
+{% extends 'admin/layout.html' %}
+
+{% block title %}Edit Subscription Plan{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin.subscriptions') }}">Subscription Plans</a></li>
+<li class="breadcrumb-item active" aria-current="page">Edit Plan</li>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="mb-1">Edit Subscription Plan</h2>
+        <p class="text-muted">Modify an existing subscription plan</p>
+    </div>
+</div>
+
+<!-- Alerts/Notifications -->
+<div class="row">
+    <div class="col-12">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+</div>
+
+<!-- Plan Edit Form -->
+<div class="row">
+    <div class="col-lg-8">
+        <div class="dashboard-card">
+            <form action="{{ url_for('admin.edit_plan', plan_id=plan._id) }}" method="post" id="editPlanForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <!-- Basic Information -->
+                <h5 class="mb-4">Basic Information</h5>
+                
+                <div class="mb-3">
+                    <label for="planName" class="form-label">Plan Name</label>
+                    <input type="text" class="form-control" id="planName" name="planName" value="{{ plan.name }}" required>
+                    <div class="form-text">Enter a unique name for this subscription plan.</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="planDescription" class="form-label">Description</label>
+                    <textarea class="form-control" id="planDescription" name="planDescription" rows="3" required>{{ plan.description }}</textarea>
+                    <div class="form-text">Briefly describe the benefits of this plan.</div>
+                </div>
+                
+                <!-- Pricing -->
+                <h5 class="mt-4 mb-4">Pricing</h5>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="planPrice" class="form-label">Monthly Price ($)</label>
+                        <input type="number" class="form-control" id="planPrice" name="planPrice" min="0" step="0.01" value="{{ plan.price.monthly }}" required>
+                        <div class="form-text">Enter the monthly subscription cost.</div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label for="yearlyPrice" class="form-label">Yearly Price ($)</label>
+                        <input type="number" class="form-control" id="yearlyPrice" name="yearlyPrice" min="0" step="0.01" value="{{ plan.price.yearly }}" required>
+                        <div class="form-text">Enter the yearly subscription cost (typically offering a discount).</div>
+                    </div>
+                </div>
+                
+                <!-- Features -->
+                <h5 class="mt-4 mb-4">Features</h5>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="featureAutoFarm" name="featureAutoFarm" {% if plan.features.autoFarm %}checked{% endif %}>
+                            <label class="form-check-label" for="featureAutoFarm">Auto-Farm Feature</label>
+                            <div class="form-text">Automatically farm resources from other villages.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="featureTrainer" name="featureTrainer" {% if plan.features.trainer %}checked{% endif %}>
+                            <label class="form-check-label" for="featureTrainer">Troop Training</label>
+                            <div class="form-text">Automate training of troops based on tribe.</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="featureNotification" name="featureNotification" {% if plan.features.notification %}checked{% endif %}>
+                            <label class="form-check-label" for="featureNotification">Notifications</label>
+                            <div class="form-text">Receive email notifications for important events.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="featureAdvanced" name="featureAdvanced" {% if plan.features.advanced %}checked{% endif %}>
+                            <label class="form-check-label" for="featureAdvanced">Advanced Features</label>
+                            <div class="form-text">Access to premium tools and functionalities.</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="maxVillages" class="form-label">Maximum Villages</label>
+                        <input type="number" class="form-control" id="maxVillages" name="maxVillages" min="1" value="{{ plan.features.maxVillages }}" required>
+                        <div class="form-text">Maximum number of villages that can be managed.</div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label for="maxTasks" class="form-label">Maximum Concurrent Tasks</label>
+                        <input type="number" class="form-control" id="maxTasks" name="maxTasks" min="1" value="{{ plan.features.maxTasks }}" required>
+                        <div class="form-text">Maximum number of tasks that can run simultaneously.</div>
+                    </div>
+                </div>
+                
+                <!-- Form Buttons -->
+                <div class="mt-4 d-flex justify-content-between">
+                    <a href="{{ url_for('admin.subscriptions') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i> Cancel
+                    </a>
+                    <div>
+                        <button type="button" class="btn btn-outline-danger me-2" data-bs-toggle="modal" data-bs-target="#deletePlanModal" data-id="{{ plan._id }}" data-name="{{ plan.name }}">
+                            <i class="bi bi-trash me-1"></i> Delete Plan
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save me-1"></i> Save Changes
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Sidebar Information -->
+    <div class="col-lg-4">
+        <!-- Usage Statistics -->
+        <div class="dashboard-card mb-4">
+            <h5 class="mb-4">Plan Statistics</h5>
+            
+            <div class="d-flex align-items-center mb-4">
+                <div class="card-icon bg-primary-light me-3">
+                    <i class="bi bi-people"></i>
+                </div>
+                <div>
+                    <div class="stat-title">Active Subscribers</div>
+                    <div class="stat-value">{{ plan.users|default(0) }}</div>
+                </div>
+            </div>
+            
+            <div class="d-flex align-items-center mb-4">
+                <div class="card-icon bg-success-light me-3">
+                    <i class="bi bi-cash"></i>
+                </div>
+                <div>
+                    <div class="stat-title">Monthly Revenue</div>
+                    <div class="stat-value">${{ plan.revenue|default(0) }}</div>
+                </div>
+            </div>
+            
+            <div class="alert alert-warning mb-0">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <strong>Note:</strong> Changes to this plan will affect all current subscribers at their next renewal date.
+            </div>
+        </div>
+        
+        <!-- Preview Card -->
+        <div class="dashboard-card">
+            <h5 class="mb-4">Plan Preview</h5>
+            
+            <div class="card border shadow-sm">
+                <div class="card-body">
+                    <div class="text-center">
+                        <h3 id="previewTitle">{{ plan.name }}</h3>
+                        <h2 class="my-3">$<span id="previewPrice">{{ plan.price.monthly }}</span> <small class="text-muted">/month</small></h2>
+                        <p id="previewDescription" class="text-muted">{{ plan.description }}</p>
+                    </div>
+                    
+                    <hr>
+                    
+                    <ul class="list-unstyled">
+                        <li class="mb-2" id="previewAutoFarm">
+                            <i class="bi bi-{% if plan.features.autoFarm %}check-circle text-success{% else %}x-circle text-danger{% endif %} me-2"></i> Auto-Farm Feature
+                        </li>
+                        <li class="mb-2" id="previewTrainer">
+                            <i class="bi bi-{% if plan.features.trainer %}check-circle text-success{% else %}x-circle text-danger{% endif %} me-2"></i> Troop Training
+                        </li>
+                        <li class="mb-2" id="previewNotification">
+                            <i class="bi bi-{% if plan.features.notification %}check-circle text-success{% else %}x-circle text-danger{% endif %} me-2"></i> Notifications
+                        </li>
+                        <li class="mb-2" id="previewAdvanced">
+                            <i class="bi bi-{% if plan.features.advanced %}check-circle text-success{% else %}x-circle text-danger{% endif %} me-2"></i> Advanced Features
+                        </li>
+                        <li class="mb-2" id="previewVillages">
+                            <i class="bi bi-check-circle text-success me-2"></i> {{ plan.features.maxVillages }} Villages Maximum
+                        </li>
+                        <li class="mb-2" id="previewTasks">
+                            <i class="bi bi-check-circle text-success me-2"></i> {{ plan.features.maxTasks }} Concurrent Task{% if plan.features.maxTasks > 1 %}s{% endif %}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- Delete Plan Modal -->
+<div class="modal fade" id="deletePlanModal" tabindex="-1" aria-labelledby="deletePlanModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deletePlanModalLabel">Delete Subscription Plan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-4">
+                    <i class="bi bi-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+                </div>
+                
+                <p>Are you sure you want to delete this subscription plan? This action cannot be undone.</p>
+                
+                {% if plan.users and plan.users > 0 %}
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-circle-fill me-2"></i>
+                    <strong>Warning:</strong> This plan currently has <strong>{{ plan.users }}</strong> active subscribers. Deleting it will prevent them from renewing with this plan.
+                </div>
+                {% endif %}
+                
+                <p class="mb-0 fw-bold" id="deletePlanName">{{ plan.name }}</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deletePlanForm" method="post" action="{{ url_for('admin.delete_plan', plan_id=plan._id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger">Delete Plan</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const form = document.getElementById('editPlanForm');
+    
+    form.addEventListener('submit', function(event) {
+        let isValid = true;
+        const planName = document.getElementById('planName');
+        const planDescription = document.getElementById('planDescription');
+        const planPrice = document.getElementById('planPrice');
+        const yearlyPrice = document.getElementById('yearlyPrice');
+        const maxVillages = document.getElementById('maxVillages');
+        const maxTasks = document.getElementById('maxTasks');
+        
+        // Basic validation
+        if (!planName.value.trim()) {
+            showError(planName, 'Plan name is required');
+            isValid = false;
+        } else if (planName.value.length < 3 || planName.value.length > 50) {
+            showError(planName, 'Plan name must be between 3 and 50 characters');
+            isValid = false;
+        } else {
+            clearError(planName);
+        }
+        
+        if (!planDescription.value.trim()) {
+            showError(planDescription, 'Description is required');
+            isValid = false;
+        } else if (planDescription.value.length < 10) {
+            showError(planDescription, 'Description is too short');
+            isValid = false;
+        } else {
+            clearError(planDescription);
+        }
+        
+        if (!planPrice.value || planPrice.value < 0) {
+            showError(planPrice, 'Please enter a valid monthly price');
+            isValid = false;
+        } else {
+            clearError(planPrice);
+        }
+        
+        if (!yearlyPrice.value || yearlyPrice.value < 0) {
+            showError(yearlyPrice, 'Please enter a valid yearly price');
+            isValid = false;
+        } else {
+            clearError(yearlyPrice);
+        }
+        
+        if (!maxVillages.value || maxVillages.value < 1) {
+            showError(maxVillages, 'Maximum villages must be at least 1');
+            isValid = false;
+        } else {
+            clearError(maxVillages);
+        }
+        
+        if (!maxTasks.value || maxTasks.value < 1) {
+            showError(maxTasks, 'Maximum tasks must be at least 1');
+            isValid = false;
+        } else {
+            clearError(maxTasks);
+        }
+        
+        if (!isValid) {
+            event.preventDefault();
+        }
+    });
+    
+    // Live preview functionality
+    const planName = document.getElementById('planName');
+    const planDescription = document.getElementById('planDescription');
+    const planPrice = document.getElementById('planPrice');
+    const featureAutoFarm = document.getElementById('featureAutoFarm');
+    const featureTrainer = document.getElementById('featureTrainer');
+    const featureNotification = document.getElementById('featureNotification');
+    const featureAdvanced = document.getElementById('featureAdvanced');
+    const maxVillages = document.getElementById('maxVillages');
+    const maxTasks = document.getElementById('maxTasks');
+    
+    // Preview elements
+    const previewTitle = document.getElementById('previewTitle');
+    const previewPrice = document.getElementById('previewPrice');
+    const previewDescription = document.getElementById('previewDescription');
+    const previewAutoFarm = document.getElementById('previewAutoFarm');
+    const previewTrainer = document.getElementById('previewTrainer');
+    const previewNotification = document.getElementById('previewNotification');
+    const previewAdvanced = document.getElementById('previewAdvanced');
+    const previewVillages = document.getElementById('previewVillages');
+    const previewTasks = document.getElementById('previewTasks');
+    
+    // Update preview when inputs change
+    function updatePreview() {
+        previewTitle.textContent = planName.value || 'Plan Name';
+        previewPrice.textContent = planPrice.value || '0.00';
+        previewDescription.textContent = planDescription.value || 'Plan description';
+        
+        // Update features
+        updateFeaturePreview(previewAutoFarm, featureAutoFarm.checked, 'Auto-Farm Feature');
+        updateFeaturePreview(previewTrainer, featureTrainer.checked, 'Troop Training');
+        updateFeaturePreview(previewNotification, featureNotification.checked, 'Notifications');
+        updateFeaturePreview(previewAdvanced, featureAdvanced.checked, 'Advanced Features');
+        
+        // Update limits
+        const villageCount = maxVillages.value || '{{ plan.features.maxVillages }}';
+        const taskCount = maxTasks.value || '{{ plan.features.maxTasks }}';
+        
+        updateFeaturePreview(previewVillages, true, `${villageCount} Villages Maximum`);
+        updateFeaturePreview(previewTasks, true, `${taskCount} Concurrent Task${taskCount > 1 ? 's' : ''}`);
+    }
+    
+    function updateFeaturePreview(element, isEnabled, text) {
+        element.innerHTML = isEnabled 
+            ? `<i class="bi bi-check-circle text-success me-2"></i> ${text}`
+            : `<i class="bi bi-x-circle text-danger me-2"></i> ${text}`;
+    }
+    
+    // Update preview on input changes
+    planName.addEventListener('input', updatePreview);
+    planDescription.addEventListener('input', updatePreview);
+    planPrice.addEventListener('input', updatePreview);
+    featureAutoFarm.addEventListener('change', updatePreview);
+    featureTrainer.addEventListener('change', updatePreview);
+    featureNotification.addEventListener('change', updatePreview);
+    featureAdvanced.addEventListener('change', updatePreview);
+    maxVillages.addEventListener('input', updatePreview);
+    maxTasks.addEventListener('input', updatePreview);
+    
+    // Helper functions for validation
+    function showError(input, message) {
+        const formGroup = input.closest('.mb-3');
+        const feedbackElement = document.createElement('div');
+        feedbackElement.className = 'invalid-feedback d-block';
+        feedbackElement.textContent = message;
+        
+        clearError(input);
+        
+        input.classList.add('is-invalid');
+        formGroup.appendChild(feedbackElement);
+    }
+    
+    function clearError(input) {
+        const formGroup = input.closest('.mb-3');
+        const feedbackElement = formGroup.querySelector('.invalid-feedback');
+        
+        input.classList.remove('is-invalid');
+        
+        if (feedbackElement) {
+            feedbackElement.remove();
+        }
+    }
+    
+    // Calculate suggested yearly price based on monthly price
+    const yearlyPrice = document.getElementById('yearlyPrice');
+    
+    // If the yearly price hasn't been customized, update it when monthly price changes
+    let yearlyPriceModified = false;
+    yearlyPrice.addEventListener('input', function() {
+        yearlyPriceModified = true;
+    });
+    
+    planPrice.addEventListener('input', function() {
+        if (!yearlyPriceModified && planPrice.value && !isNaN(planPrice.value)) {
+            // Suggest yearly price with 2 months free
+            const monthly = parseFloat(planPrice.value);
+            const suggested = (monthly * 10).toFixed(2);
+            yearlyPrice.value = suggested;
+        }
+    });
+    
+    // Set up delete plan modal
+    const deletePlanModal = document.getElementById('deletePlanModal');
+    if (deletePlanModal) {
+        deletePlanModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const planId = button.getAttribute('data-id');
+            const planName = button.getAttribute('data-name');
+            
+            // Set plan name in modal
+            document.getElementById('deletePlanName').textContent = planName;
+        });
+    }
+});
+</script>
+{% endblock %}

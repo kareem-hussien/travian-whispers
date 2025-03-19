@@ -1,4 +1,4 @@
-{% extends 'admin/components/admin-layout.html' %}
+{% extends 'admin/layout.html' %}
 
 {% block title %}Subscription Plans{% endblock %}
 
@@ -8,24 +8,25 @@
 
 {% block content %}
 <!-- Page Header -->
-{% with 
-    title="Subscription Plans",
-    subtitle="Manage subscription plans and pricing",
-    show_buttons=true,
-    primary_button_text="Add New Plan",
-    primary_button_icon="plus-circle",
-    primary_button_url=url_for('admin.create_plan')
-%}
-    {% include 'admin/components/admin-page-header.html' %}
-{% endwith %}
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="mb-1">Subscription Plans</h2>
+            <p class="text-muted">Manage subscription plans and pricing</p>
+        </div>
+        <div>
+            <a href="{{ url_for('admin.create_plan') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-1"></i> Add New Plan
+            </a>
+        </div>
+    </div>
+</div>
 
 <!-- Plans Cards -->
 <div class="row g-4 mb-4">
     {% for plan in plans %}
     <div class="col-lg-4 col-md-6">
-        {% with plan=plan, show_edit=true %}
         <div class="dashboard-card plan-card h-100">
-            {% if show_edit %}
             <div class="position-absolute top-0 end-0 p-3">
                 <div class="btn-group btn-group-sm">
                     <a href="{{ url_for('admin.edit_plan', plan_id=plan.id) }}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Edit Plan">
@@ -37,7 +38,6 @@
                     </button>
                 </div>
             </div>
-            {% endif %}
             
             <div class="text-center">
                 <h3 class="mb-3">{{ plan.name }}</h3>
@@ -82,7 +82,6 @@
                 <a href="{{ url_for('admin.edit_plan', plan_id=plan.id) }}" class="btn btn-outline-primary w-100">Edit Plan</a>
             </div>
         </div>
-        {% endwith %}
     </div>
     {% endfor %}
 </div>
@@ -113,23 +112,49 @@
                         <tr>
                             <td>Max Villages</td>
                             {% for plan in plans %}
-                            <td class="text-center">{{ plan.features_map.maxVillages }}</td>
+                            <td class="text-center">
+                                {% if plan.features and 'maxVillages' in plan.features %}
+                                    {{ plan.features.maxVillages }}
+                                {% elif plan.features_obj and 'maxVillages' in plan.features_obj %}
+                                    {{ plan.features_obj.maxVillages }}
+                                {% else %}
+                                    1
+                                {% endif %}
+                            </td>
                             {% endfor %}
                         </tr>
                         <tr>
                             <td>Max Tasks</td>
                             {% for plan in plans %}
-                            <td class="text-center">{{ plan.features_map.maxTasks }}</td>
+                            <td class="text-center">
+                                {% if plan.features and 'maxTasks' in plan.features %}
+                                    {{ plan.features.maxTasks }}
+                                {% elif plan.features_obj and 'maxTasks' in plan.features_obj %}
+                                    {{ plan.features_obj.maxTasks }}
+                                {% else %}
+                                    1
+                                {% endif %}
+                            </td>
                             {% endfor %}
                         </tr>
                         <tr>
                             <td>Auto-Farm</td>
                             {% for plan in plans %}
                             <td class="text-center">
-                                {% if plan.features_map.autoFarm %}
-                                <i class="bi bi-check-lg text-success"></i>
+                                {% if plan.features and 'autoFarm' in plan.features %}
+                                    {% if plan.features.autoFarm %}
+                                        <i class="bi bi-check-lg text-success"></i>
+                                    {% else %}
+                                        <i class="bi bi-x-lg text-danger"></i>
+                                    {% endif %}
+                                {% elif plan.features_obj and 'autoFarm' in plan.features_obj %}
+                                    {% if plan.features_obj.autoFarm %}
+                                        <i class="bi bi-check-lg text-success"></i>
+                                    {% else %}
+                                        <i class="bi bi-x-lg text-danger"></i>
+                                    {% endif %}
                                 {% else %}
-                                <i class="bi bi-x-lg text-danger"></i>
+                                    <i class="bi bi-x-lg text-danger"></i>
                                 {% endif %}
                             </td>
                             {% endfor %}
@@ -138,10 +163,20 @@
                             <td>Troop Trainer</td>
                             {% for plan in plans %}
                             <td class="text-center">
-                                {% if plan.features_map.trainer %}
-                                <i class="bi bi-check-lg text-success"></i>
+                                {% if plan.features and 'trainer' in plan.features %}
+                                    {% if plan.features.trainer %}
+                                        <i class="bi bi-check-lg text-success"></i>
+                                    {% else %}
+                                        <i class="bi bi-x-lg text-danger"></i>
+                                    {% endif %}
+                                {% elif plan.features_obj and 'trainer' in plan.features_obj %}
+                                    {% if plan.features_obj.trainer %}
+                                        <i class="bi bi-check-lg text-success"></i>
+                                    {% else %}
+                                        <i class="bi bi-x-lg text-danger"></i>
+                                    {% endif %}
                                 {% else %}
-                                <i class="bi bi-x-lg text-danger"></i>
+                                    <i class="bi bi-x-lg text-danger"></i>
                                 {% endif %}
                             </td>
                             {% endfor %}
@@ -150,10 +185,20 @@
                             <td>Notifications</td>
                             {% for plan in plans %}
                             <td class="text-center">
-                                {% if plan.features_map.notification %}
-                                <i class="bi bi-check-lg text-success"></i>
+                                {% if plan.features and 'notification' in plan.features %}
+                                    {% if plan.features.notification %}
+                                        <i class="bi bi-check-lg text-success"></i>
+                                    {% else %}
+                                        <i class="bi bi-x-lg text-danger"></i>
+                                    {% endif %}
+                                {% elif plan.features_obj and 'notification' in plan.features_obj %}
+                                    {% if plan.features_obj.notification %}
+                                        <i class="bi bi-check-lg text-success"></i>
+                                    {% else %}
+                                        <i class="bi bi-x-lg text-danger"></i>
+                                    {% endif %}
                                 {% else %}
-                                <i class="bi bi-x-lg text-danger"></i>
+                                    <i class="bi bi-x-lg text-danger"></i>
                                 {% endif %}
                             </td>
                             {% endfor %}
@@ -162,10 +207,20 @@
                             <td>Advanced Features</td>
                             {% for plan in plans %}
                             <td class="text-center">
-                                {% if plan.features_map.advanced %}
-                                <i class="bi bi-check-lg text-success"></i>
+                                {% if plan.features and 'advanced' in plan.features %}
+                                    {% if plan.features.advanced %}
+                                        <i class="bi bi-check-lg text-success"></i>
+                                    {% else %}
+                                        <i class="bi bi-x-lg text-danger"></i>
+                                    {% endif %}
+                                {% elif plan.features_obj and 'advanced' in plan.features_obj %}
+                                    {% if plan.features_obj.advanced %}
+                                        <i class="bi bi-check-lg text-success"></i>
+                                    {% else %}
+                                        <i class="bi bi-x-lg text-danger"></i>
+                                    {% endif %}
                                 {% else %}
-                                <i class="bi bi-x-lg text-danger"></i>
+                                    <i class="bi bi-x-lg text-danger"></i>
                                 {% endif %}
                             </td>
                             {% endfor %}
@@ -209,19 +264,11 @@
 
 {% block modals %}
 <!-- Delete Plan Modal -->
-{% with 
-    modal_id="deletePlanModal",
-    modal_title="Delete Subscription Plan",
-    confirm_message="Are you sure you want to delete this subscription plan? This action cannot be undone.",
-    confirm_button_text="Delete Plan",
-    confirm_button_class="btn-danger",
-    item_type="Plan"
-%}
-<div class="modal fade" id="{{ modal_id }}" tabindex="-1" aria-labelledby="{{ modal_id }}Label" aria-hidden="true">
+<div class="modal fade" id="deletePlanModal" tabindex="-1" aria-labelledby="deletePlanModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="{{ modal_id }}Label">{{ modal_title }}</h5>
+                <h5 class="modal-title" id="deletePlanModalLabel">Delete Subscription Plan</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -229,7 +276,7 @@
                     <i class="bi bi-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
                 </div>
                 
-                <p>{{ confirm_message }}</p>
+                <p>Are you sure you want to delete this subscription plan? This action cannot be undone.</p>
                 
                 <div class="alert alert-warning">
                     <i class="bi bi-info-circle-fill me-2"></i>
@@ -242,13 +289,12 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <form id="deletePlanForm" method="post" action="">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn {{ confirm_button_class }}">{{ confirm_button_text }}</button>
+                    <button type="submit" class="btn btn-danger">Delete Plan</button>
                 </form>
             </div>
         </div>
     </div>
 </div>
-{% endwith %}
 {% endblock %}
 
 {% block scripts %}
@@ -283,97 +329,101 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function initSubscriptionCharts() {
     // Subscription Trend Chart
-    const trendCtx = document.getElementById('subscriptionTrendChart').getContext('2d');
-    new Chart(trendCtx, {
-        type: 'line',
-        data: {
-            labels: ['Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb'],
-            datasets: [
-                {
-                    label: 'Basic Plan',
-                    data: [45, 47, 52, 58, 65, 72, 80, 85, 92, 96, 102, 110],
-                    backgroundColor: 'rgba(58, 110, 165, 0.1)',
-                    borderColor: 'rgba(58, 110, 165, 1)',
-                    borderWidth: 2,
-                    tension: 0.3
+    const trendCtx = document.getElementById('subscriptionTrendChart');
+    if (trendCtx) {
+        new Chart(trendCtx.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: ['Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb'],
+                datasets: [
+                    {
+                        label: 'Basic Plan',
+                        data: [45, 47, 52, 58, 65, 72, 80, 85, 92, 96, 102, 110],
+                        backgroundColor: 'rgba(58, 110, 165, 0.1)',
+                        borderColor: 'rgba(58, 110, 165, 1)',
+                        borderWidth: 2,
+                        tension: 0.3
+                    },
+                    {
+                        label: 'Standard Plan',
+                        data: [32, 35, 39, 42, 50, 55, 62, 68, 73, 80, 85, 92],
+                        backgroundColor: 'rgba(255, 154, 60, 0.1)',
+                        borderColor: 'rgba(255, 154, 60, 1)',
+                        borderWidth: 2,
+                        tension: 0.3
+                    },
+                    {
+                        label: 'Premium Plan',
+                        data: [15, 18, 20, 24, 28, 32, 36, 42, 46, 52, 58, 65],
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        borderColor: 'rgba(40, 167, 69, 1)',
+                        borderWidth: 2,
+                        tension: 0.3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Subscriptions'
+                        }
+                    }
                 },
-                {
-                    label: 'Standard Plan',
-                    data: [32, 35, 39, 42, 50, 55, 62, 68, 73, 80, 85, 92],
-                    backgroundColor: 'rgba(255, 154, 60, 0.1)',
-                    borderColor: 'rgba(255, 154, 60, 1)',
-                    borderWidth: 2,
-                    tension: 0.3
-                },
-                {
-                    label: 'Premium Plan',
-                    data: [15, 18, 20, 24, 28, 32, 36, 42, 46, 52, 58, 65],
-                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                    borderColor: 'rgba(40, 167, 69, 1)',
-                    borderWidth: 2,
-                    tension: 0.3
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    },
                     title: {
                         display: true,
-                        text: 'Number of Subscriptions'
+                        text: 'Subscription Trends'
                     }
                 }
-            },
-            plugins: {
-                legend: {
-                    position: 'top'
-                },
-                title: {
-                    display: true,
-                    text: 'Subscription Trends'
-                }
             }
-        }
-    });
+        });
+    }
     
     // Plan Distribution Chart
-    const distributionCtx = document.getElementById('planDistributionChart').getContext('2d');
-    new Chart(distributionCtx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Basic Plan', 'Standard Plan', 'Premium Plan'],
-            datasets: [{
-                data: [110, 92, 65],
-                backgroundColor: [
-                    'rgba(58, 110, 165, 0.7)',
-                    'rgba(255, 154, 60, 0.7)',
-                    'rgba(40, 167, 69, 0.7)'
-                ],
-                borderColor: [
-                    'rgba(58, 110, 165, 1)',
-                    'rgba(255, 154, 60, 1)',
-                    'rgba(40, 167, 69, 1)'
-                ],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom'
-                },
-                title: {
-                    display: true,
-                    text: 'Active Subscriptions by Plan'
+    const distributionCtx = document.getElementById('planDistributionChart');
+    if (distributionCtx) {
+        new Chart(distributionCtx.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Basic Plan', 'Standard Plan', 'Premium Plan'],
+                datasets: [{
+                    data: [110, 92, 65],
+                    backgroundColor: [
+                        'rgba(58, 110, 165, 0.7)',
+                        'rgba(255, 154, 60, 0.7)',
+                        'rgba(40, 167, 69, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(58, 110, 165, 1)',
+                        'rgba(255, 154, 60, 1)',
+                        'rgba(40, 167, 69, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Active Subscriptions by Plan'
+                    }
                 }
             }
-        }
-    });
+        });
+    }
 }
 </script>
 {% endblock %}

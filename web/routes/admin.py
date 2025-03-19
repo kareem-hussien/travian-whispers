@@ -396,7 +396,7 @@ def user_edit(user_id):
         
         # Update user
         success = user_model.update_user(user_id, update_data)
-        
+
         if success:
             # Handle password change separately if needed
             if new_password:
@@ -550,7 +550,7 @@ def create_plan():
     
     # Render plan create template
     return render_template(
-        'admin/plan_create.html', 
+        'admin/subscriptions/create.html', 
         current_user=current_user,
         title='Create Subscription Plan'
     )

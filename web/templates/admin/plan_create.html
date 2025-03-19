@@ -1,0 +1,282 @@
+{% extends 'admin/layout.html' %}
+
+{% block title %}Create Subscription Plan{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin.subscriptions') }}">Subscription Plans</a></li>
+<li class="breadcrumb-item active" aria-current="page">Create Plan</li>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="mb-1">Create Subscription Plan</h2>
+        <p class="text-muted">Add a new subscription plan to the system</p>
+    </div>
+    
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+</div>
+
+<!-- Plan Creation Form -->
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="dashboard-card">
+            <form action="{{ url_for('admin.create_plan') }}" method="post" id="createPlanForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <!-- Basic Information Section -->
+                <div class="border-bottom pb-3 mb-4">
+                    <h5>Basic Information</h5>
+                </div>
+                
+                <!-- Plan Name -->
+                <div class="mb-3">
+                    <label for="planName" class="form-label">Plan Name</label>
+                    <input type="text" class="form-control" id="planName" name="planName" required
+                           placeholder="Enter plan name (e.g., Basic, Standard, Premium)">
+                    <small class="form-text text-muted">Name should be concise and descriptive.</small>
+                </div>
+                
+                <!-- Plan Description -->
+                <div class="mb-3">
+                    <label for="planDescription" class="form-label">Description</label>
+                    <textarea class="form-control" id="planDescription" name="planDescription" rows="3" required
+                              placeholder="Enter plan description"></textarea>
+                    <small class="form-text text-muted">Brief description of what this plan offers.</small>
+                </div>
+                
+                <!-- Pricing Information Section -->
+                <div class="border-bottom pb-3 mb-4 mt-5">
+                    <h5>Pricing Information</h5>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <!-- Monthly Price -->
+                        <div class="mb-3">
+                            <label for="planPrice" class="form-label">Monthly Price ($)</label>
+                            <input type="number" class="form-control" id="planPrice" name="planPrice" required
+                                   value="9.99" min="0" step="0.01">
+                            <small class="form-text text-muted">Monthly subscription price in USD.</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <!-- Yearly Price -->
+                        <div class="mb-3">
+                            <label for="yearlyPrice" class="form-label">Yearly Price ($)</label>
+                            <input type="number" class="form-control" id="yearlyPrice" name="yearlyPrice" required
+                                   value="99.99" min="0" step="0.01">
+                            <small class="form-text text-muted">Yearly subscription price in USD (typically offer a discount).</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Features Section -->
+                <div class="border-bottom pb-3 mb-4 mt-5">
+                    <h5>Plan Features</h5>
+                </div>
+                
+                <!-- Feature Checkboxes -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="featureAutoFarm" name="featureAutoFarm" value="1">
+                                <label class="form-check-label" for="featureAutoFarm">Auto-Farm Feature</label>
+                            </div>
+                            <small class="form-text text-muted">Enables automatic farming of resources.</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="featureTrainer" name="featureTrainer" value="1">
+                                <label class="form-check-label" for="featureTrainer">Troop Training</label>
+                            </div>
+                            <small class="form-text text-muted">Enables automatic troop training.</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="featureNotification" name="featureNotification" value="1" checked>
+                                <label class="form-check-label" for="featureNotification">Notifications</label>
+                            </div>
+                            <small class="form-text text-muted">Enables email and in-app notifications.</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="featureAdvanced" name="featureAdvanced" value="1">
+                                <label class="form-check-label" for="featureAdvanced">Advanced Features</label>
+                            </div>
+                            <small class="form-text text-muted">Enables access to advanced features and analytics.</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Feature Limits -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="maxVillages" class="form-label">Maximum Villages</label>
+                            <input type="number" class="form-control" id="maxVillages" name="maxVillages" required
+                                   value="2" min="1" step="1">
+                            <small class="form-text text-muted">Maximum number of villages that can be managed.</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="maxTasks" class="form-label">Maximum Tasks</label>
+                            <input type="number" class="form-control" id="maxTasks" name="maxTasks" required
+                                   value="1" min="1" step="1">
+                            <small class="form-text text-muted">Maximum number of concurrent tasks allowed.</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="mt-5 d-flex justify-content-between">
+                    <a href="{{ url_for('admin.subscriptions') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-1"></i> Create Plan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const form = document.getElementById('createPlanForm');
+    if (form) {
+        form.addEventListener('submit', function(event) {
+            let isValid = true;
+            
+            // Plan Name validation
+            const planName = document.getElementById('planName');
+            if (!planName.value.trim()) {
+                showError(planName, 'Plan name is required');
+                isValid = false;
+            } else if (planName.value.length < 3 || planName.value.length > 50) {
+                showError(planName, 'Plan name must be between 3 and 50 characters');
+                isValid = false;
+            } else {
+                clearError(planName);
+            }
+            
+            // Plan Description validation
+            const planDescription = document.getElementById('planDescription');
+            if (!planDescription.value.trim()) {
+                showError(planDescription, 'Plan description is required');
+                isValid = false;
+            } else if (planDescription.value.length < 10) {
+                showError(planDescription, 'Description must be at least 10 characters');
+                isValid = false;
+            } else {
+                clearError(planDescription);
+            }
+            
+            // Price validation
+            const planPrice = document.getElementById('planPrice');
+            if (!planPrice.value || parseFloat(planPrice.value) < 0) {
+                showError(planPrice, 'Please enter a valid monthly price');
+                isValid = false;
+            } else {
+                clearError(planPrice);
+            }
+            
+            const yearlyPrice = document.getElementById('yearlyPrice');
+            if (!yearlyPrice.value || parseFloat(yearlyPrice.value) < 0) {
+                showError(yearlyPrice, 'Please enter a valid yearly price');
+                isValid = false;
+            } else {
+                clearError(yearlyPrice);
+            }
+            
+            // Maximum Villages validation
+            const maxVillages = document.getElementById('maxVillages');
+            if (!maxVillages.value || parseInt(maxVillages.value) < 1) {
+                showError(maxVillages, 'Maximum villages must be at least 1');
+                isValid = false;
+            } else {
+                clearError(maxVillages);
+            }
+            
+            // Maximum Tasks validation
+            const maxTasks = document.getElementById('maxTasks');
+            if (!maxTasks.value || parseInt(maxTasks.value) < 1) {
+                showError(maxTasks, 'Maximum tasks must be at least 1');
+                isValid = false;
+            } else {
+                clearError(maxTasks);
+            }
+            
+            // Prevent form submission if validation fails
+            if (!isValid) {
+                event.preventDefault();
+            }
+        });
+        
+        // Auto-calculate yearly price suggestion
+        const planPrice = document.getElementById('planPrice');
+        const yearlyPrice = document.getElementById('yearlyPrice');
+        
+        planPrice.addEventListener('input', function() {
+            const monthlyPrice = parseFloat(this.value) || 0;
+            // Suggest yearly price with ~16% discount (10 months for price of 12)
+            const suggestedYearlyPrice = (monthlyPrice * 10).toFixed(2);
+            yearlyPrice.value = suggestedYearlyPrice;
+        });
+    }
+    
+    // Helper functions for validation errors
+    function showError(input, message) {
+        const formGroup = input.closest('.mb-3');
+        let errorDiv = formGroup.querySelector('.invalid-feedback');
+        
+        if (!errorDiv) {
+            errorDiv = document.createElement('div');
+            errorDiv.className = 'invalid-feedback';
+            input.parentNode.appendChild(errorDiv);
+        }
+        
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+        input.classList.add('is-invalid');
+    }
+    
+    function clearError(input) {
+        const formGroup = input.closest('.mb-3');
+        const errorDiv = formGroup.querySelector('.invalid-feedback');
+        
+        if (errorDiv) {
+            errorDiv.style.display = 'none';
+        }
+        
+        input.classList.remove('is-invalid');
+    }
+});
+</script>
+{% endblock %}
