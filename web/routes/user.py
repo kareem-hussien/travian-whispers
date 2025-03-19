@@ -3,7 +3,6 @@ User routes for Travian Whispers web application.
 This module defines the blueprint for user dashboard routes.
 """
 import logging
-from datetime import datetime, timedelta
 from flask import (
     Blueprint, render_template, request, redirect, 
     url_for, flash, session, current_app, jsonify
@@ -12,10 +11,6 @@ from flask import (
 from web.utils.decorators import login_required
 from database.models.user import User
 from database.models.subscription import SubscriptionPlan
-from database.models.activity import UserActivity
-from database.models.village import Village
-from database.models.auto_farm import AutoFarm
-from database.models.trainer import TroopTrainer
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -40,240 +35,11 @@ def dashboard():
         session.clear()
         return redirect(url_for('auth.login'))
     
-    # Get support articles from config (if available)
-    support_articles = current_app.config.get('SUPPORT_ARTICLES', [])
-    
-    # Get FAQ entries from database (if available)
-    try:
-        from database.models.faq import FAQ
-        faq_model = FAQ()
-        faq_entries = faq_model.list_faq_entries()
-    except (ImportError, AttributeError):
-        # Fall back to empty list if model doesn't exist
-        faq_entries = []
-    
-    # Render support template
-    return render_template(
-        'user/support.html', 
-        current_user=user,
-        support_articles=support_articles,
-        faq_entries=faq_entries,
-        title='Help & Support'
-    ) found', 'danger')
-        
-        # Clear session and redirect to login
-        session.clear()
-        return redirect(url_for('auth.login'))
-    
-    # Get subscription plans
-    plan_model = SubscriptionPlan()
-    plans = plan_model.list_plans()
-    
-    # Get current plan
-    current_plan = None
-    if user['subscription']['planId']:
-        current_plan = plan_model.get_plan_by_id(user['subscription']['planId'])
-    
-    # Render subscription template
-    return render_template(
-        'user/subscription.html', 
-        plans=plans,
-        current_plan=current_plan,
-        current_user=user, 
-        title='Subscription'
-    )
-
-
-@user_bp.route('/support')
-@login_required
-def support():
-    """Help and support route."""
-    # Get user data
-    user_model = User()
-    user = user_model.get_user_by_id(session['user_id'])
-    
-    if not user:
-        # Flash error message
-        flash('User not found', 'danger')
-        
-        # Clear session and redirect to login
-        session.clear()
-        return redirect(url_for('auth.login'))
-    
-    # Check if user has subscription
-    if user['subscription']['status'] != 'active':
-        # Flash error message
-        flash('You need an active subscription to use Troop Trainer', 'warning')
-        
-        # Redirect to subscription page
-        return redirect(url_for('user.subscription'))
-    
     # Get subscription plan
     plan_model = SubscriptionPlan()
     plan = None
     if user['subscription']['planId']:
         plan = plan_model.get_plan_by_id(user['subscription']['planId'])
-    
-    # Check if troop trainer is included in plan
-    if not plan or not plan['features'].get('trainer', False):
-        # Flash error message
-        flash('Troop Trainer is not included in your subscription plan', 'warning')
-        
-        # Redirect to subscription page
-        return redirect(url_for('user.subscription'))
-    
-    # Get trainer data from database
-    trainer_model = TroopTrainer()
-    trainer_data = trainer_model.get_user_config(session['user_id'])
-    
-    # If no trainer data exists, initialize with defaults
-    if not trainer_data:
-        trainer_data = {
-            'status': 'stopped',
-            'tribe': user['travianCredentials'].get('tribe', 'Unknown'),
-            'troops': [],
-        }
-    
-    # Get villages from database
-    village_model = Village()
-    trainer_data['villages'] = village_model.get_user_villages(session['user_id'])
-    
-    # Render troop trainer template
-    return render_template(
-        'user/troop_trainer.html', 
-        trainer=trainer_data,
-        current_user=user, 
-        title='Troop Trainer'
-    )
-
-
-@user_bp.route('/activity-logs')
-@login_required
-def activity_logs():
-    """Activity logs route."""
-    # Get user data
-    user_model = User()
-    user = user_model.get_user_by_id(session['user_id'])
-    
-    if not user:
-        # Flash error message
-        flash('User not found', 'danger')
-        
-        # Clear session and redirect to login
-        session.clear()
-        return redirect(url_for('auth.login'))
-    
-    # Get activity logs from database
-    activity_model = UserActivity()
-    
-    # Set up pagination
-    page = int(request.args.get('page', 1))
-    per_page = 20
-    skip = (page - 1) * per_page
-    
-    # Get activity logs with pagination
-    activities_cursor = activity_model.get_user_activities(
-        user_id=session['user_id'],
-        skip=skip,
-        limit=per_page
-    )
-    
-    # Convert cursor to list
-    activity_logs = list(activities_cursor)
-    
-    # Get total count for pagination
-    total_logs = activity_model.count_user_activities(session['user_id'])
-    total_pages = (total_logs + per_page - 1) // per_page
-    
-    # Render activity logs template
-    return render_template(
-        'user/activity_logs.html', 
-        logs=activity_logs,
-        current_page=page,
-        total_pages=total_pages,
-        current_user=user, 
-        title='Activity Logs'
-    )
-
-
-@user_bp.route('/subscription')
-@login_required
-def subscription():
-    """Subscription management route."""
-    # Get user data
-    user_model = User()
-    user = user_model.get_user_by_id(session['user_id'])
-    
-    if not user:
-        # Flash error message
-        flash('User not found', 'danger')
-        
-        # Clear session and redirect to login
-        session.clear()
-        return redirect(url_for('auth.login'))
-    
-    # Get subscription plan
-    plan_model = SubscriptionPlan()
-    plan = None
-    if user['subscription']['planId']:
-        plan = plan_model.get_plan_by_id(user['subscription']['planId'])
-    
-    # Get user's villages from database
-    village_model = Village()
-    user_villages = village_model.get_user_villages(session['user_id'])
-    
-    # Get auto farm status from database
-    auto_farm_model = AutoFarm()
-    auto_farm_status = auto_farm_model.get_user_status(session['user_id'])
-    
-    # If no auto farm status exists, initialize with defaults
-    if not auto_farm_status:
-        auto_farm_status = {
-            'status': 'stopped',
-            'last_run': None,
-            'next_run': None
-        }
-    
-    # Calculate next run if active
-    if auto_farm_status['status'] == 'active' and auto_farm_status['last_run']:
-        last_run = auto_farm_status['last_run']
-        if isinstance(last_run, str):
-            try:
-                last_run = datetime.strptime(last_run, '%Y-%m-%d %H:%M:%S')
-            except ValueError:
-                last_run = datetime.now() - timedelta(hours=1)
-        
-        # Get interval from settings or default to 60 minutes
-        interval_minutes = user.get('settings', {}).get('autoFarmInterval', 60)
-        next_run = last_run + timedelta(minutes=interval_minutes)
-        
-        # Format for display
-        auto_farm_status['next_run'] = next_run.strftime('%Y-%m-%d %H:%M:%S')
-    else:
-        auto_farm_status['next_run'] = 'N/A'
-    
-    # Format last run time
-    if auto_farm_status['last_run']:
-        if isinstance(auto_farm_status['last_run'], datetime):
-            auto_farm_status['last_run'] = auto_farm_status['last_run'].strftime('%Y-%m-%d %H:%M:%S')
-    else:
-        auto_farm_status['last_run'] = 'Never'
-    
-    # Get troop trainer status from database
-    trainer_model = TroopTrainer()
-    trainer_status = trainer_model.get_user_status(session['user_id'])
-    
-    # If no trainer status exists, initialize with defaults
-    if not trainer_status:
-        trainer_status = {
-            'status': 'stopped',
-            'tribe': user['travianCredentials'].get('tribe', ''),
-            'troops': []
-        }
-    
-    # Get latest activity logs for the user
-    activity_model = UserActivity()
-    recent_activities = activity_model.get_recent_activities(session['user_id'], limit=5)
     
     # Prepare data for dashboard
     dashboard_data = {
@@ -282,19 +48,19 @@ def subscription():
         'subscription': {
             'status': user['subscription']['status'],
             'plan': plan['name'] if plan else 'None',
-            'start_date': user['subscription'].get('startDate'),
-            'end_date': user['subscription'].get('endDate'),
+            'start_date': user['subscription']['startDate'],
+            'end_date': user['subscription']['endDate'],
         },
-        'villages': user_villages,
+        'villages': user['villages'],
         'auto_farm': {
-            'status': auto_farm_status['status'],
-            'last_run': auto_farm_status['last_run'],
-            'next_run': auto_farm_status['next_run'],
+            'status': 'active' if user['settings']['autoFarm'] else 'stopped',
+            'last_run': 'Never', # This would be retrieved from activity logs
+            'next_run': 'N/A',  # This would be calculated based on last run and interval
         },
         'trainer': {
-            'status': trainer_status['status'],
-            'tribe': trainer_status['tribe'] or 'Not set',
-            'troops': trainer_status['troops'],
+            'status': 'active' if user['settings']['trainer'] else 'stopped',
+            'tribe': user['travianCredentials']['tribe'] or 'Not set',
+            'troops': [], # This would be retrieved from trainer configuration
         },
     }
     
@@ -405,6 +171,75 @@ def profile():
     )
 
 
+@user_bp.route('/travian-settings', methods=['GET', 'POST'])
+@login_required
+def travian_settings():
+    """Travian account settings route."""
+    # Get user data
+    user_model = User()
+    user = user_model.get_user_by_id(session['user_id'])
+    
+    if not user:
+        # Flash error message
+        flash('User not found', 'danger')
+        
+        # Clear session and redirect to login
+        session.clear()
+        return redirect(url_for('auth.login'))
+    
+    # Process form submission
+    if request.method == 'POST':
+        # Get form data
+        travian_username = request.form.get('travian_username', '')
+        travian_password = request.form.get('travian_password', '')
+        travian_server = request.form.get('travian_server', '')
+        travian_tribe = request.form.get('travian_tribe', '')
+        
+        # Check for changes in password field
+        if travian_password == '********':
+            # Password field was not changed, use existing password
+            travian_password = user['travianCredentials']['password']
+        
+        # Update travian credentials
+        update_data = {
+            'travianCredentials': {
+                'username': travian_username,
+                'password': travian_password,
+                'server': travian_server,
+                'tribe': travian_tribe
+            }
+        }
+        
+        # Update user in database
+        if user_model.update_user(session['user_id'], update_data):
+            # Flash success message
+            flash('Travian account settings updated successfully', 'success')
+            logger.info(f"User '{user['username']}' updated Travian settings")
+        else:
+            # Flash error message
+            flash('Failed to update Travian account settings', 'danger')
+            logger.warning(f"Failed to update Travian settings for user '{user['username']}'")
+    
+    # Prepare travian settings data
+    travian_settings = {
+        'travian_credentials': {
+            'username': user['travianCredentials'].get('username', ''),
+            'password': '********' if user['travianCredentials'].get('password', '') else '',
+            'server': user['travianCredentials'].get('server', ''),
+            'tribe': user['travianCredentials'].get('tribe', '')
+        },
+        'last_connection': 'Never'  # This would be retrieved from activity logs
+    }
+    
+    # Render travian settings template
+    return render_template(
+        'user/travian_settings.html', 
+        user_profile=travian_settings,
+        current_user=user, 
+        title='Travian Settings'
+    )
+
+
 @user_bp.route('/villages')
 @login_required
 def villages():
@@ -421,9 +256,8 @@ def villages():
         session.clear()
         return redirect(url_for('auth.login'))
     
-    # Get villages from database
-    village_model = Village()
-    villages_data = village_model.get_user_villages(session['user_id'])
+    # Prepare villages data
+    villages_data = user['villages']
     
     # Render villages template
     return render_template(
@@ -472,22 +306,14 @@ def auto_farm():
         # Redirect to subscription page
         return redirect(url_for('user.subscription'))
     
-    # Get auto farm data from database
-    auto_farm_model = AutoFarm()
-    auto_farm_data = auto_farm_model.get_user_config(session['user_id'])
-    
-    # If no auto farm data exists, initialize with defaults
-    if not auto_farm_data:
-        auto_farm_data = {
-            'status': 'stopped',
-            'interval': 60,
-            'last_run': 'Never',
-            'next_run': 'N/A',
-        }
-    
-    # Get villages from database
-    village_model = Village()
-    auto_farm_data['villages'] = village_model.get_user_villages(session['user_id'])
+    # Prepare auto farm data
+    auto_farm_data = {
+        'status': 'active' if user['settings'].get('autoFarm', False) else 'stopped',
+        'interval': 60,  # Default interval
+        'last_run': 'Never',  # This would be retrieved from activity logs
+        'next_run': 'N/A',  # This would be calculated based on last run and interval
+        'villages': user['villages']
+    }
     
     # Render auto farm template
     return render_template(
@@ -508,4 +334,164 @@ def troop_trainer():
     
     if not user:
         # Flash error message
-        flash('User not
+        flash('User not found', 'danger')
+        
+        # Clear session and redirect to login
+        session.clear()
+        return redirect(url_for('auth.login'))
+    
+    # Check if user has subscription
+    if user['subscription']['status'] != 'active':
+        # Flash error message
+        flash('You need an active subscription to use Troop Trainer', 'warning')
+        
+        # Redirect to subscription page
+        return redirect(url_for('user.subscription'))
+    
+    # Get subscription plan
+    plan_model = SubscriptionPlan()
+    plan = None
+    if user['subscription']['planId']:
+        plan = plan_model.get_plan_by_id(user['subscription']['planId'])
+    
+    # Check if troop trainer is included in plan
+    if not plan or not plan['features'].get('trainer', False):
+        # Flash error message
+        flash('Troop Trainer is not included in your subscription plan', 'warning')
+        
+        # Redirect to subscription page
+        return redirect(url_for('user.subscription'))
+    
+    # Prepare troop trainer data
+    trainer_data = {
+        'status': 'active' if user['settings'].get('trainer', False) else 'stopped',
+        'tribe': user['travianCredentials'].get('tribe', 'Unknown'),
+        'troops': [],  # This would be retrieved from trainer configuration
+        'villages': user['villages']
+    }
+    
+    # Render troop trainer template
+    return render_template(
+        'user/troop_trainer.html', 
+        trainer=trainer_data,
+        current_user=user, 
+        title='Troop Trainer'
+    )
+
+
+@user_bp.route('/activity-logs')
+@login_required
+def activity_logs():
+    """Activity logs route."""
+    # Get user data
+    user_model = User()
+    user = user_model.get_user_by_id(session['user_id'])
+    
+    if not user:
+        # Flash error message
+        flash('User not found', 'danger')
+        
+        # Clear session and redirect to login
+        session.clear()
+        return redirect(url_for('auth.login'))
+    
+    # Prepare activity logs data (example logs)
+    activity_logs = [
+        {
+            'timestamp': '2025-03-13 15:30:45',
+            'activity': 'Auto-Farm',
+            'details': 'Sent farm lists from Main Village',
+            'status': 'Success'
+        },
+        {
+            'timestamp': '2025-03-13 14:15:22',
+            'activity': 'Troop Training',
+            'details': 'Trained 50 Legionnaires in Main Village',
+            'status': 'Success'
+        },
+        {
+            'timestamp': '2025-03-13 12:30:10',
+            'activity': 'Auto-Farm',
+            'details': 'Sent farm lists from Second Village',
+            'status': 'Success'
+        },
+        {
+            'timestamp': '2025-03-13 11:05:38',
+            'activity': 'System',
+            'details': 'Bot started after maintenance',
+            'status': 'Info'
+        },
+        {
+            'timestamp': '2025-03-13 10:45:15',
+            'activity': 'System',
+            'details': 'Scheduled maintenance began',
+            'status': 'Warning'
+        }
+    ]
+    
+    # Render activity logs template
+    return render_template(
+        'user/activity_logs.html', 
+        logs=activity_logs,
+        current_user=user, 
+        title='Activity Logs'
+    )
+
+
+@user_bp.route('/subscription')
+@login_required
+def subscription():
+    """Subscription management route."""
+    # Get user data
+    user_model = User()
+    user = user_model.get_user_by_id(session['user_id'])
+    
+    if not user:
+        # Flash error message
+        flash('User not found', 'danger')
+        
+        # Clear session and redirect to login
+        session.clear()
+        return redirect(url_for('auth.login'))
+    
+    # Get subscription plans
+    plan_model = SubscriptionPlan()
+    plans = plan_model.list_plans()
+    
+    # Get current plan
+    current_plan = None
+    if user['subscription']['planId']:
+        current_plan = plan_model.get_plan_by_id(user['subscription']['planId'])
+    
+    # Render subscription template
+    return render_template(
+        'user/subscription.html', 
+        plans=plans,
+        current_plan=current_plan,
+        current_user=user, 
+        title='Subscription'
+    )
+
+
+@user_bp.route('/support')
+@login_required
+def support():
+    """Help and support route."""
+    # Get user data
+    user_model = User()
+    user = user_model.get_user_by_id(session['user_id'])
+    
+    if not user:
+        # Flash error message
+        flash('User not found', 'danger')
+        
+        # Clear session and redirect to login
+        session.clear()
+        return redirect(url_for('auth.login'))
+    
+    # Render support template
+    return render_template(
+        'user/support.html', 
+        current_user=user, 
+        title='Help & Support'
+    )
