@@ -177,7 +177,7 @@ If you see errors related to templates like "jinja2.exceptions.UndefinedError" o
 
 ```bash
 # Connect to the web container
-docker exec -it travian-whispers-web-1 bash
+docker exec -it travian-tools-web bash
 
 # Create base.html template if it doesn't exist
 mkdir -p /app/web/templates
