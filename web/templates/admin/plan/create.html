@@ -1,0 +1,302 @@
+{% extends 'admin/components/admin-layout.html' %}
+
+{% block title %}Create Subscription Plan{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin.subscriptions') }}">Subscription Plans</a></li>
+<li class="breadcrumb-item active" aria-current="page">Create Plan</li>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+{% with 
+    title="Create New Subscription Plan",
+    subtitle="Add a new subscription plan to your service offerings",
+    show_buttons=false
+%}
+    {% include 'admin/components/admin-page-header.html' %}
+{% endwith %}
+
+<!-- Plan Creation Form -->
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="dashboard-card">
+            <form action="{{ url_for('admin.create_plan') }}" method="post" id="createPlanForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <!-- Basic Plan Information -->
+                <h5 class="mb-3">Basic Information</h5>
+                
+                <!-- Plan Name Field -->
+                {% with 
+                    field_type="text",
+                    field_id="planName",
+                    field_name="planName",
+                    field_label="Plan Name",
+                    field_placeholder="Enter plan name (e.g. Basic, Standard, Premium)",
+                    field_required=true,
+                    field_help="Choose a clear, descriptive name for this subscription plan."
+                %}
+                    {% include 'admin/components/admin-form-field.html' %}
+                {% endwith %}
+                
+                <!-- Plan Description Field -->
+                {% with 
+                    field_type="textarea",
+                    field_id="planDescription",
+                    field_name="planDescription",
+                    field_label="Description",
+                    field_placeholder="Enter a description of the plan features and benefits",
+                    field_required=true,
+                    field_rows=3,
+                    field_help="A brief description that will be displayed to users."
+                %}
+                    {% include 'admin/components/admin-form-field.html' %}
+                {% endwith %}
+                
+                <!-- Pricing Section -->
+                <h5 class="mt-4 mb-3">Pricing</h5>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        {% with 
+                            field_type="number",
+                            field_id="planPrice",
+                            field_name="planPrice",
+                            field_label="Monthly Price ($)",
+                            field_placeholder="9.99",
+                            field_required=true,
+                            field_min=0,
+                            field_step="0.01",
+                            field_help="Monthly subscription price in USD."
+                        %}
+                            {% include 'admin/components/admin-form-field.html' %}
+                        {% endwith %}
+                    </div>
+                    <div class="col-md-6">
+                        {% with 
+                            field_type="number",
+                            field_id="yearlyPrice",
+                            field_name="yearlyPrice",
+                            field_label="Yearly Price ($)",
+                            field_placeholder="99.99",
+                            field_required=true,
+                            field_min=0,
+                            field_step="0.01",
+                            field_help="Yearly subscription price in USD. Typically discounted from monthly × 12."
+                        %}
+                            {% include 'admin/components/admin-form-field.html' %}
+                        {% endwith %}
+                    </div>
+                </div>
+                
+                <!-- Features Section -->
+                <h5 class="mt-4 mb-3">Plan Features</h5>
+                
+                <!-- Feature Checkboxes -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        {% with 
+                            checkbox_id="featureAutoFarm",
+                            checkbox_name="featureAutoFarm",
+                            checkbox_label="Auto-Farm Feature",
+                            checkbox_help="Allow users to use the auto-farming functionality."
+                        %}
+                            {% include 'admin/components/admin-form-checkbox.html' %}
+                        {% endwith %}
+                    </div>
+                    <div class="col-md-6">
+                        {% with 
+                            checkbox_id="featureTrainer",
+                            checkbox_name="featureTrainer",
+                            checkbox_label="Troop Training",
+                            checkbox_help="Allow users to use the troop training functionality."
+                        %}
+                            {% include 'admin/components/admin-form-checkbox.html' %}
+                        {% endwith %}
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        {% with 
+                            checkbox_id="featureNotification",
+                            checkbox_name="featureNotification",
+                            checkbox_label="Notifications",
+                            checkbox_checked=true,
+                            checkbox_help="Enable email and in-app notifications."
+                        %}
+                            {% include 'admin/components/admin-form-checkbox.html' %}
+                        {% endwith %}
+                    </div>
+                    <div class="col-md-6">
+                        {% with 
+                            checkbox_id="featureAdvanced",
+                            checkbox_name="featureAdvanced",
+                            checkbox_label="Advanced Features",
+                            checkbox_help="Enable premium advanced features."
+                        %}
+                            {% include 'admin/components/admin-form-checkbox.html' %}
+                        {% endwith %}
+                    </div>
+                </div>
+                
+                <!-- Limit Settings -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        {% with 
+                            field_type="number",
+                            field_id="maxVillages",
+                            field_name="maxVillages",
+                            field_label="Maximum Villages",
+                            field_value=2,
+                            field_required=true,
+                            field_min=1,
+                            field_help="Maximum number of villages the user can manage."
+                        %}
+                            {% include 'admin/components/admin-form-field.html' %}
+                        {% endwith %}
+                    </div>
+                    <div class="col-md-6">
+                        {% with 
+                            field_type="number",
+                            field_id="maxTasks",
+                            field_name="maxTasks",
+                            field_label="Maximum Concurrent Tasks",
+                            field_value=1,
+                            field_required=true,
+                            field_min=1,
+                            field_help="Maximum number of tasks that can run simultaneously."
+                        %}
+                            {% include 'admin/components/admin-form-field.html' %}
+                        {% endwith %}
+                    </div>
+                </div>
+                
+                <!-- Form Buttons -->
+                <div class="mt-4 d-flex justify-content-between">
+                    <a href="{{ url_for('admin.subscriptions') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-1"></i> Create Plan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Calculate yearly price as 10 months worth when monthly price changes (2 months free)
+    const monthlyPriceInput = document.getElementById('planPrice');
+    const yearlyPriceInput = document.getElementById('yearlyPrice');
+    
+    if (monthlyPriceInput && yearlyPriceInput) {
+        monthlyPriceInput.addEventListener('input', function() {
+            const monthlyPrice = parseFloat(this.value) || 0;
+            const yearlyPrice = (monthlyPrice * 10).toFixed(2); // 10 months for yearly (2 months free)
+            yearlyPriceInput.value = yearlyPrice;
+        });
+    }
+    
+    // Form validation
+    const form = document.getElementById('createPlanForm');
+    
+    if (form) {
+        form.addEventListener('submit', function(event) {
+            let isValid = true;
+            
+            // Validate plan name
+            const planName = document.getElementById('planName');
+            if (!planName.value.trim()) {
+                showError(planName, 'Plan name is required');
+                isValid = false;
+            } else {
+                clearError(planName);
+            }
+            
+            // Validate description
+            const planDescription = document.getElementById('planDescription');
+            if (!planDescription.value.trim()) {
+                showError(planDescription, 'Plan description is required');
+                isValid = false;
+            } else if (planDescription.value.trim().length < 10) {
+                showError(planDescription, 'Description should be at least 10 characters long');
+                isValid = false;
+            } else {
+                clearError(planDescription);
+            }
+            
+            // Validate prices
+            const planPrice = document.getElementById('planPrice');
+            if (!planPrice.value || parseFloat(planPrice.value) < 0) {
+                showError(planPrice, 'Please enter a valid price (0 or higher)');
+                isValid = false;
+            } else {
+                clearError(planPrice);
+            }
+            
+            const yearlyPrice = document.getElementById('yearlyPrice');
+            if (!yearlyPrice.value || parseFloat(yearlyPrice.value) < 0) {
+                showError(yearlyPrice, 'Please enter a valid yearly price (0 or higher)');
+                isValid = false;
+            } else {
+                clearError(yearlyPrice);
+            }
+            
+            // Validate max values
+            const maxVillages = document.getElementById('maxVillages');
+            if (!maxVillages.value || parseInt(maxVillages.value) < 1) {
+                showError(maxVillages, 'Maximum villages must be at least 1');
+                isValid = false;
+            } else {
+                clearError(maxVillages);
+            }
+            
+            const maxTasks = document.getElementById('maxTasks');
+            if (!maxTasks.value || parseInt(maxTasks.value) < 1) {
+                showError(maxTasks, 'Maximum tasks must be at least 1');
+                isValid = false;
+            } else {
+                clearError(maxTasks);
+            }
+            
+            // Prevent form submission if validation fails
+            if (!isValid) {
+                event.preventDefault();
+            }
+        });
+    }
+    
+    // Helper functions for validation
+    function showError(input, message) {
+        const formGroup = input.closest('.mb-3');
+        const errorDiv = formGroup.querySelector('.invalid-feedback') || document.createElement('div');
+        
+        errorDiv.className = 'invalid-feedback d-block';
+        errorDiv.textContent = message;
+        
+        if (!formGroup.querySelector('.invalid-feedback')) {
+            formGroup.appendChild(errorDiv);
+        }
+        
+        input.classList.add('is-invalid');
+    }
+    
+    function clearError(input) {
+        const formGroup = input.closest('.mb-3');
+        const errorDiv = formGroup.querySelector('.invalid-feedback');
+        
+        if (errorDiv) {
+            errorDiv.remove();
+        }
+        
+        input.classList.remove('is-invalid');
+    }
+});
+</script>
+{% endblock %}

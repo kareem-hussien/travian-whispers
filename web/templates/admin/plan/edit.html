@@ -1,0 +1,464 @@
+{% extends 'admin/components/admin-layout.html' %}
+
+{% block title %}Edit Subscription Plan{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin.subscriptions') }}">Subscription Plans</a></li>
+<li class="breadcrumb-item active" aria-current="page">Edit Plan</li>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+{% with 
+    title="Edit Subscription Plan: " + plan.name,
+    subtitle="Modify subscription plan details and features",
+    show_buttons=false
+%}
+    {% include 'admin/components/admin-page-header.html' %}
+{% endwith %}
+
+<!-- Plan Edit Form -->
+<div class="row">
+    <div class="col-lg-8">
+        <div class="dashboard-card">
+            <form action="{{ url_for('admin.edit_plan', plan_id=plan._id) }}" method="post" id="editPlanForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <!-- Basic Plan Information -->
+                <h5 class="mb-3">Basic Information</h5>
+                
+                <!-- Plan Name Field -->
+                {% with 
+                    field_type="text",
+                    field_id="planName",
+                    field_name="planName",
+                    field_label="Plan Name",
+                    field_value=plan.name,
+                    field_required=true,
+                    field_help="Choose a clear, descriptive name for this subscription plan."
+                %}
+                    {% include 'admin/components/admin-form-field.html' %}
+                {% endwith %}
+                
+                <!-- Plan Description Field -->
+                {% with 
+                    field_type="textarea",
+                    field_id="planDescription",
+                    field_name="planDescription",
+                    field_label="Description",
+                    field_value=plan.description,
+                    field_required=true,
+                    field_rows=3,
+                    field_help="A brief description that will be displayed to users."
+                %}
+                    {% include 'admin/components/admin-form-field.html' %}
+                {% endwith %}
+                
+                <!-- Pricing Section -->
+                <h5 class="mt-4 mb-3">Pricing</h5>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        {% with 
+                            field_type="number",
+                            field_id="planPrice",
+                            field_name="planPrice",
+                            field_label="Monthly Price ($)",
+                            field_value=plan.price.monthly,
+                            field_required=true,
+                            field_min=0,
+                            field_step="0.01",
+                            field_help="Monthly subscription price in USD."
+                        %}
+                            {% include 'admin/components/admin-form-field.html' %}
+                        {% endwith %}
+                    </div>
+                    <div class="col-md-6">
+                        {% with 
+                            field_type="number",
+                            field_id="yearlyPrice",
+                            field_name="yearlyPrice",
+                            field_label="Yearly Price ($)",
+                            field_value=plan.price.yearly,
+                            field_required=true,
+                            field_min=0,
+                            field_step="0.01",
+                            field_help="Yearly subscription price in USD. Typically discounted from monthly × 12."
+                        %}
+                            {% include 'admin/components/admin-form-field.html' %}
+                        {% endwith %}
+                    </div>
+                </div>
+                
+                <!-- Features Section -->
+                <h5 class="mt-4 mb-3">Plan Features</h5>
+                
+                <!-- Feature Checkboxes -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        {% with 
+                            checkbox_id="featureAutoFarm",
+                            checkbox_name="featureAutoFarm",
+                            checkbox_label="Auto-Farm Feature",
+                            checkbox_checked=plan.features.autoFarm,
+                            checkbox_help="Allow users to use the auto-farming functionality."
+                        %}
+                            {% include 'admin/components/admin-form-checkbox.html' %}
+                        {% endwith %}
+                    </div>
+                    <div class="col-md-6">
+                        {% with 
+                            checkbox_id="featureTrainer",
+                            checkbox_name="featureTrainer",
+                            checkbox_label="Troop Training",
+                            checkbox_checked=plan.features.trainer,
+                            checkbox_help="Allow users to use the troop training functionality."
+                        %}
+                            {% include 'admin/components/admin-form-checkbox.html' %}
+                        {% endwith %}
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        {% with 
+                            checkbox_id="featureNotification",
+                            checkbox_name="featureNotification",
+                            checkbox_label="Notifications",
+                            checkbox_checked=plan.features.notification,
+                            checkbox_help="Enable email and in-app notifications."
+                        %}
+                            {% include 'admin/components/admin-form-checkbox.html' %}
+                        {% endwith %}
+                    </div>
+                    <div class="col-md-6">
+                        {% with 
+                            checkbox_id="featureAdvanced",
+                            checkbox_name="featureAdvanced",
+                            checkbox_label="Advanced Features",
+                            checkbox_checked=plan.features.advanced,
+                            checkbox_help="Enable premium advanced features."
+                        %}
+                            {% include 'admin/components/admin-form-checkbox.html' %}
+                        {% endwith %}
+                    </div>
+                </div>
+                
+                <!-- Limit Settings -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        {% with 
+                            field_type="number",
+                            field_id="maxVillages",
+                            field_name="maxVillages",
+                            field_label="Maximum Villages",
+                            field_value=plan.features.maxVillages,
+                            field_required=true,
+                            field_min=1,
+                            field_help="Maximum number of villages the user can manage."
+                        %}
+                            {% include 'admin/components/admin-form-field.html' %}
+                        {% endwith %}
+                    </div>
+                    <div class="col-md-6">
+                        {% with 
+                            field_type="number",
+                            field_id="maxTasks",
+                            field_name="maxTasks",
+                            field_label="Maximum Concurrent Tasks",
+                            field_value=plan.features.maxTasks,
+                            field_required=true,
+                            field_min=1,
+                            field_help="Maximum number of tasks that can run simultaneously."
+                        %}
+                            {% include 'admin/components/admin-form-field.html' %}
+                        {% endwith %}
+                    </div>
+                </div>
+                
+                <!-- Form Buttons -->
+                <div class="mt-4 d-flex justify-content-between">
+                    <a href="{{ url_for('admin.subscriptions') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i> Cancel
+                    </a>
+                    <div>
+                        <button type="button" class="btn btn-outline-danger me-2" data-bs-toggle="modal" data-bs-target="#deletePlanModal" 
+                                data-id="{{ plan._id }}" data-name="{{ plan.name }}">
+                            <i class="bi bi-trash me-1"></i> Delete Plan
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save me-1"></i> Save Changes
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Plan Statistics Card -->
+        <div class="dashboard-card mb-4">
+            <h5 class="mb-4">Plan Statistics</h5>
+            
+            <div class="d-flex align-items-center mb-4">
+                <div class="rounded bg-primary-light p-3 me-3">
+                    <i class="bi bi-people fs-3 text-primary"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">Active Subscribers</div>
+                    <h3 class="mb-0">{{ plan.users }}</h3>
+                </div>
+            </div>
+            
+            <div class="d-flex align-items-center mb-4">
+                <div class="rounded bg-success-light p-3 me-3">
+                    <i class="bi bi-cash fs-3 text-success"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">Monthly Revenue</div>
+                    <h3 class="mb-0">${{ plan.revenue }}</h3>
+                </div>
+            </div>
+            
+            <hr class="my-4">
+            
+            <div class="mb-3">
+                <div class="text-muted small">Creation Date</div>
+                <div>{{ plan.createdAt.strftime('%Y-%m-%d') }}</div>
+            </div>
+            
+            <div class="mb-3">
+                <div class="text-muted small">Last Updated</div>
+                <div>{{ plan.updatedAt.strftime('%Y-%m-%d') }}</div>
+            </div>
+        </div>
+        
+        <!-- User Distribution Card -->
+        <div class="dashboard-card">
+            <h5 class="mb-4">User Distribution</h5>
+            
+            <div class="chart-container" style="height: 200px;">
+                <canvas id="userDistributionChart"></canvas>
+            </div>
+            
+            <div class="mt-4">
+                <div class="mb-2 d-flex justify-content-between align-items-center">
+                    <span>Last 30 days</span>
+                    <span class="badge bg-success">+{{ '%.1f'|format(plan.growth * 100) }}%</span>
+                </div>
+                <div class="progress" style="height: 6px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ plan.growth * 100 }}%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- Delete Plan Modal -->
+{% with 
+    modal_id="deletePlanModal",
+    modal_title="Delete Subscription Plan",
+    confirm_message="Are you sure you want to delete this subscription plan? This action cannot be undone.",
+    confirm_button_text="Delete Plan",
+    confirm_button_class="btn-danger",
+    item_type="Plan"
+%}
+<div class="modal fade" id="{{ modal_id }}" tabindex="-1" aria-labelledby="{{ modal_id }}Label" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="{{ modal_id }}Label">{{ modal_title }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-4">
+                    <i class="bi bi-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+                </div>
+                
+                <p>{{ confirm_message }}</p>
+                
+                <div class="alert alert-warning">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    This plan will be removed from the system. Users currently subscribed to this plan will not be affected immediately, but they will need to select a different plan at their next renewal.
+                </div>
+                
+                <p class="mb-0 fw-bold" id="deletePlanName"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deletePlanForm" method="post" action="{{ url_for('admin.delete_plan', plan_id=plan._id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn {{ confirm_button_class }}">{{ confirm_button_text }}</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endwith %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Calculate yearly price as 10 months worth when monthly price changes (2 months free)
+    const monthlyPriceInput = document.getElementById('planPrice');
+    const yearlyPriceInput = document.getElementById('yearlyPrice');
+    
+    if (monthlyPriceInput && yearlyPriceInput) {
+        monthlyPriceInput.addEventListener('input', function() {
+            const monthlyPrice = parseFloat(this.value) || 0;
+            const yearlyPrice = (monthlyPrice * 10).toFixed(2); // 10 months for yearly (2 months free)
+            yearlyPriceInput.value = yearlyPrice;
+        });
+    }
+    
+    // Form validation
+    const form = document.getElementById('editPlanForm');
+    
+    if (form) {
+        form.addEventListener('submit', function(event) {
+            let isValid = true;
+            
+            // Validate plan name
+            const planName = document.getElementById('planName');
+            if (!planName.value.trim()) {
+                showError(planName, 'Plan name is required');
+                isValid = false;
+            } else {
+                clearError(planName);
+            }
+            
+            // Validate description
+            const planDescription = document.getElementById('planDescription');
+            if (!planDescription.value.trim()) {
+                showError(planDescription, 'Plan description is required');
+                isValid = false;
+            } else if (planDescription.value.trim().length < 10) {
+                showError(planDescription, 'Description should be at least 10 characters long');
+                isValid = false;
+            } else {
+                clearError(planDescription);
+            }
+            
+            // Validate prices
+            const planPrice = document.getElementById('planPrice');
+            if (!planPrice.value || parseFloat(planPrice.value) < 0) {
+                showError(planPrice, 'Please enter a valid price (0 or higher)');
+                isValid = false;
+            } else {
+                clearError(planPrice);
+            }
+            
+            const yearlyPrice = document.getElementById('yearlyPrice');
+            if (!yearlyPrice.value || parseFloat(yearlyPrice.value) < 0) {
+                showError(yearlyPrice, 'Please enter a valid yearly price (0 or higher)');
+                isValid = false;
+            } else {
+                clearError(yearlyPrice);
+            }
+            
+            // Validate max values
+            const maxVillages = document.getElementById('maxVillages');
+            if (!maxVillages.value || parseInt(maxVillages.value) < 1) {
+                showError(maxVillages, 'Maximum villages must be at least 1');
+                isValid = false;
+            } else {
+                clearError(maxVillages);
+            }
+            
+            const maxTasks = document.getElementById('maxTasks');
+            if (!maxTasks.value || parseInt(maxTasks.value) < 1) {
+                showError(maxTasks, 'Maximum tasks must be at least 1');
+                isValid = false;
+            } else {
+                clearError(maxTasks);
+            }
+            
+            // Prevent form submission if validation fails
+            if (!isValid) {
+                event.preventDefault();
+            }
+        });
+    }
+    
+    // Set up delete plan modal
+    const deletePlanModal = document.getElementById('deletePlanModal');
+    if (deletePlanModal) {
+        deletePlanModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const planName = button.getAttribute('data-name') || '{{ plan.name }}';
+            
+            // Set plan name in modal
+            document.getElementById('deletePlanName').textContent = planName;
+        });
+    }
+    
+    // Initialize the user distribution chart
+    if (document.getElementById('userDistributionChart')) {
+        const ctx = document.getElementById('userDistributionChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Subscribers',
+                    data: [65, 72, 78, 85, 92, {{ plan.users }}],
+                    backgroundColor: 'rgba(58, 110, 165, 0.1)',
+                    borderColor: 'rgba(58, 110, 165, 1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        grid: {
+                            display: false
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Helper functions for validation
+    function showError(input, message) {
+        const formGroup = input.closest('.mb-3');
+        const errorDiv = formGroup.querySelector('.invalid-feedback') || document.createElement('div');
+        
+        errorDiv.className = 'invalid-feedback d-block';
+        errorDiv.textContent = message;
+        
+        if (!formGroup.querySelector('.invalid-feedback')) {
+            formGroup.appendChild(errorDiv);
+        }
+        
+        input.classList.add('is-invalid');
+    }
+    
+    function clearError(input) {
+        const formGroup = input.closest('.mb-3');
+        const errorDiv = formGroup.querySelector('.invalid-feedback');
+        
+        if (errorDiv) {
+            errorDiv.remove();
+        }
+        
+        input.classList.remove('is-invalid');
+    }

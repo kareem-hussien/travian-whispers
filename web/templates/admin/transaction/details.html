@@ -1,0 +1,532 @@
+{% extends 'admin/components/admin-layout.html' %}
+
+{% block title %}Transaction Details{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin.transactions') }}">Transactions</a></li>
+<li class="breadcrumb-item active" aria-current="page">Transaction Details</li>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+{% with 
+    title="Transaction Details",
+    subtitle="View and manage detailed transaction information",
+    show_buttons=true,
+    primary_button_text="Back to Transactions",
+    primary_button_icon="arrow-left",
+    primary_button_url=url_for('admin.transactions')
+%}
+    {% include 'admin/components/admin-page-header.html' %}
+{% endwith %}
+
+<div class="row">
+    <!-- Transaction Overview -->
+    <div class="col-lg-8 mb-4">
+        <div class="dashboard-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h5 class="mb-1">Transaction #{{ transaction.id }}</h5>
+                    <p class="mb-0 text-muted">{{ transaction.date }}</p>
+                </div>
+                <span class="badge {{ transaction.status_class }} fs-6">{{ transaction.status }}</span>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-1">User</h6>
+                        <p class="mb-0">
+                            <a href="{{ url_for('admin.user_edit', user_id=transaction.user_id) }}" class="text-decoration-none">
+                                <i class="bi bi-person me-1"></i> {{ transaction.user }}
+                            </a>
+                        </p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-1">User Email</h6>
+                        <p class="mb-0">{{ transaction.user_email }}</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-1">Subscription Plan</h6>
+                        <p class="mb-0">{{ transaction.plan }}</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-1">Amount</h6>
+                        <p class="mb-0 fs-5 fw-bold">{{ transaction.amount }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-1">Payment Method</h6>
+                        <p class="mb-0">{{ transaction.payment_method }}</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-1">Payment ID</h6>
+                        <p class="mb-0">{{ transaction.payment_id }}</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-1">Billing Period</h6>
+                        <p class="mb-0">{{ transaction.billing_period|capitalize }}</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-1">Subscription Dates</h6>
+                        <p class="mb-0">
+                            {% if transaction.subscription_start and transaction.subscription_end %}
+                            {{ transaction.subscription_start.strftime('%Y-%m-%d') }} to {{ transaction.subscription_end.strftime('%Y-%m-%d') }}
+                            {% else %}
+                            N/A
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card bg-light mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">Payment Gateway Response</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3 mb-md-0">
+                                <h6 class="text-muted mb-1">Transaction ID</h6>
+                                <p class="mb-0">{{ transaction.gateway_response.transaction_id }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3 mb-md-0">
+                                <h6 class="text-muted mb-1">Payer ID</h6>
+                                <p class="mb-0">{{ transaction.gateway_response.payer_id }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-3">
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3 mb-md-0">
+                                <h6 class="text-muted mb-1">Payer Email</h6>
+                                <p class="mb-0">{{ transaction.gateway_response.payer_email }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3 mb-md-0">
+                                <h6 class="text-muted mb-1">Payment Status</h6>
+                                <p class="mb-0">{{ transaction.gateway_response.payment_status }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-3">
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3 mb-md-0">
+                                <h6 class="text-muted mb-1">Payment Time</h6>
+                                <p class="mb-0">{{ transaction.gateway_response.payment_time }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3 mb-md-0">
+                                <h6 class="text-muted mb-1">Currency / Fee</h6>
+                                <p class="mb-0">{{ transaction.gateway_response.currency }} / ${{ transaction.gateway_response.fee }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                This transaction is for a <strong>{{ transaction.billing_period }}</strong> subscription to the <strong>{{ transaction.plan }}</strong>.
+                {% if transaction.status|lower == 'completed' %}
+                The subscription is currently active and will expire on {{ transaction.subscription_end.strftime('%Y-%m-%d') if transaction.subscription_end else 'N/A' }}.
+                {% endif %}
+            </div>
+            
+            {% if transaction.status|lower == 'pending' %}
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                This transaction is still pending. You can manually approve it or wait for the payment gateway to send a confirmation.
+            </div>
+            {% endif %}
+            
+            {% if transaction.status|lower == 'failed' %}
+            <div class="alert alert-danger">
+                <i class="bi bi-x-circle-fill me-2"></i>
+                This transaction has failed. The user will need to attempt the payment again.
+            </div>
+            {% endif %}
+            
+            {% if transaction.status|lower == 'refunded' %}
+            <div class="alert alert-secondary">
+                <i class="bi bi-arrow-return-left me-2"></i>
+                This transaction has been refunded. The subscription has been cancelled.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Actions and Status Updates -->
+    <div class="col-lg-4 mb-4">
+        <div class="dashboard-card mb-4">
+            <h5 class="mb-4">Transaction Actions</h5>
+            
+            <!-- Status Update Form -->
+            <form action="{{ url_for('admin.update_transaction_status', transaction_id=transaction.id) }}" method="post" id="updateStatusForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                {% with 
+                    select_id="status",
+                    select_name="status",
+                    select_label="Update Status",
+                    select_options=[
+                        {'value': 'completed', 'text': 'Completed'},
+                        {'value': 'pending', 'text': 'Pending'},
+                        {'value': 'failed', 'text': 'Failed'},
+                        {'value': 'refunded', 'text': 'Refunded'}
+                    ],
+                    select_selected=transaction.status|lower,
+                    select_required=true,
+                    select_help="Changing the status may affect the user's subscription."
+                %}
+                    {% include 'admin/components/admin-form-select.html' %}
+                {% endwith %}
+                
+                <div class="d-grid mt-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-1"></i> Update Status
+                    </button>
+                </div>
+            </form>
+            
+            <hr class="my-4">
+            
+            <div class="d-grid gap-2">
+                <button type="button" class="btn btn-outline-secondary" id="sendReceiptBtn">
+                    <i class="bi bi-envelope me-1"></i> Send Receipt
+                </button>
+                
+                <button type="button" class="btn btn-outline-info" id="downloadInvoiceBtn">
+                    <i class="bi bi-file-earmark-pdf me-1"></i> Download Invoice
+                </button>
+                
+                <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#refundTransactionModal">
+                    <i class="bi bi-arrow-return-left me-1"></i> Process Refund
+                </button>
+            </div>
+        </div>
+        
+        <!-- User Subscription Card -->
+        <div class="dashboard-card">
+            <h5 class="mb-4">Customer Information</h5>
+            
+            <div class="d-flex align-items-center mb-4">
+                <div class="d-flex align-items-center justify-content-center bg-light rounded-circle me-3" style="width: 50px; height: 50px;">
+                    <span class="fs-5 text-secondary">{{ transaction.user[0]|upper }}</span>
+                </div>
+                <div>
+                    <h6 class="mb-1">{{ transaction.user }}</h6>
+                    <p class="mb-0 text-muted">{{ transaction.user_email }}</p>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <h6 class="text-muted mb-1">Subscription Status</h6>
+                <p class="mb-0">
+                    {% if transaction.subscription_start and transaction.subscription_end %}
+                    <span class="badge bg-success">Active</span>
+                    {% else %}
+                    <span class="badge bg-secondary">Inactive</span>
+                    {% endif %}
+                </p>
+            </div>
+            
+            <div class="mb-3">
+                <h6 class="text-muted mb-1">Current Plan</h6>
+                <p class="mb-0">{{ transaction.plan }}</p>
+            </div>
+            
+            <div class="mb-3">
+                <h6 class="text-muted mb-1">Payment History</h6>
+                <p class="mb-0 small">
+                    <i class="bi bi-clock-history me-1"></i> {{ transaction.user }} has 
+                    <a href="#" class="text-decoration-none">3 previous transactions</a>
+                </p>
+            </div>
+            
+            <a href="{{ url_for('admin.user_edit', user_id=transaction.user_id) }}" class="btn btn-outline-primary btn-sm mt-2 d-block">
+                <i class="bi bi-person me-1"></i> View Full Profile
+            </a>
+        </div>
+    </div>
+    
+    <!-- Transaction Timeline -->
+    <div class="col-12">
+        <div class="dashboard-card">
+            <h5 class="mb-4">Transaction Timeline</h5>
+            
+            <div class="position-relative transaction-timeline pb-2">
+                <div class="timeline-line"></div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-indicator bg-primary">
+                        <i class="bi bi-plus-circle-fill"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">Transaction Created</h6>
+                            <span class="text-muted small">{{ transaction.date }}</span>
+                        </div>
+                        <p class="mb-0">User initiated subscription purchase for {{ transaction.plan }}</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-indicator {{ 'bg-warning' if transaction.status|lower == 'pending' else 'bg-success' }}">
+                        <i class="bi bi-credit-card-fill"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">Payment {{ 'Processing' if transaction.status|lower == 'pending' else 'Completed' }}</h6>
+                            <span class="text-muted small">{{ transaction.date }}</span>
+                        </div>
+                        <p class="mb-0">
+                            {% if transaction.status|lower == 'pending' %}
+                            Payment is being processed by {{ transaction.payment_method }}
+                            {% elif transaction.status|lower == 'completed' %}
+                            Payment was successful via {{ transaction.payment_method }}
+                            {% elif transaction.status|lower == 'failed' %}
+                            Payment failed via {{ transaction.payment_method }}
+                            {% elif transaction.status|lower == 'refunded' %}
+                            Payment was refunded via {{ transaction.payment_method }}
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                
+                {% if transaction.status|lower == 'completed' %}
+                <div class="timeline-item">
+                    <div class="timeline-indicator bg-success">
+                        <i class="bi bi-check-circle-fill"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">Subscription Activated</h6>
+                            <span class="text-muted small">{{ transaction.date }}</span>
+                        </div>
+                        <p class="mb-0">
+                            User subscription was activated until {{ transaction.subscription_end.strftime('%Y-%m-%d') if transaction.subscription_end else 'N/A' }}
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if transaction.status|lower == 'refunded' %}
+                <div class="timeline-item">
+                    <div class="timeline-indicator bg-danger">
+                        <i class="bi bi-arrow-return-left"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">Payment Refunded</h6>
+                            <span class="text-muted small">{{ transaction.date }}</span>
+                        </div>
+                        <p class="mb-0">
+                            Transaction was refunded and subscription was cancelled
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="timeline-item">
+                    <div class="timeline-indicator bg-info">
+                        <i class="bi bi-envelope-fill"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">Receipt Sent</h6>
+                            <span class="text-muted small">{{ transaction.date }}</span>
+                        </div>
+                        <p class="mb-0">
+                            Receipt was sent to {{ transaction.user_email }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- Refund Transaction Modal -->
+<div class="modal fade" id="refundTransactionModal" tabindex="-1" aria-labelledby="refundTransactionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="refundTransactionModalLabel">Process Refund</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-4">
+                    <i class="bi bi-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+                </div>
+                
+                <p>Are you sure you want to process a refund for this transaction? This will cancel the user's subscription.</p>
+                
+                <div class="alert alert-warning">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    Refunding this transaction will:
+                    <ul class="mb-0 mt-2">
+                        <li>Return the payment amount to the customer</li>
+                        <li>Cancel their current subscription</li>
+                        <li>Revoke access to premium features</li>
+                    </ul>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="refundReason" class="form-label">Refund Reason</label>
+                    <textarea class="form-control" id="refundReason" rows="3" placeholder="Enter reason for refund"></textarea>
+                </div>
+                
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="notifyCustomer" checked>
+                    <label class="form-check-label" for="notifyCustomer">
+                        Notify customer about refund
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="{{ url_for('admin.update_transaction_status', transaction_id=transaction.id) }}" method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="status" value="refunded">
+                    <button type="submit" class="btn btn-danger">Process Refund</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block additional_styles %}
+<style>
+.transaction-timeline {
+    position: relative;
+    padding-left: 28px;
+}
+
+.timeline-line {
+    position: absolute;
+    left: 14px;
+    top: 10px;
+    bottom: 0;
+    width: 2px;
+    background-color: #e9ecef;
+    transform: translateX(-50%);
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 1.5rem;
+}
+
+.timeline-indicator {
+    position: absolute;
+    left: -28px;
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 28px;
+    font-size: 14px;
+}
+
+.timeline-content {
+    background-color: #f8f9fa;
+    border-radius: 0.25rem;
+    padding: 1rem;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Send Receipt button
+    const sendReceiptBtn = document.getElementById('sendReceiptBtn');
+    if (sendReceiptBtn) {
+        sendReceiptBtn.addEventListener('click', function() {
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Sending...';
+            
+            // Simulate sending receipt
+            setTimeout(() => {
+                alert('Receipt sent successfully to {{ transaction.user_email }}');
+                this.disabled = false;
+                this.innerHTML = '<i class="bi bi-envelope me-1"></i> Send Receipt';
+            }, 1500);
+        });
+    }
+    
+    // Download Invoice button
+    const downloadInvoiceBtn = document.getElementById('downloadInvoiceBtn');
+    if (downloadInvoiceBtn) {
+        downloadInvoiceBtn.addEventListener('click', function() {
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating...';
+            
+            // Simulate invoice generation
+            setTimeout(() => {
+                alert('Invoice downloaded successfully');
+                this.disabled = false;
+                this.innerHTML = '<i class="bi bi-file-earmark-pdf me-1"></i> Download Invoice';
+            }, 1500);
+        });
+    }
+    
+    // Status update form validation
+    const updateStatusForm = document.getElementById('updateStatusForm');
+    if (updateStatusForm) {
+        updateStatusForm.addEventListener('submit', function(event) {
+            const currentStatus = '{{ transaction.status|lower }}';
+            const newStatus = document.getElementById('status').value;
+            
+            // If changing to refunded, confirm with user
+            if (newStatus === 'refunded' && currentStatus !== 'refunded') {
+                if (!confirm('Are you sure you want to mark this transaction as refunded? This will cancel the user\'s subscription.')) {
+                    event.preventDefault();
+                    return;
+                }
+            }
+            
+            // If changing from completed to something else, confirm
+            if (currentStatus === 'completed' && newStatus !== 'completed') {
+                if (!confirm('Are you sure you want to change the status from completed? This may affect the user\'s subscription.')) {
+                    event.preventDefault();
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
