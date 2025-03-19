@@ -30,13 +30,15 @@ web/
         ├── subscriptions.html      - Subscription plans page
         ├── transactions.html       - Transaction history page
         ├── settings.html           - System settings page
-        ├── maintenance.html        - System maintenance page
-        ├── logs.html               - System logs page
+        ├── settings/           - System settings page
+        │   ├── maintenance.html    - System maintenance page
+        │   ├── backup.html           - System logs page
+        │   ├── logs.html           - System logs page
         ├── user/                   - User management related pages
         │   ├── create.html         - Create user page
         │   ├── edit.html           - Edit user page
         │   └── view.html           - View user details page
-        ├── plan/                   - Subscription plan related pages
+        ├── subscriptions/          - Subscription plan related pages
         │   ├── create.html         - Create plan page
         │   └── edit.html           - Edit plan page
         ├── transaction/            - Transaction related pages
