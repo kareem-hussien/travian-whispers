@@ -1,0 +1,54 @@
+services:
+  mongodb:
+    image: mongo:4.4
+    volumes:
+      - mongodb_data:/data/db
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=whispers
+    networks:
+      - travian-network
+    restart: always
+
+  mongo-express:
+    image: mongo-express
+    ports:
+      - "8081:8081"
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+    depends_on:
+      - mongodb
+    networks:
+      - travian-network
+    restart: always
+
+  web:
+    build: .
+    command: gunicorn --bind 0.0.0.0:5000 "web.app:create_app()"
+    volumes:
+      - ./:/app
+      - logs:/app/logs
+      - backups:/app/backups
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - MONGODB_URI=mongodb://mongodb:27017/whispers
+      - MONGODB_DB_NAME=whispers
+      - SECRET_KEY=defaultsecretkey
+      - JWT_SECRET=defaultjwtsecret
+    depends_on:
+      - mongodb
+    networks:
+      - travian-network
+    restart: always
+
+volumes:
+  mongodb_data:
+  logs:
+  backups:
+
+networks:
+  travian-network:
+    driver: bridge

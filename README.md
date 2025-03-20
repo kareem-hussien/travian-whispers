@@ -88,8 +88,8 @@ git clone https://github.com/yourusername/travian-whispers.git
 cd travian-whispers
 
 # Create and activate virtual environment
-python3 -m venv fresh_venv
-source fresh_venv/bin/activate  # On Windows: venv\Scripts\activate
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
@@ -298,6 +298,30 @@ travian-whispers/
 │   ├── app.py               # Flask application
 │   ├── static/              # Static assets
 │   └── templates/           # HTML templates
+│   └── routes/
+│       ├── __init__.py
+│       ├── auth.py
+│       ├── user.py
+│       ├── user_api/
+│       │   ├── __init__.py
+│       │   ├── dashboard.py
+│       │   ├── profile.py
+│       │   ├── travian_settings.py
+│       │   ├── villages.py
+│       │   ├── auto_farm.py
+│       │   ├── troop_trainer.py
+│       │   ├── activity_logs.py
+│       │   ├── subscription.py
+│       │   └── support.py
+│       ├── admin.py
+│       └── admin_apis/
+│           ├─ __init__.py
+│           ├─ dashboard.py
+│           ├─ users.py
+│           ├─ subscriptions.py
+│           ├─ transactions.py
+│           ├─ settings.py
+│           └─ maintenance.py
 │
 ├── startup/                 # Bot initialization
 │   ├── browser_profile.py   # Browser setup
