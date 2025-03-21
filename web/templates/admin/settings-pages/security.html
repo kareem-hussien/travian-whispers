@@ -1,0 +1,241 @@
+<!-- Security Settings -->
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        {% with 
+            form_id="securitySettingsForm",
+            form_title="Security Settings",
+            form_description="Configure security settings and policies",
+            form_type="security",
+            form_submit_text="Save Security Settings",
+            form_submit_icon="save",
+            reset_button=true
+        %}
+        {% include 'admin/components/admin-settings-form.html' %}
+            <!-- Authentication Section -->
+            <div class="border-bottom pb-2 mb-4">
+                <h6>Authentication Settings</h6>
+            </div>
+            
+            <!-- Email Verification -->
+            {% with 
+                checkbox_id="emailVerification",
+                checkbox_name="emailVerification",
+                checkbox_label="Require Email Verification",
+                checkbox_checked=settings.security.email_verification,
+                checkbox_help="When enabled, new users must verify their email address before accessing the system.",
+                checkbox_switch=true
+            %}
+                {% include 'admin/components/admin-form-checkbox.html' %}
+            {% endwith %}
+        {% endwith %}
+        
+        <!-- Security Tests Section -->
+        <div class="dashboard-card mt-4">
+            <h5 class="mb-3">Security Tests</h5>
+            <p>Run security tests to verify the integrity of your site.</p>
+            
+            <div class="list-group mb-3">
+                <div class="list-group-item">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">SSL/TLS Configuration</h6>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="runSecurityTest('ssl')">
+                            Test
+                        </button>
+                    </div>
+                    <p class="mb-1">Verify your SSL/TLS settings and certificate configuration.</p>
+                </div>
+                <div class="list-group-item">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">Security Headers</h6>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="runSecurityTest('headers')">
+                            Test
+                        </button>
+                    </div>
+                    <p class="mb-1">Check for properly configured security headers.</p>
+                </div>
+                <div class="list-group-item">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">Common Vulnerabilities</h6>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="runSecurityTest('vulnerabilities')">
+                            Test
+                        </button>
+                    </div>
+                    <p class="mb-1">Scan for common security vulnerabilities (XSS, CSRF, etc.).</p>
+                </div>
+            </div>
+            
+            <button type="button" class="btn btn-primary" onclick="runSecurityTest('all')">
+                <i class="bi bi-shield-check me-1"></i> Run All Security Tests
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function runSecurityTest(testType) {
+    // In a real app, this would make an AJAX call to run security tests
+    let testName = '';
+    switch(testType) {
+        case 'ssl':
+            testName = 'SSL/TLS Configuration';
+            break;
+        case 'headers':
+            testName = 'Security Headers';
+            break;
+        case 'vulnerabilities':
+            testName = 'Common Vulnerabilities';
+            break;
+        case 'all':
+            testName = 'All Security Tests';
+            break;
+    }
+    
+    alert(`Running ${testName}. This would perform security checks on your site.`);
+}
+</script>
+            
+            <!-- Session Timeout -->
+            {% with 
+                field_type="number",
+                field_id="sessionTimeout",
+                field_name="sessionTimeout",
+                field_label="Session Timeout (minutes)",
+                field_value=settings.security.session_timeout,
+                field_min=5,
+                field_max=1440,
+                field_required=true,
+                field_help="The time in minutes before an inactive user session expires."
+            %}
+                {% include 'admin/components/admin-form-field.html' %}
+            {% endwith %}
+            
+            <!-- Login Throttling -->
+            <div class="border-bottom pb-2 mb-4 mt-5">
+                <h6>Login Throttling</h6>
+            </div>
+            
+            <!-- Max Login Attempts -->
+            {% with 
+                field_type="number",
+                field_id="maxLoginAttempts",
+                field_name="maxLoginAttempts",
+                field_label="Maximum Login Attempts",
+                field_value=settings.security.max_login_attempts,
+                field_min=3,
+                field_max=20,
+                field_required=true,
+                field_help="Number of failed login attempts before account is temporarily locked."
+            %}
+                {% include 'admin/components/admin-form-field.html' %}
+            {% endwith %}
+            
+            <!-- Account Lock Duration -->
+            {% with 
+                field_type="number",
+                field_id="accountLockDuration",
+                field_name="accountLockDuration",
+                field_label="Account Lock Duration (minutes)",
+                field_value=settings.security.account_lock_duration,
+                field_min=5,
+                field_max=1440,
+                field_required=true,
+                field_help="Time in minutes an account remains locked after too many failed login attempts."
+            %}
+                {% include 'admin/components/admin-form-field.html' %}
+            {% endwith %}
+            
+            <!-- Password Policy -->
+            <div class="border-bottom pb-2 mb-4 mt-5">
+                <h6>Password Policy</h6>
+            </div>
+            
+            <!-- Password Policy -->
+            {% with 
+                select_id="passwordPolicy",
+                select_name="passwordPolicy",
+                select_label="Password Strength Policy",
+                select_options=[
+                    {'value': 'basic', 'text': 'Basic (8+ characters)'},
+                    {'value': 'standard', 'text': 'Standard (8+ chars with uppercase, lowercase, numbers)'},
+                    {'value': 'strong', 'text': 'Strong (10+ chars with uppercase, lowercase, numbers, symbols)'}
+                ],
+                select_selected=settings.security.password_policy,
+                select_required=true,
+                select_help="Sets the minimum requirements for user passwords."
+            %}
+                {% include 'admin/components/admin-form-select.html' %}
+            {% endwith %}
+            
+            <!-- Password Expiry -->
+            {% with 
+                field_type="number",
+                field_id="passwordExpiry",
+                field_name="passwordExpiry",
+                field_label="Password Expiry (days)",
+                field_value=90,
+                field_min=0,
+                field_max=365,
+                field_required=true,
+                field_help="Number of days before users are required to change their password. Set to 0 to disable."
+            %}
+                {% include 'admin/components/admin-form-field.html' %}
+            {% endwith %}
+            
+            <!-- TLS/SSL Requirements -->
+            <div class="border-bottom pb-2 mb-4 mt-5">
+                <h6>Security Headers</h6>
+            </div>
+            
+            <!-- Force HTTPS -->
+            {% with 
+                checkbox_id="forceHttps",
+                checkbox_name="forceHttps",
+                checkbox_label="Force HTTPS",
+                checkbox_checked=True,
+                checkbox_help="Redirects all HTTP requests to HTTPS.",
+                checkbox_switch=true
+            %}
+                {% include 'admin/components/admin-form-checkbox.html' %}
+            {% endwith %}
+            
+            <!-- Enable HSTS -->
+            {% with 
+                checkbox_id="enableHSTS",
+                checkbox_name="enableHSTS",
+                checkbox_label="Enable HSTS (HTTP Strict Transport Security)",
+                checkbox_checked=True,
+                checkbox_help="Adds the Strict-Transport-Security header to ensure connections use HTTPS.",
+                checkbox_switch=true
+            %}
+                {% include 'admin/components/admin-form-checkbox.html' %}
+            {% endwith %}
+            
+            <!-- Content Security Policy -->
+            {% with 
+                checkbox_id="enableCSP",
+                checkbox_name="enableCSP",
+                checkbox_label="Enable Content Security Policy (CSP)",
+                checkbox_checked=True,
+                checkbox_help="Adds CSP headers to help prevent cross-site scripting (XSS) attacks.",
+                checkbox_switch=true
+            %}
+                {% include 'admin/components/admin-form-checkbox.html' %}
+            {% endwith %}
+            
+            <!-- X-Frame-Options -->
+            {% with 
+                select_id="xFrameOptions",
+                select_name="xFrameOptions",
+                select_label="X-Frame-Options",
+                select_options=[
+                    {'value': 'DENY', 'text': 'DENY - Prevent all framing'},
+                    {'value': 'SAMEORIGIN', 'text': 'SAMEORIGIN - Allow same-origin framing only'},
+                    {'value': 'ALLOW-FROM', 'text': 'ALLOW-FROM - Allow specific origins'},
+                    {'value': 'none', 'text': 'Disabled - No X-Frame-Options header'}
+                ],
+                select_selected='SAMEORIGIN',
+                select_required=true,
+                select_help="Controls whether the site can be embedded in frames on other websites."
+            %}
+                {% include 'admin/components/admin-form-select.html' %}
+            {% endwith %}

@@ -1,0 +1,218 @@
+<!-- Payment Settings -->
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        {% with 
+            form_id="paymentSettingsForm",
+            form_title="Payment Gateway Configuration",
+            form_description="Configure payment gateway settings",
+            form_type="payment",
+            form_submit_text="Save Payment Settings",
+            form_submit_icon="save",
+            reset_button=true
+        %}
+        {% include 'admin/components/admin-settings-form.html' %}
+            <!-- PayPal Section -->
+            <div class="border-bottom pb-2 mb-4">
+                <h6>PayPal Settings</h6>
+            </div>
+            
+            <!-- PayPal Enable -->
+            {% with 
+                checkbox_id="paypalEnabled",
+                checkbox_name="paypalEnabled",
+                checkbox_label="Enable PayPal",
+                checkbox_checked=settings.payment.paypal_enabled,
+                checkbox_help="Enable PayPal as a payment method.",
+                checkbox_switch=true
+            %}
+                {% include 'admin/components/admin-form-checkbox.html' %}
+            {% endwith %}
+            
+            <!-- PayPal Mode -->
+            {% with 
+                select_id="paypalMode",
+                select_name="paypalMode",
+                select_label="PayPal Mode",
+                select_options=[
+                    {'value': 'sandbox', 'text': 'Sandbox (Testing)'},
+                    {'value': 'live', 'text': 'Live (Production)'}
+                ],
+                select_selected=settings.payment.paypal_mode,
+                select_required=true,
+                select_help="Use sandbox for testing and live for production."
+            %}
+                {% include 'admin/components/admin-form-select.html' %}
+            {% endwith %}
+            
+            <!-- PayPal Client ID -->
+            {% with 
+                field_type="text",
+                field_id="paypalClientId",
+                field_name="paypalClientId",
+                field_label="PayPal Client ID",
+                field_value=settings.payment.paypal_client_id,
+                field_required=true,
+                field_help="Your PayPal REST API Client ID."
+            %}
+                {% include 'admin/components/admin-form-field.html' %}
+            {% endwith %}
+            
+            <!-- PayPal Secret -->
+            {% with 
+                field_type="password",
+                field_id="paypalSecret",
+                field_name="paypalSecret",
+                field_label="PayPal Secret",
+                field_value="••••••••••••",
+                field_required=true,
+                field_help="Your PayPal REST API Secret. Leave unchanged to keep current secret."
+            %}
+                {% include 'admin/components/admin-form-field.html' %}
+            {% endwith %}
+            
+            <!-- Stripe Section -->
+            <div class="border-bottom pb-2 mb-4 mt-5">
+                <h6>Stripe Settings</h6>
+            </div>
+            
+            <!-- Stripe Enable -->
+            {% with 
+                checkbox_id="stripeEnabled",
+                checkbox_name="stripeEnabled",
+                checkbox_label="Enable Stripe",
+                checkbox_checked=settings.payment.get('stripe_enabled', False),
+                checkbox_help="Enable Stripe as a payment method.",
+                checkbox_switch=true
+            %}
+                {% include 'admin/components/admin-form-checkbox.html' %}
+            {% endwith %}
+            
+            <!-- Stripe Mode -->
+            {% with 
+                select_id="stripeMode",
+                select_name="stripeMode",
+                select_label="Stripe Mode",
+                select_options=[
+                    {'value': 'test', 'text': 'Test Mode'},
+                    {'value': 'live', 'text': 'Live Mode'}
+                ],
+                select_selected=settings.payment.get('stripe_mode', 'test'),
+                select_required=true,
+                select_help="Use test for testing and live for production."
+            %}
+                {% include 'admin/components/admin-form-select.html' %}
+            {% endwith %}
+            
+            <!-- Stripe Publishable Key -->
+            {% with 
+                field_type="text",
+                field_id="stripePublishableKey",
+                field_name="stripePublishableKey",
+                field_label="Stripe Publishable Key",
+                field_value=settings.payment.get('stripe_publishable_key', ''),
+                field_required=true,
+                field_help="Your Stripe Publishable API Key."
+            %}
+                {% include 'admin/components/admin-form-field.html' %}
+            {% endwith %}
+            
+            <!-- Stripe Secret Key -->
+            {% with 
+                field_type="password",
+                field_id="stripeSecretKey",
+                field_name="stripeSecretKey",
+                field_label="Stripe Secret Key",
+                field_value="••••••••••••" if settings.payment.get('stripe_secret_key') else '',
+                field_required=true,
+                field_help="Your Stripe Secret API Key. Leave unchanged to keep current key."
+            %}
+                {% include 'admin/components/admin-form-field.html' %}
+            {% endwith %}
+            
+            <!-- Payment Display Settings -->
+            <div class="border-bottom pb-2 mb-4 mt-5">
+                <h6>Payment Display Settings</h6>
+            </div>
+            
+            <!-- Currency -->
+            {% with 
+                select_id="currency",
+                select_name="currency",
+                select_label="Default Currency",
+                select_options=[
+                    {'value': 'USD', 'text': 'USD - US Dollar'},
+                    {'value': 'EUR', 'text': 'EUR - Euro'},
+                    {'value': 'GBP', 'text': 'GBP - British Pound'},
+                    {'value': 'CAD', 'text': 'CAD - Canadian Dollar'},
+                    {'value': 'AUD', 'text': 'AUD - Australian Dollar'}
+                ],
+                select_selected=settings.payment.get('currency', 'USD'),
+                select_required=true,
+                select_help="The default currency for payments."
+            %}
+                {% include 'admin/components/admin-form-select.html' %}
+            {% endwith %}
+            
+            <!-- Currency Symbol Position -->
+            {% with 
+                select_id="currencyPosition",
+                select_name="currencyPosition",
+                select_label="Currency Symbol Position",
+                select_options=[
+                    {'value': 'before', 'text': 'Before amount ($10.00)'},
+                    {'value': 'after', 'text': 'After amount (10.00$)'}
+                ],
+                select_selected=settings.payment.get('currency_position', 'before'),
+                select_required=true,
+                select_help="Position of the currency symbol relative to the amount."
+            %}
+                {% include 'admin/components/admin-form-select.html' %}
+            {% endwith %}
+        {% endwith %}
+        
+        <!-- Payment Test Section -->
+        <div class="dashboard-card mt-4">
+            <h5 class="mb-3">Test Payment Configuration</h5>
+            <p>Verify your payment gateway configuration by making a test transaction.</p>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="m-0">PayPal Test</h6>
+                        </div>
+                        <div class="card-body">
+                            <p>Run a PayPal sandbox transaction to verify your configuration.</p>
+                            <button type="button" class="btn btn-outline-primary" {% if not settings.payment.paypal_enabled %}disabled{% endif %}
+                                    onclick="testPaymentGateway('paypal')">
+                                <i class="bi bi-paypal me-1"></i> Test PayPal
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="m-0">Stripe Test</h6>
+                        </div>
+                        <div class="card-body">
+                            <p>Run a Stripe test transaction to verify your configuration.</p>
+                            <button type="button" class="btn btn-outline-primary" {% if not settings.payment.get('stripe_enabled', False) %}disabled{% endif %}
+                                    onclick="testPaymentGateway('stripe')">
+                                <i class="bi bi-stripe me-1"></i> Test Stripe
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function testPaymentGateway(gateway) {
+    // In a real app, this would make an AJAX call to test the payment gateway
+    alert(`Testing ${gateway} integration. This would create a test transaction in the ${gateway} sandbox.`);
+}
+</script>

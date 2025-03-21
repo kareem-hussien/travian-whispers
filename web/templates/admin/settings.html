@@ -1,0 +1,132 @@
+{% extends 'admin/components/admin-layout.html' %}
+
+{% block title %}System Settings{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">Settings</li>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+{% with 
+    title="System Settings",
+    subtitle="Configure system-wide settings and preferences",
+    show_buttons=false
+%}
+    {% include 'admin/components/admin-page-header.html' %}
+{% endwith %}
+
+<!-- Settings Tabs -->
+{% with
+    tabs=[
+        {
+            'id': 'general',
+            'label': 'General',
+            'icon': 'gear'
+        },
+        {
+            'id': 'email',
+            'label': 'Email',
+            'icon': 'envelope'
+        },
+        {
+            'id': 'payment',
+            'label': 'Payment',
+            'icon': 'credit-card'
+        },
+        {
+            'id': 'security',
+            'label': 'Security',
+            'icon': 'shield-lock'
+        },
+        {
+            'id': 'backup',
+            'label': 'Backup',
+            'icon': 'cloud-arrow-up'
+        },
+        {
+            'id': 'system',
+            'label': 'System Info',
+            'icon': 'info-circle'
+        }
+    ],
+    active_tab=request.args.get('tab', 'general'),
+    vertical=true
+%}
+{% include 'admin/components/admin-tab-nav.html' %}
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="settingsTabContent">
+        <!-- General Settings Tab -->
+        <div class="tab-pane fade {% if active_tab == 'general' or not active_tab %}show active{% endif %}" 
+             id="general" role="tabpanel" aria-labelledby="general-tab">
+            {% include 'admin/settings-pages/general.html' %}
+        </div>
+        
+        <!-- Email Settings Tab -->
+        <div class="tab-pane fade {% if active_tab == 'email' %}show active{% endif %}" 
+             id="email" role="tabpanel" aria-labelledby="email-tab">
+            {% include 'admin/settings-pages/email.html' %}
+        </div>
+        
+        <!-- Payment Settings Tab -->
+        <div class="tab-pane fade {% if active_tab == 'payment' %}show active{% endif %}" 
+             id="payment" role="tabpanel" aria-labelledby="payment-tab">
+            {% include 'admin/settings-pages/payment.html' %}
+        </div>
+        
+        <!-- Security Settings Tab -->
+        <div class="tab-pane fade {% if active_tab == 'security' %}show active{% endif %}" 
+             id="security" role="tabpanel" aria-labelledby="security-tab">
+            {% include 'admin/settings-pages/security.html' %}
+        </div>
+        
+        <!-- Backup Settings Tab -->
+        <div class="tab-pane fade {% if active_tab == 'backup' %}show active{% endif %}" 
+             id="backup" role="tabpanel" aria-labelledby="backup-tab">
+            {% include 'admin/settings-pages/backup.html' %}
+        </div>
+        
+        <!-- System Info Tab -->
+        <div class="tab-pane fade {% if active_tab == 'system' %}show active{% endif %}" 
+             id="system" role="tabpanel" aria-labelledby="system-tab">
+            {% include 'admin/settings-pages/system-info.html' %}
+        </div>
+    </div>
+{% endwith %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Keep tab selection after form submission
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    
+    if (tabParam) {
+        const tabElement = document.getElementById(`${tabParam}-tab`);
+        if (tabElement) {
+            const tab = new bootstrap.Tab(tabElement);
+            tab.show();
+        }
+    }
+    
+    // Handle form submission to preserve tab selection
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+        form.addEventListener('submit', function(event) {
+            // Get the active tab
+            const activeTab = document.querySelector('.tab-pane.active').id;
+            
+            // Add a hidden field to store the active tab
+            let tabInput = document.createElement('input');
+            tabInput.type = 'hidden';
+            tabInput.name = 'active_tab';
+            tabInput.value = activeTab;
+            
+            this.appendChild(tabInput);
+        });
+    });
+});
+</script>
+{% endblock %}

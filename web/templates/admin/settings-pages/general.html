@@ -1,0 +1,100 @@
+<!-- General Settings -->
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        {% with 
+            form_id="generalSettingsForm",
+            form_title="General Settings",
+            form_description="Configure basic site settings and preferences",
+            form_type="general",
+            form_submit_text="Save General Settings",
+            form_submit_icon="save",
+            reset_button=true
+        %}
+        {% include 'admin/components/admin-settings-form.html' %}
+            <!-- Site Name -->
+            {% with 
+                field_type="text",
+                field_id="siteName",
+                field_name="siteName",
+                field_label="Site Name",
+                field_value=settings.general.site_name,
+                field_required=true,
+                field_help="The name of your site that appears in the browser title and emails."
+            %}
+                {% include 'admin/components/admin-form-field.html' %}
+            {% endwith %}
+            
+            <!-- Site Description -->
+            {% with 
+                field_type="textarea",
+                field_id="siteDescription",
+                field_name="siteDescription",
+                field_label="Site Description",
+                field_value=settings.general.site_description,
+                field_required=true,
+                field_help="A brief description of your site. Used in meta tags for SEO.",
+                field_rows=3
+            %}
+                {% include 'admin/components/admin-form-field.html' %}
+            {% endwith %}
+            
+            <!-- Timezone -->
+            {% with 
+                select_id="timezone",
+                select_name="timezone",
+                select_label="Default Timezone",
+                select_options=[
+                    {'value': 'UTC', 'text': 'UTC'},
+                    {'value': 'America/New_York', 'text': 'America/New_York'},
+                    {'value': 'Europe/London', 'text': 'Europe/London'},
+                    {'value': 'Asia/Tokyo', 'text': 'Asia/Tokyo'},
+                    {'value': 'Australia/Sydney', 'text': 'Australia/Sydney'}
+                ],
+                select_selected=settings.general.timezone,
+                select_required=true,
+                select_help="The default timezone for date and time display."
+            %}
+                {% include 'admin/components/admin-form-select.html' %}
+            {% endwith %}
+            
+            <!-- Maintenance Mode -->
+            {% with 
+                checkbox_id="maintenanceMode",
+                checkbox_name="maintenanceMode",
+                checkbox_label="Enable Maintenance Mode",
+                checkbox_checked=settings.general.maintenance_mode,
+                checkbox_help="When enabled, the site will display a maintenance message to all non-admin users.",
+                checkbox_switch=true
+            %}
+                {% include 'admin/components/admin-form-checkbox.html' %}
+            {% endwith %}
+            
+            <!-- Maintenance Message -->
+            {% with 
+                field_type="textarea",
+                field_id="maintenanceMessage",
+                field_name="maintenanceMessage",
+                field_label="Maintenance Message",
+                field_value=settings.general.maintenance_message,
+                field_required=false,
+                field_help="The message to display when maintenance mode is enabled.",
+                field_rows=3
+            %}
+                {% include 'admin/components/admin-form-field.html' %}
+            {% endwith %}
+        {% endwith %}
+        
+        <!-- Maintenance Mode Alert -->
+        {% if settings.general.maintenance_mode %}
+            {% with 
+                alert_type="warning",
+                alert_title="Maintenance Mode Active",
+                alert_message="Your site is currently in maintenance mode and is not accessible to regular users.",
+                alert_icon="exclamation-triangle-fill",
+                dismissible=true
+            %}
+                {% include 'admin/components/admin-alert.html' %}
+            {% endwith %}
+        {% endif %}
+    </div>
+</div>

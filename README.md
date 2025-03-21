@@ -302,27 +302,8 @@ travian-whispers/
 │       ├── __init__.py
 │       ├── auth.py
 │       ├── user.py
-│       ├── user_api/
-│       │   ├── __init__.py
-│       │   ├── dashboard.py
-│       │   ├── profile.py
-│       │   ├── travian_settings.py
-│       │   ├── villages.py
-│       │   ├── auto_farm.py
-│       │   ├── troop_trainer.py
-│       │   ├── activity_logs.py
-│       │   ├── subscription.py
-│       │   └── support.py
 │       ├── admin.py
-│       └── admin_apis/
-│           ├─ __init__.py
-│           ├─ dashboard.py
-│           ├─ users.py
-│           ├─ subscriptions.py
-│           ├─ transactions.py
-│           ├─ settings.py
-│           └─ maintenance.py
-│
+|       ├── public.py
 ├── startup/                 # Bot initialization
 │   ├── browser_profile.py   # Browser setup
 │   └── tasks.py             # Task management

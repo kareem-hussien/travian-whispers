@@ -1,0 +1,249 @@
+<!-- System Information -->
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="dashboard-card">
+            <h5 class="mb-4">System Information</h5>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-4">
+                        <h6>Application</h6>
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr>
+                                    <th>Version</th>
+                                    <td>{{ settings.system.version }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Environment</th>
+                                    <td>
+                                        <span class="badge {{ 'bg-success' if settings.system.environment == 'Production' else 'bg-warning' }}">
+                                            {{ settings.system.environment }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Debug Mode</th>
+                                    <td>
+                                        <span class="badge {{ 'bg-danger' if settings.system.debug_mode else 'bg-success' }}">
+                                            {{ 'Enabled' if settings.system.debug_mode else 'Disabled' }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Uptime</th>
+                                    <td>{{ settings.system.uptime }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="mb-4">
+                        <h6>Server</h6>
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr>
+                                    <th>Python Version</th>
+                                    <td>{{ settings.system.python_version }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Web Server</th>
+                                    <td>{{ settings.system.server_software }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Database</th>
+                                    <td>{{ settings.system.database }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Operating System</th>
+                                    <td>{{ os_info|default('Linux/Unix') }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-12">
+                    <h6>System Status</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-3 col-sm-6">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">CPU Usage</h6>
+                                    <div class="progress mb-2">
+                                        <div class="progress-bar {{ 'bg-success' if cpu_usage|default(35) < 70 else 'bg-warning' if cpu_usage|default(35) < 90 else 'bg-danger' }}" 
+                                             role="progressbar" style="width: {{ cpu_usage|default(35) }}%"></div>
+                                    </div>
+                                    <span class="fw-bold">{{ cpu_usage|default(35) }}%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">Memory Usage</h6>
+                                    <div class="progress mb-2">
+                                        <div class="progress-bar {{ 'bg-success' if memory_usage|default(62) < 70 else 'bg-warning' if memory_usage|default(62) < 90 else 'bg-danger' }}" 
+                                             role="progressbar" style="width: {{ memory_usage|default(62) }}%"></div>
+                                    </div>
+                                    <span class="fw-bold">{{ memory_usage|default(62) }}%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">Disk Usage</h6>
+                                    <div class="progress mb-2">
+                                        <div class="progress-bar {{ 'bg-success' if disk_usage|default(48) < 70 else 'bg-warning' if disk_usage|default(48) < 90 else 'bg-danger' }}" 
+                                             role="progressbar" style="width: {{ disk_usage|default(48) }}%"></div>
+                                    </div>
+                                    <span class="fw-bold">{{ disk_usage|default(48) }}%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">Active Connections</h6>
+                                    <div class="pt-2 pb-2">
+                                        <span class="display-6">{{ active_connections|default(18) }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-12">
+                    <h6>Database Information</h6>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Collection</th>
+                                <th>Documents</th>
+                                <th>Size</th>
+                                <th>Indexes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- In a real application, this would be populated with actual database info -->
+                            <tr>
+                                <td>users</td>
+                                <td>{{ user_count|default(287) }}</td>
+                                <td>12.4 MB</td>
+                                <td>5</td>
+                            </tr>
+                            <tr>
+                                <td>transactions</td>
+                                <td>{{ transaction_count|default(1521) }}</td>
+                                <td>18.2 MB</td>
+                                <td>6</td>
+                            </tr>
+                            <tr>
+                                <td>subscriptionPlans</td>
+                                <td>3</td>
+                                <td>48 KB</td>
+                                <td>2</td>
+                            </tr>
+                            <tr>
+                                <td>activityLogs</td>
+                                <td>{{ activity_log_count|default(8954) }}</td>
+                                <td>32.7 MB</td>
+                                <td>3</td>
+                            </tr>
+                            <tr>
+                                <td>systemLogs</td>
+                                <td>{{ system_log_count|default(4625) }}</td>
+                                <td>26.8 MB</td>
+                                <td>2</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-12">
+                    <h6>Dependencies</h6>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Package</th>
+                                <th>Version</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Flask</td>
+                                <td>{{ dependencies.flask|default('2.3.2') }}</td>
+                                <td><span class="badge bg-success">Up to date</span></td>
+                            </tr>
+                            <tr>
+                                <td>PyMongo</td>
+                                <td>{{ dependencies.pymongo|default('4.5.0') }}</td>
+                                <td><span class="badge bg-success">Up to date</span></td>
+                            </tr>
+                            <tr>
+                                <td>Flask-WTF</td>
+                                <td>{{ dependencies.flask_wtf|default('1.1.1') }}</td>
+                                <td><span class="badge bg-success">Up to date</span></td>
+                            </tr>
+                            <tr>
+                                <td>passlib</td>
+                                <td>{{ dependencies.passlib|default('1.7.4') }}</td>
+                                <td><span class="badge bg-success">Up to date</span></td>
+                            </tr>
+                            <tr>
+                                <td>psutil</td>
+                                <td>{{ dependencies.psutil|default('5.9.5') }}</td>
+                                <td><span class="badge bg-warning">Update available</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <div class="d-flex">
+                    <button type="button" class="btn btn-outline-primary me-2" onclick="refreshSystemInfo()">
+                        <i class="bi bi-arrow-clockwise me-1"></i> Refresh System Info
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary me-2" onclick="downloadSystemReport()">
+                        <i class="bi bi-download me-1"></i> Download System Report
+                    </button>
+                    <button type="button" class="btn btn-outline-danger" onclick="clearCaches()">
+                        <i class="bi bi-trash me-1"></i> Clear System Caches
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function refreshSystemInfo() {
+    // In a real app, this would make an AJAX call to refresh system info
+    alert('Refreshing system information...');
+    location.reload();
+}
+
+function downloadSystemReport() {
+    // In a real app, this would trigger a download of a system report
+    alert('Generating and downloading system report...');
+}
+
+function clearCaches() {
+    // In a real app, this would make an AJAX call to clear system caches
+    if (confirm('Are you sure you want to clear all system caches? This might temporarily affect system performance.')) {
+        alert('Clearing system caches...');
+    }
+}
+</script>
