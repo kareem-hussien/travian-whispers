@@ -155,3 +155,17 @@ class ActivityLog:
         except Exception as e:
             logger.error(f"Failed to delete old activity logs: {e}")
             return 0
+
+class SystemLog(ActivityLog):
+    """SystemLog model for storing system-level logs."""
+    
+    def __init__(self):
+        """Initialize SystemLog model."""
+        super().__init__()
+        # Override collection if needed
+        if self.db is not None:
+            self.collection = self.db["systemLogs"]
+    
+    def get_current_logs(self):
+        """Get recent system logs."""
+        return self.get_recent_logs()

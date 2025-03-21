@@ -18,3 +18,4 @@ WTForms==3.2.1
 selenium==4.16.0
 webdriver-manager==4.0.1
 python-dotenv==1.0.0
+psutil==7.0.0
