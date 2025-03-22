@@ -6,6 +6,7 @@
 <li class="breadcrumb-item active" aria-current="page">Settings</li>
 {% endblock %}
 
+
 {% block additional_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css') }}">
 {% endblock %}
@@ -21,190 +22,202 @@
 {% endwith %}
 
 <!-- Settings Category Cards -->
-<div class="settings-category-cards" id="settings-cards">
+<div class="settings-category-cards">
     <!-- General Settings Card -->
-    <div class="settings-card" data-settings-target="general">
-        <div class="settings-card-header">
-            <div class="settings-card-icon bg-primary-light">
-                <i class="bi bi-gear-fill"></i>
+    <div class="settings-card">
+        <a href="{{ url_for('admin.settings') }}?tab=general">
+            <div class="settings-card-header">
+                <div class="settings-card-icon bg-primary-light">
+                    <i class="bi bi-gear-fill"></i>
+                </div>
+                <h5 class="settings-card-title">General</h5>
             </div>
-            <h5 class="settings-card-title">General</h5>
-        </div>
-        <div class="settings-card-body">
-            Configure site name, description, timezone, and maintenance mode settings.
-        </div>
-        <div class="settings-card-footer">
-            <button class="btn btn-sm btn-outline-primary w-100">
-                Configure Settings <i class="bi bi-arrow-right ms-1"></i>
-            </button>
-        </div>
+            <div class="settings-card-body">
+                Configure site name, description, timezone, and maintenance mode settings.
+            </div>
+            <div class="settings-card-footer">
+                <button class="btn btn-sm btn-outline-primary w-100">
+                    Configure Settings <i class="bi bi-arrow-right ms-1"></i>
+                </button>
+            </div>
+        </a>
     </div>
 
     <!-- Email Settings Card -->
-    <div class="settings-card" data-settings-target="email">
-        <div class="settings-card-header">
-            <div class="settings-card-icon bg-info-light">
-                <i class="bi bi-envelope-fill"></i>
+    <div class="settings-card">
+        <a href="{{ url_for('admin.settings') }}?tab=email">
+            <div class="settings-card-header">
+                <div class="settings-card-icon bg-info-light">
+                    <i class="bi bi-envelope-fill"></i>
+                </div>
+                <h5 class="settings-card-title">Email</h5>
             </div>
-            <h5 class="settings-card-title">Email</h5>
-        </div>
-        <div class="settings-card-body">
-            Set up email server configuration, sender information, and test email functionality.
-        </div>
-        <div class="settings-card-footer">
-            <button class="btn btn-sm btn-outline-info w-100">
-                Configure Settings <i class="bi bi-arrow-right ms-1"></i>
-            </button>
-        </div>
+            <div class="settings-card-body">
+                Set up email server configuration, sender information, and test email functionality.
+            </div>
+            <div class="settings-card-footer">
+                <button class="btn btn-sm btn-outline-info w-100">
+                    Configure Settings <i class="bi bi-arrow-right ms-1"></i>
+                </button>
+            </div>
+        </a>
     </div>
 
     <!-- Payment Settings Card -->
-    <div class="settings-card" data-settings-target="payment">
-        <div class="settings-card-header">
-            <div class="settings-card-icon bg-success-light">
-                <i class="bi bi-credit-card-fill"></i>
+    <div class="settings-card">
+        <a href="{{ url_for('admin.settings') }}?tab=payment">
+            <div class="settings-card-header">
+                <div class="settings-card-icon bg-success-light">
+                    <i class="bi bi-credit-card-fill"></i>
+                </div>
+                <h5 class="settings-card-title">Payment</h5>
             </div>
-            <h5 class="settings-card-title">Payment</h5>
-        </div>
-        <div class="settings-card-body">
-            Configure PayPal, Stripe, and other payment gateway settings for your subscription plans.
-        </div>
-        <div class="settings-card-footer">
-            <button class="btn btn-sm btn-outline-success w-100">
-                Configure Settings <i class="bi bi-arrow-right ms-1"></i>
-            </button>
-        </div>
+            <div class="settings-card-body">
+                Configure PayPal, Stripe, and other payment gateway settings for your subscription plans.
+            </div>
+            <div class="settings-card-footer">
+                <button class="btn btn-sm btn-outline-success w-100">
+                    Configure Settings <i class="bi bi-arrow-right ms-1"></i>
+                </button>
+            </div>
+        </a>
     </div>
 
     <!-- Security Settings Card -->
-    <div class="settings-card" data-settings-target="security">
-        <div class="settings-card-header">
-            <div class="settings-card-icon bg-danger-light">
-                <i class="bi bi-shield-lock-fill"></i>
+    <div class="settings-card">
+        <a href="{{ url_for('admin.settings') }}?tab=security">
+            <div class="settings-card-header">
+                <div class="settings-card-icon bg-danger-light">
+                    <i class="bi bi-shield-lock-fill"></i>
+                </div>
+                <h5 class="settings-card-title">Security</h5>
             </div>
-            <h5 class="settings-card-title">Security</h5>
-        </div>
-        <div class="settings-card-body">
-            Manage password policies, session timeouts, and other security-related settings.
-        </div>
-        <div class="settings-card-footer">
-            <button class="btn btn-sm btn-outline-danger w-100">
-                Configure Settings <i class="bi bi-arrow-right ms-1"></i>
-            </button>
-        </div>
+            <div class="settings-card-body">
+                Manage password policies, session timeouts, and other security-related settings.
+            </div>
+            <div class="settings-card-footer">
+                <button class="btn btn-sm btn-outline-danger w-100">
+                    Configure Settings <i class="bi bi-arrow-right ms-1"></i>
+                </button>
+            </div>
+        </a>
     </div>
 
     <!-- Backup Settings Card -->
-    <div class="settings-card" data-settings-target="backup">
-        <div class="settings-card-header">
-            <div class="settings-card-icon bg-warning-light">
-                <i class="bi bi-cloud-arrow-up-fill"></i>
+    <div class="settings-card">
+        <a href="{{ url_for('admin.settings') }}?tab=backup">
+            <div class="settings-card-header">
+                <div class="settings-card-icon bg-warning-light">
+                    <i class="bi bi-cloud-arrow-up-fill"></i>
+                </div>
+                <h5 class="settings-card-title">Backup</h5>
             </div>
-            <h5 class="settings-card-title">Backup</h5>
-        </div>
-        <div class="settings-card-body">
-            Configure automated backups, backup retention policy, and storage options.
-        </div>
-        <div class="settings-card-footer">
-            <button class="btn btn-sm btn-outline-warning w-100">
-                Configure Settings <i class="bi bi-arrow-right ms-1"></i>
-            </button>
-        </div>
+            <div class="settings-card-body">
+                Configure automated backups, backup retention policy, and storage options.
+            </div>
+            <div class="settings-card-footer">
+                <button class="btn btn-sm btn-outline-warning w-100">
+                    Configure Settings <i class="bi bi-arrow-right ms-1"></i>
+                </button>
+            </div>
+        </a>
     </div>
 
     <!-- System Info Card -->
-    <div class="settings-card" data-settings-target="system">
-        <div class="settings-card-header">
-            <div class="settings-card-icon bg-secondary-light">
-                <i class="bi bi-info-circle-fill"></i>
+    <div class="settings-card">
+        <a href="{{ url_for('admin.settings') }}?tab=system">
+            <div class="settings-card-header">
+                <div class="settings-card-icon bg-secondary-light">
+                    <i class="bi bi-info-circle-fill"></i>
+                </div>
+                <h5 class="settings-card-title">System Info</h5>
             </div>
-            <h5 class="settings-card-title">System Info</h5>
-        </div>
-        <div class="settings-card-body">
-            View system information, server details, resource usage, and installed dependencies.
-        </div>
-        <div class="settings-card-footer">
-            <button class="btn btn-sm btn-outline-secondary w-100">
-                View Information <i class="bi bi-arrow-right ms-1"></i>
-            </button>
-        </div>
+            <div class="settings-card-body">
+                View system information, server details, resource usage, and installed dependencies.
+            </div>
+            <div class="settings-card-footer">
+                <button class="btn btn-sm btn-outline-secondary w-100">
+                    View Information <i class="bi bi-arrow-right ms-1"></i>
+                </button>
+            </div>
+        </a>
     </div>
 </div>
 
-<!-- Settings Content Areas -->
-<div id="general-settings" class="settings-content" data-settings-name="general">
-    <div class="settings-content-header">
+{% if request.args.get('tab') %}
+<!-- Show the selected tab content -->
+{% set tab = request.args.get('tab') %}
+
+{% if tab == 'general' %}
+<div class="mt-4">
+    <div class="d-flex align-items-center mb-3">
         <h4><i class="bi bi-gear-fill text-primary me-2"></i> General Settings</h4>
-        <button class="back-to-cards" onclick="hideSettings('general')">
-            <i class="bi bi-arrow-left"></i>
-        </button>
+        <a href="{{ url_for('admin.settings') }}" class="btn btn-sm btn-outline-secondary ms-3">
+            <i class="bi bi-arrow-left"></i> Back to Settings
+        </a>
     </div>
-    <div class="settings-content-body">
-        {% include 'admin/settings-pages/general.html' %}
-    </div>
+    {% include 'admin/settings-pages/general.html' %}
 </div>
+{% endif %}
 
-<div id="email-settings" class="settings-content" data-settings-name="email">
-    <div class="settings-content-header">
+{% if tab == 'email' %}
+<div class="mt-4">
+    <div class="d-flex align-items-center mb-3">
         <h4><i class="bi bi-envelope-fill text-info me-2"></i> Email Settings</h4>
-        <button class="back-to-cards" onclick="hideSettings('email')">
-            <i class="bi bi-arrow-left"></i>
-        </button>
+        <a href="{{ url_for('admin.settings') }}" class="btn btn-sm btn-outline-secondary ms-3">
+            <i class="bi bi-arrow-left"></i> Back to Settings
+        </a>
     </div>
-    <div class="settings-content-body">
-        {% include 'admin/settings-pages/email.html' %}
-    </div>
+    {% include 'admin/settings-pages/email.html' %}
 </div>
+{% endif %}
 
-<div id="payment-settings" class="settings-content" data-settings-name="payment">
-    <div class="settings-content-header">
+{% if tab == 'payment' %}
+<div class="mt-4">
+    <div class="d-flex align-items-center mb-3">
         <h4><i class="bi bi-credit-card-fill text-success me-2"></i> Payment Settings</h4>
-        <button class="back-to-cards" onclick="hideSettings('payment')">
-            <i class="bi bi-arrow-left"></i>
-        </button>
+        <a href="{{ url_for('admin.settings') }}" class="btn btn-sm btn-outline-secondary ms-3">
+            <i class="bi bi-arrow-left"></i> Back to Settings
+        </a>
     </div>
-    <div class="settings-content-body">
-        {% include 'admin/settings-pages/payment.html' %}
-    </div>
+    {% include 'admin/settings-pages/payment.html' %}
 </div>
+{% endif %}
 
-<div id="security-settings" class="settings-content" data-settings-name="security">
-    <div class="settings-content-header">
+{% if tab == 'security' %}
+<div class="mt-4">
+    <div class="d-flex align-items-center mb-3">
         <h4><i class="bi bi-shield-lock-fill text-danger me-2"></i> Security Settings</h4>
-        <button class="back-to-cards" onclick="hideSettings('security')">
-            <i class="bi bi-arrow-left"></i>
-        </button>
+        <a href="{{ url_for('admin.settings') }}" class="btn btn-sm btn-outline-secondary ms-3">
+            <i class="bi bi-arrow-left"></i> Back to Settings
+        </a>
     </div>
-    <div class="settings-content-body">
-        {% include 'admin/settings-pages/security.html' %}
-    </div>
+    {% include 'admin/settings-pages/security.html' %}
 </div>
+{% endif %}
 
-<div id="backup-settings" class="settings-content" data-settings-name="backup">
-    <div class="settings-content-header">
+{% if tab == 'backup' %}
+<div class="mt-4">
+    <div class="d-flex align-items-center mb-3">
         <h4><i class="bi bi-cloud-arrow-up-fill text-warning me-2"></i> Backup Settings</h4>
-        <button class="back-to-cards" onclick="hideSettings('backup')">
-            <i class="bi bi-arrow-left"></i>
-        </button>
+        <a href="{{ url_for('admin.settings') }}" class="btn btn-sm btn-outline-secondary ms-3">
+            <i class="bi bi-arrow-left"></i> Back to Settings
+        </a>
     </div>
-    <div class="settings-content-body">
-        {% include 'admin/settings-pages/backup.html' %}
-    </div>
+    {% include 'admin/settings-pages/backup.html' %}
 </div>
+{% endif %}
 
-<div id="system-settings" class="settings-content" data-settings-name="system">
-    <div class="settings-content-header">
+{% if tab == 'system' %}
+<div class="mt-4">
+    <div class="d-flex align-items-center mb-3">
         <h4><i class="bi bi-info-circle-fill text-secondary me-2"></i> System Information</h4>
-        <button class="back-to-cards" onclick="hideSettings('system')">
-            <i class="bi bi-arrow-left"></i>
-        </button>
+        <a href="{{ url_for('admin.settings') }}" class="btn btn-sm btn-outline-secondary ms-3">
+            <i class="bi bi-arrow-left"></i> Back to Settings
+        </a>
     </div>
-    <div class="settings-content-body">
-        {% include 'admin/settings-pages/system-info.html' %}
-    </div>
+    {% include 'admin/settings-pages/system-info.html' %}
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script src="{{ url_for('static', filename='js/settings.js') }}"></script>
+{% endif %}
+{% endif %}
 {% endblock %}
