@@ -1257,6 +1257,26 @@ def test_email():
     return redirect(url_for('admin.settings', tab='email'))
 
 
+@admin_bp.route('/backups')
+@admin_required
+def backups():
+    """View all database backups."""
+    # Get current user for the template
+    user_model = User()
+    current_user = user_model.get_user_by_id(session['user_id'])
+    
+    # Get list of backups
+    # This would use your backup model to retrieve all backups
+    backups = []  # In a real app, you'd pull this from the database
+    
+    # Render backups template
+    return render_template(
+        'admin/backups.html', 
+        backups=backups,
+        current_user=current_user,
+        title='Database Backups'
+    )
+    
 @admin_bp.route('/create-backup', methods=['POST'])
 @admin_required
 def create_backup_route():

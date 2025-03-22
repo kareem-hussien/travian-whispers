@@ -1,16 +1,13 @@
 <!-- Email Settings -->
-<div class="row">
-    <div class="col-lg-8 mx-auto">
-        {% with 
-            form_id="emailSettingsForm",
-            form_title="Email Configuration",
-            form_description="Configure SMTP settings for sending emails",
-            form_type="email",
-            form_submit_text="Save Email Settings",
-            form_submit_icon="save",
-            reset_button=true
-        %}
-        {% include 'admin/components/admin-settings-form.html' %}
+<div class="dashboard-card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Email Configuration</h5>
+    </div>
+    <div class="card-body">
+        <form id="emailSettingsForm" action="{{ url_for('admin.settings') }}" method="post">
+            <input type="hidden" name="form_type" value="email">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
             <!-- SMTP Server -->
             {% with 
                 field_type="text",
@@ -51,12 +48,17 @@
                     {'value': 'ssl', 'text': 'SSL/TLS'},
                     {'value': 'starttls', 'text': 'STARTTLS'}
                 ],
-                select_selected="starttls",
+                select_selected=settings.email.smtp_security|default("starttls"),
                 select_required=true,
                 select_help="The encryption method for connecting to the SMTP server."
             %}
                 {% include 'admin/components/admin-form-select.html' %}
             {% endwith %}
+            
+            <!-- Authentication Section -->
+            <div class="border-bottom pb-2 mb-4 mt-5">
+                <h6>Authentication</h6>
+            </div>
             
             <!-- SMTP Username -->
             {% with 
@@ -86,6 +88,11 @@
                 {% include 'admin/components/admin-form-field.html' %}
             {% endwith %}
             
+            <!-- Sender Information -->
+            <div class="border-bottom pb-2 mb-4 mt-5">
+                <h6>Sender Information</h6>
+            </div>
+            
             <!-- Sender Email -->
             {% with 
                 field_type="email",
@@ -113,29 +120,43 @@
             %}
                 {% include 'admin/components/admin-form-field.html' %}
             {% endwith %}
-        {% endwith %}
-        
-        <!-- Test Email Section -->
-        <div class="dashboard-card mt-4">
-            <h5 class="mb-3">Test Email Configuration</h5>
-            <p>Send a test email to verify your SMTP configuration is working correctly.</p>
             
-            <form action="{{ url_for('admin.test_email') }}" method="post" class="row g-3">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <input type="hidden" name="form_type" value="test_email">
-                
-                <div class="col-md-6">
-                    <label for="testEmailAddress" class="form-label">Test Email Address</label>
-                    <input type="email" class="form-control" id="testEmailAddress" name="testEmailAddress" 
-                           placeholder="Enter recipient email" required>
-                </div>
-                
-                <div class="col-md-6 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-envelope me-1"></i> Send Test Email
-                    </button>
-                </div>
-            </form>
-        </div>
+            <!-- Form Buttons -->
+            <div class="mt-4 d-flex justify-content-end">
+                <button type="reset" class="btn btn-outline-secondary me-2">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save me-1"></i> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Test Email Card -->
+<div class="dashboard-card">
+    <div class="card-header">
+        <h5 class="mb-0">Test Email Configuration</h5>
+    </div>
+    <div class="card-body">
+        <p>Send a test email to verify your SMTP configuration is working correctly.</p>
+        
+        <form action="{{ url_for('admin.test_email') }}" method="post" class="row g-3">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="form_type" value="test_email">
+            
+            <div class="col-md-8">
+                <label for="testEmailAddress" class="form-label">Test Email Address</label>
+                <input type="email" class="form-control" id="testEmailAddress" name="testEmailAddress" 
+                       placeholder="Enter recipient email" required>
+            </div>
+            
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-envelope me-1"></i> Send Test Email
+                </button>
+            </div>
+        </form>
     </div>
 </div>

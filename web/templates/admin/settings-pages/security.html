@@ -1,16 +1,13 @@
 <!-- Security Settings -->
-<div class="row">
-    <div class="col-lg-8 mx-auto">
-        {% with 
-            form_id="securitySettingsForm",
-            form_title="Security Settings",
-            form_description="Configure security settings and policies",
-            form_type="security",
-            form_submit_text="Save Security Settings",
-            form_submit_icon="save",
-            reset_button=true
-        %}
-        {% include 'admin/components/admin-settings-form.html' %}
+<div class="dashboard-card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Security Settings</h5>
+    </div>
+    <div class="card-body">
+        <form id="securitySettingsForm" action="{{ url_for('admin.settings') }}" method="post">
+            <input type="hidden" name="form_type" value="security">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
             <!-- Authentication Section -->
             <div class="border-bottom pb-2 mb-4">
                 <h6>Authentication Settings</h6>
@@ -27,72 +24,6 @@
             %}
                 {% include 'admin/components/admin-form-checkbox.html' %}
             {% endwith %}
-        {% endwith %}
-        
-        <!-- Security Tests Section -->
-        <div class="dashboard-card mt-4">
-            <h5 class="mb-3">Security Tests</h5>
-            <p>Run security tests to verify the integrity of your site.</p>
-            
-            <div class="list-group mb-3">
-                <div class="list-group-item">
-                    <div class="d-flex w-100 justify-content-between">
-                        <h6 class="mb-1">SSL/TLS Configuration</h6>
-                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="runSecurityTest('ssl')">
-                            Test
-                        </button>
-                    </div>
-                    <p class="mb-1">Verify your SSL/TLS settings and certificate configuration.</p>
-                </div>
-                <div class="list-group-item">
-                    <div class="d-flex w-100 justify-content-between">
-                        <h6 class="mb-1">Security Headers</h6>
-                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="runSecurityTest('headers')">
-                            Test
-                        </button>
-                    </div>
-                    <p class="mb-1">Check for properly configured security headers.</p>
-                </div>
-                <div class="list-group-item">
-                    <div class="d-flex w-100 justify-content-between">
-                        <h6 class="mb-1">Common Vulnerabilities</h6>
-                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="runSecurityTest('vulnerabilities')">
-                            Test
-                        </button>
-                    </div>
-                    <p class="mb-1">Scan for common security vulnerabilities (XSS, CSRF, etc.).</p>
-                </div>
-            </div>
-            
-            <button type="button" class="btn btn-primary" onclick="runSecurityTest('all')">
-                <i class="bi bi-shield-check me-1"></i> Run All Security Tests
-            </button>
-        </div>
-    </div>
-</div>
-
-<script>
-function runSecurityTest(testType) {
-    // In a real app, this would make an AJAX call to run security tests
-    let testName = '';
-    switch(testType) {
-        case 'ssl':
-            testName = 'SSL/TLS Configuration';
-            break;
-        case 'headers':
-            testName = 'Security Headers';
-            break;
-        case 'vulnerabilities':
-            testName = 'Common Vulnerabilities';
-            break;
-        case 'all':
-            testName = 'All Security Tests';
-            break;
-    }
-    
-    alert(`Running ${testName}. This would perform security checks on your site.`);
-}
-</script>
             
             <!-- Session Timeout -->
             {% with 
@@ -172,7 +103,7 @@ function runSecurityTest(testType) {
                 field_id="passwordExpiry",
                 field_name="passwordExpiry",
                 field_label="Password Expiry (days)",
-                field_value=90,
+                field_value=settings.security.get('password_expiry', 90),
                 field_min=0,
                 field_max=365,
                 field_required=true,
@@ -191,7 +122,7 @@ function runSecurityTest(testType) {
                 checkbox_id="forceHttps",
                 checkbox_name="forceHttps",
                 checkbox_label="Force HTTPS",
-                checkbox_checked=True,
+                checkbox_checked=settings.security.force_https,
                 checkbox_help="Redirects all HTTP requests to HTTPS.",
                 checkbox_switch=true
             %}
@@ -203,7 +134,7 @@ function runSecurityTest(testType) {
                 checkbox_id="enableHSTS",
                 checkbox_name="enableHSTS",
                 checkbox_label="Enable HSTS (HTTP Strict Transport Security)",
-                checkbox_checked=True,
+                checkbox_checked=settings.security.enable_hsts,
                 checkbox_help="Adds the Strict-Transport-Security header to ensure connections use HTTPS.",
                 checkbox_switch=true
             %}
@@ -215,7 +146,7 @@ function runSecurityTest(testType) {
                 checkbox_id="enableCSP",
                 checkbox_name="enableCSP",
                 checkbox_label="Enable Content Security Policy (CSP)",
-                checkbox_checked=True,
+                checkbox_checked=settings.security.get('enable_csp', True),
                 checkbox_help="Adds CSP headers to help prevent cross-site scripting (XSS) attacks.",
                 checkbox_switch=true
             %}
@@ -233,9 +164,97 @@ function runSecurityTest(testType) {
                     {'value': 'ALLOW-FROM', 'text': 'ALLOW-FROM - Allow specific origins'},
                     {'value': 'none', 'text': 'Disabled - No X-Frame-Options header'}
                 ],
-                select_selected='SAMEORIGIN',
+                select_selected=settings.security.get('x_frame_options', 'SAMEORIGIN'),
                 select_required=true,
                 select_help="Controls whether the site can be embedded in frames on other websites."
             %}
                 {% include 'admin/components/admin-form-select.html' %}
             {% endwith %}
+            
+            <!-- Form Buttons -->
+            <div class="mt-4 d-flex justify-content-end">
+                <button type="reset" class="btn btn-outline-secondary me-2">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save me-1"></i> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Security Tests Section -->
+<div class="dashboard-card">
+    <div class="card-header">
+        <h5 class="mb-0">Security Tests</h5>
+    </div>
+    <div class="card-body">
+        <p>Run security tests to verify the integrity of your site.</p>
+        
+        <div class="list-group mb-4">
+            <div class="list-group-item">
+                <div class="d-flex w-100 justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-1">SSL/TLS Configuration</h6>
+                        <p class="mb-0 text-muted">Verify your SSL/TLS settings and certificate configuration.</p>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="runSecurityTest('ssl')">
+                        Test
+                    </button>
+                </div>
+            </div>
+            <div class="list-group-item">
+                <div class="d-flex w-100 justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-1">Security Headers</h6>
+                        <p class="mb-0 text-muted">Check for properly configured security headers.</p>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="runSecurityTest('headers')">
+                        Test
+                    </button>
+                </div>
+            </div>
+            <div class="list-group-item">
+                <div class="d-flex w-100 justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-1">Common Vulnerabilities</h6>
+                        <p class="mb-0 text-muted">Scan for common security vulnerabilities (XSS, CSRF, etc.).</p>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="runSecurityTest('vulnerabilities')">
+                        Test
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center">
+            <button type="button" class="btn btn-primary" onclick="runSecurityTest('all')">
+                <i class="bi bi-shield-check me-1"></i> Run All Security Tests
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function runSecurityTest(testType) {
+    // In a real app, this would make an AJAX call to run security tests
+    let testName = '';
+    switch(testType) {
+        case 'ssl':
+            testName = 'SSL/TLS Configuration';
+            break;
+        case 'headers':
+            testName = 'Security Headers';
+            break;
+        case 'vulnerabilities':
+            testName = 'Common Vulnerabilities';
+            break;
+        case 'all':
+            testName = 'All Security Tests';
+            break;
+    }
+    
+    alert(`Running ${testName}. This would perform security checks on your site.`);
+}
+</script>

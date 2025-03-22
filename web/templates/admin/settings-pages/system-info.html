@@ -1,128 +1,129 @@
 <!-- System Information -->
-<div class="row">
-    <div class="col-lg-8 mx-auto">
-        <div class="dashboard-card">
-            <h5 class="mb-4">System Information</h5>
-            
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="mb-4">
-                        <h6>Application</h6>
-                        <table class="table table-sm">
-                            <tbody>
-                                <tr>
-                                    <th>Version</th>
-                                    <td>{{ settings.system.version }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Environment</th>
-                                    <td>
-                                        <span class="badge {{ 'bg-success' if settings.system.environment == 'Production' else 'bg-warning' }}">
-                                            {{ settings.system.environment }}
-                                        </span>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th>Debug Mode</th>
-                                    <td>
-                                        <span class="badge {{ 'bg-danger' if settings.system.debug_mode else 'bg-success' }}">
-                                            {{ 'Enabled' if settings.system.debug_mode else 'Disabled' }}
-                                        </span>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th>Uptime</th>
-                                    <td>{{ settings.system.uptime }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                
-                <div class="col-md-6">
-                    <div class="mb-4">
-                        <h6>Server</h6>
-                        <table class="table table-sm">
-                            <tbody>
-                                <tr>
-                                    <th>Python Version</th>
-                                    <td>{{ settings.system.python_version }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Web Server</th>
-                                    <td>{{ settings.system.server_software }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Database</th>
-                                    <td>{{ settings.system.database }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Operating System</th>
-                                    <td>{{ os_info|default('Linux/Unix') }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+<div class="dashboard-card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">System Information</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-4">
+                    <h6>Application</h6>
+                    <table class="table table-sm">
+                        <tbody>
+                            <tr>
+                                <th width="40%">Version</th>
+                                <td>{{ settings.system.version }}</td>
+                            </tr>
+                            <tr>
+                                <th>Environment</th>
+                                <td>
+                                    <span class="badge {{ 'bg-success' if settings.system.environment == 'Production' else 'bg-warning' }}">
+                                        {{ settings.system.environment }}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Debug Mode</th>
+                                <td>
+                                    <span class="badge {{ 'bg-danger' if settings.system.debug_mode else 'bg-success' }}">
+                                        {{ 'Enabled' if settings.system.debug_mode else 'Disabled' }}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Uptime</th>
+                                <td>{{ settings.system.uptime }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
             
-            <div class="row">
-                <div class="col-12">
-                    <h6>System Status</h6>
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-3 col-sm-6">
-                            <div class="card bg-light">
-                                <div class="card-body text-center">
-                                    <h6 class="text-muted">CPU Usage</h6>
-                                    <div class="progress mb-2">
-                                        <div class="progress-bar {{ 'bg-success' if cpu_usage|default(35) < 70 else 'bg-warning' if cpu_usage|default(35) < 90 else 'bg-danger' }}" 
-                                             role="progressbar" style="width: {{ cpu_usage|default(35) }}%"></div>
-                                    </div>
-                                    <span class="fw-bold">{{ cpu_usage|default(35) }}%</span>
+            <div class="col-md-6">
+                <div class="mb-4">
+                    <h6>Server</h6>
+                    <table class="table table-sm">
+                        <tbody>
+                            <tr>
+                                <th width="40%">Python Version</th>
+                                <td>{{ settings.system.python_version }}</td>
+                            </tr>
+                            <tr>
+                                <th>Web Server</th>
+                                <td>{{ settings.system.server_software }}</td>
+                            </tr>
+                            <tr>
+                                <th>Database</th>
+                                <td>{{ settings.system.database }}</td>
+                            </tr>
+                            <tr>
+                                <th>Operating System</th>
+                                <td>{{ os_info|default('Linux/Unix') }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12">
+                <h6>System Resource Status</h6>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3 col-sm-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6 class="text-muted">CPU Usage</h6>
+                                <div class="progress mb-2">
+                                    <div class="progress-bar {{ 'bg-success' if system_stats.cpu_usage < 70 else 'bg-warning' if system_stats.cpu_usage < 90 else 'bg-danger' }}" 
+                                         role="progressbar" style="width: {{ system_stats.cpu_usage }}%"></div>
                                 </div>
+                                <span class="fw-bold">{{ system_stats.cpu_usage }}%</span>
                             </div>
                         </div>
-                        <div class="col-md-3 col-sm-6">
-                            <div class="card bg-light">
-                                <div class="card-body text-center">
-                                    <h6 class="text-muted">Memory Usage</h6>
-                                    <div class="progress mb-2">
-                                        <div class="progress-bar {{ 'bg-success' if memory_usage|default(62) < 70 else 'bg-warning' if memory_usage|default(62) < 90 else 'bg-danger' }}" 
-                                             role="progressbar" style="width: {{ memory_usage|default(62) }}%"></div>
-                                    </div>
-                                    <span class="fw-bold">{{ memory_usage|default(62) }}%</span>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6 class="text-muted">Memory Usage</h6>
+                                <div class="progress mb-2">
+                                    <div class="progress-bar {{ 'bg-success' if system_stats.memory_usage < 70 else 'bg-warning' if system_stats.memory_usage < 90 else 'bg-danger' }}" 
+                                         role="progressbar" style="width: {{ system_stats.memory_usage }}%"></div>
                                 </div>
+                                <span class="fw-bold">{{ system_stats.memory_usage }}%</span>
                             </div>
                         </div>
-                        <div class="col-md-3 col-sm-6">
-                            <div class="card bg-light">
-                                <div class="card-body text-center">
-                                    <h6 class="text-muted">Disk Usage</h6>
-                                    <div class="progress mb-2">
-                                        <div class="progress-bar {{ 'bg-success' if disk_usage|default(48) < 70 else 'bg-warning' if disk_usage|default(48) < 90 else 'bg-danger' }}" 
-                                             role="progressbar" style="width: {{ disk_usage|default(48) }}%"></div>
-                                    </div>
-                                    <span class="fw-bold">{{ disk_usage|default(48) }}%</span>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6 class="text-muted">Disk Usage</h6>
+                                <div class="progress mb-2">
+                                    <div class="progress-bar {{ 'bg-success' if system_stats.disk_usage < 70 else 'bg-warning' if system_stats.disk_usage < 90 else 'bg-danger' }}" 
+                                         role="progressbar" style="width: {{ system_stats.disk_usage }}%"></div>
                                 </div>
+                                <span class="fw-bold">{{ system_stats.disk_usage }}%</span>
                             </div>
                         </div>
-                        <div class="col-md-3 col-sm-6">
-                            <div class="card bg-light">
-                                <div class="card-body text-center">
-                                    <h6 class="text-muted">Active Connections</h6>
-                                    <div class="pt-2 pb-2">
-                                        <span class="display-6">{{ active_connections|default(18) }}</span>
-                                    </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6 class="text-muted">Active Connections</h6>
+                                <div class="pt-2 pb-2">
+                                    <span class="display-6">{{ system_stats.active_connections }}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <div class="row">
-                <div class="col-12">
-                    <h6>Database Information</h6>
+        </div>
+        
+        <div class="row">
+            <div class="col-12">
+                <h6>Database Information</h6>
+                <div class="table-responsive">
                     <table class="table">
                         <thead>
                             <tr>
@@ -168,10 +169,12 @@
                     </table>
                 </div>
             </div>
-            
-            <div class="row">
-                <div class="col-12">
-                    <h6>Dependencies</h6>
+        </div>
+        
+        <div class="row">
+            <div class="col-12">
+                <h6>Dependencies</h6>
+                <div class="table-responsive">
                     <table class="table">
                         <thead>
                             <tr>
@@ -210,19 +213,19 @@
                     </table>
                 </div>
             </div>
-            
-            <div class="mt-4">
-                <div class="d-flex">
-                    <button type="button" class="btn btn-outline-primary me-2" onclick="refreshSystemInfo()">
-                        <i class="bi bi-arrow-clockwise me-1"></i> Refresh System Info
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary me-2" onclick="downloadSystemReport()">
-                        <i class="bi bi-download me-1"></i> Download System Report
-                    </button>
-                    <button type="button" class="btn btn-outline-danger" onclick="clearCaches()">
-                        <i class="bi bi-trash me-1"></i> Clear System Caches
-                    </button>
-                </div>
+        </div>
+        
+        <div class="mt-4">
+            <div class="d-flex flex-wrap">
+                <button type="button" class="btn btn-outline-primary me-2 mb-2" onclick="refreshSystemInfo()">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Refresh System Info
+                </button>
+                <button type="button" class="btn btn-outline-secondary me-2 mb-2" onclick="downloadSystemReport()">
+                    <i class="bi bi-download me-1"></i> Download System Report
+                </button>
+                <button type="button" class="btn btn-outline-danger mb-2" onclick="clearCaches()">
+                    <i class="bi bi-trash me-1"></i> Clear System Caches
+                </button>
             </div>
         </div>
     </div>

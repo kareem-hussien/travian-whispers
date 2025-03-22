@@ -1,261 +1,310 @@
-<!-- Backup Settings -->
-<div class="row">
-    <div class="col-lg-8 mx-auto">
+{% extends 'admin/components/admin-layout.html' %}
+
+{% block title %}Database Backups{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin.maintenance') }}">Maintenance</a></li>
+<li class="breadcrumb-item active" aria-current="page">Backups</li>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+{% with 
+    title="Database Backups",
+    subtitle="Manage your database backup files",
+    show_buttons=true,
+    primary_button_text="Create New Backup",
+    primary_button_icon="cloud-arrow-up",
+    primary_button_id="createBackupBtn",
+    primary_button_data_bs_toggle="modal",
+    primary_button_data_bs_target="#createBackupModal",
+    secondary_button_text="Configuration",
+    secondary_button_icon="gear",
+    secondary_button_url=url_for('admin.settings', tab='backup')
+%}
+    {% include 'admin/components/admin-page-header.html' %}
+{% endwith %}
+
+<!-- Summary Cards Row -->
+<div class="row mb-4">
+    <!-- Total Backups Card -->
+    <div class="col-xl-3 col-md-6 mb-3">
         {% with 
-            form_id="backupSettingsForm",
-            form_title="Backup Settings",
-            form_description="Configure automatic database backup settings",
-            form_type="backup",
-            form_submit_text="Save Backup Settings",
-            form_submit_icon="save",
-            reset_button=true
+            icon="archive",
+            icon_bg="bg-primary-light",
+            title="Total Backups",
+            value=backups|length,
+            subtitle="Available backup files"
         %}
-        {% include 'admin/components/admin-settings-form.html' %}
-            <!-- Automatic Backup -->
-            {% with 
-                checkbox_id="autoBackup",
-                checkbox_name="autoBackup",
-                checkbox_label="Enable Automatic Backups",
-                checkbox_checked=settings.backup.auto_backup,
-                checkbox_help="When enabled, the system will automatically create backups according to the schedule.",
-                checkbox_switch=true
-            %}
-                {% include 'admin/components/admin-form-checkbox.html' %}
-            {% endwith %}
-            
-            <!-- Backup Frequency -->
-            {% with 
-                select_id="backupFrequency",
-                select_name="backupFrequency",
-                select_label="Backup Frequency",
-                select_options=[
-                    {'value': 'daily', 'text': 'Daily'},
-                    {'value': 'weekly', 'text': 'Weekly'},
-                    {'value': 'monthly', 'text': 'Monthly'}
-                ],
-                select_selected=settings.backup.backup_frequency,
-                select_required=true,
-                select_help="How often automatic backups should be performed."
-            %}
-                {% include 'admin/components/admin-form-select.html' %}
-            {% endwith %}
-            
-            <!-- Backup Time -->
-            {% with 
-                field_type="time",
-                field_id="backupTime",
-                field_name="backupTime",
-                field_label="Backup Time",
-                field_value="02:00",
-                field_required=true,
-                field_help="The time of day when automatic backups should run (server time)."
-            %}
-                {% include 'admin/components/admin-form-field.html' %}
-            {% endwith %}
-            
-            <!-- Backup Type -->
-            {% with 
-                select_id="backupType",
-                select_name="backupType",
-                select_label="Default Backup Type",
-                select_options=[
-                    {'value': 'full', 'text': 'Full Backup'},
-                    {'value': 'users', 'text': 'Users Only'},
-                    {'value': 'transactions', 'text': 'Transactions Only'},
-                    {'value': 'subscriptions', 'text': 'Subscriptions Only'}
-                ],
-                select_selected="full",
-                select_required=true,
-                select_help="The type of data to include in automatic backups."
-            %}
-                {% include 'admin/components/admin-form-select.html' %}
-            {% endwith %}
-            
-            <!-- Compress Backups -->
-            {% with 
-                checkbox_id="compressBackups",
-                checkbox_name="compressBackups",
-                checkbox_label="Compress Backups",
-                checkbox_checked=True,
-                checkbox_help="When enabled, backup files will be compressed to save disk space.",
-                checkbox_switch=true
-            %}
-                {% include 'admin/components/admin-form-checkbox.html' %}
-            {% endwith %}
-            
-            <!-- Retention Settings -->
-            <div class="border-bottom pb-2 mb-4 mt-5">
-                <h6>Retention Settings</h6>
-            </div>
-            
-            <!-- Retention Period -->
-            {% with 
-                field_type="number",
-                field_id="retentionPeriod",
-                field_name="retentionPeriod",
-                field_label="Retention Period (days)",
-                field_value=settings.backup.retention_period,
-                field_min=1,
-                field_max=365,
-                field_required=true,
-                field_help="Number of days to keep backups before automatic deletion."
-            %}
-                {% include 'admin/components/admin-form-field.html' %}
-            {% endwith %}
-            
-            <!-- Maximum Backups -->
-            {% with 
-                field_type="number",
-                field_id="maxBackups",
-                field_name="maxBackups",
-                field_label="Maximum Backups",
-                field_value=10,
-                field_min=1,
-                field_max=100,
-                field_required=true,
-                field_help="Maximum number of backups to keep. Oldest backups will be deleted when this limit is reached."
-            %}
-                {% include 'admin/components/admin-form-field.html' %}
-            {% endwith %}
-            
-            <!-- Storage Settings -->
-            <div class="border-bottom pb-2 mb-4 mt-5">
-                <h6>Storage Settings</h6>
-            </div>
-            
-            <!-- Backup Storage Location -->
-            {% with 
-                field_type="text",
-                field_id="backupLocation",
-                field_name="backupLocation",
-                field_label="Backup Storage Location",
-                field_value="backups",
-                field_required=true,
-                field_help="Directory path where backups will be stored. Can be relative to the application or absolute."
-            %}
-                {% include 'admin/components/admin-form-field.html' %}
-            {% endwith %}
-            
-            <!-- External Storage -->
-            {% with 
-                checkbox_id="externalStorage",
-                checkbox_name="externalStorage",
-                checkbox_label="Enable External Storage",
-                checkbox_checked=False,
-                checkbox_help="When enabled, backups will also be uploaded to external storage.",
-                checkbox_switch=true
-            %}
-                {% include 'admin/components/admin-form-checkbox.html' %}
-            {% endwith %}
-            
-            <!-- External Storage Type -->
-            {% with 
-                select_id="externalStorageType",
-                select_name="externalStorageType",
-                select_label="External Storage Type",
-                select_options=[
-                    {'value': 's3', 'text': 'Amazon S3'},
-                    {'value': 'gcs', 'text': 'Google Cloud Storage'},
-                    {'value': 'dropbox', 'text': 'Dropbox'},
-                    {'value': 'ftp', 'text': 'FTP Server'}
-                ],
-                select_selected="s3",
-                select_required=false,
-                select_disabled=true,
-                select_help="The type of external storage to use for backup uploads."
-            %}
-                {% include 'admin/components/admin-form-select.html' %}
-            {% endwith %}
+            {% include 'admin/components/admin-stat-card.html' %}
         {% endwith %}
-        
-        <!-- Manual Backup Section -->
-        <div class="dashboard-card mt-4">
-            <h5 class="mb-3">Manual Backup</h5>
-            <p>Create a database backup immediately with custom options.</p>
-            
-            <form action="{{ url_for('admin.create_backup') }}" method="post" class="row g-3">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                
-                <div class="col-md-6">
-                    <label for="manualBackupType" class="form-label">Backup Type</label>
-                    <select class="form-select" id="manualBackupType" name="backup_type">
-                        <option value="full" selected>Full Backup</option>
-                        <option value="users">Users Only</option>
-                        <option value="transactions">Transactions Only</option>
-                        <option value="subscriptions">Subscriptions Only</option>
-                    </select>
-                </div>
-                
-                <div class="col-md-6">
-                    <div class="form-check mt-4">
-                        <input class="form-check-input" type="checkbox" id="manualCompressBackup" name="compress_backup" checked>
-                        <label class="form-check-label" for="manualCompressBackup">
-                            Compress Backup
-                        </label>
-                    </div>
-                </div>
-                
-                <div class="col-12">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-cloud-arrow-up me-1"></i> Create Backup Now
-                    </button>
-                </div>
-            </form>
-        </div>
-        
-        <!-- Recent Backups Section -->
-        <div class="dashboard-card mt-4">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="m-0">Recent Backups</h5>
-                <a href="{{ url_for('admin.backups') }}" class="btn btn-sm btn-outline-primary">View All Backups</a>
+    </div>
+
+    <!-- Storage Used Card -->
+    <div class="col-xl-3 col-md-6 mb-3">
+        {% with 
+            icon="hdd",
+            icon_bg="bg-success-light",
+            title="Storage Used",
+            value=total_size|default('45.8 MB'),
+            subtitle="Total backup storage"
+        %}
+            {% include 'admin/components/admin-stat-card.html' %}
+        {% endwith %}
+    </div>
+
+    <!-- Last Backup Card -->
+    <div class="col-xl-3 col-md-6 mb-3">
+        {% with 
+            icon="clock-history",
+            icon_bg="bg-info-light",
+            title="Last Backup",
+            value=last_backup_time|default('3 days ago'),
+            subtitle=last_backup_type|default('Full backup')
+        %}
+            {% include 'admin/components/admin-stat-card.html' %}
+        {% endwith %}
+    </div>
+
+    <!-- Next Backup Card -->
+    <div class="col-xl-3 col-md-6 mb-3">
+        {% with 
+            icon="calendar-event",
+            icon_bg="bg-warning-light",
+            title="Next Scheduled",
+            value=next_backup_time|default('Tomorrow'),
+            subtitle="Auto-backup " + (backup_schedule|default('Weekly'))
+        %}
+            {% include 'admin/components/admin-stat-card.html' %}
+        {% endwith %}
+    </div>
+</div>
+
+<!-- Search and Filters -->
+{% with 
+    search_placeholder="Search backups...",
+    show_search=true,
+    filters=[
+        {
+            'name': 'backup_type',
+            'label': 'Backup Type',
+            'options': [
+                {'value': 'full', 'text': 'Full Backup'},
+                {'value': 'users', 'text': 'Users Only'},
+                {'value': 'transactions', 'text': 'Transactions Only'},
+                {'value': 'subscriptions', 'text': 'Subscriptions Only'}
+            ]
+        }
+    ],
+    date_filter=true,
+    date_filter_label="Created Date",
+    search_value=request.args.get('q', ''),
+    filter_values={
+        'backup_type': request.args.get('backup_type', '')
+    },
+    date_from=request.args.get('date_from', ''),
+    date_to=request.args.get('date_to', '')
+%}
+    {% include 'admin/components/admin-search-filter.html' %}
+{% endwith %}
+
+<!-- Backup Files Table -->
+<div class="dashboard-card">
+    <div class="card-header">
+        <h5 class="mb-0">Backup Files</h5>
+    </div>
+    <div class="card-body">
+        {% if backups and backups|length > 0 %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Filename</th>
+                            <th>Type</th>
+                            <th>Size</th>
+                            <th>Created Date</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for backup in backups %}
+                            <tr>
+                                <td>{{ backup.filename }}</td>
+                                <td><span class="badge bg-secondary">{{ backup.type }}</span></td>
+                                <td>{{ backup.size }}</td>
+                                <td>{{ backup.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>
+                                    <span class="badge {{ 'bg-success' if backup.success else 'bg-danger' }}">
+                                        {{ 'Success' if backup.success else 'Failed' }}
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ url_for('admin.download_backup', filename=backup.filename) }}" class="btn btn-outline-primary" title="Download">
+                                            <i class="bi bi-download"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-outline-success" title="Restore" 
+                                                data-bs-toggle="modal" data-bs-target="#restoreBackupModal" 
+                                                data-filename="{{ backup.filename }}">
+                                            <i class="bi bi-arrow-counterclockwise"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger" title="Delete"
+                                                data-bs-toggle="modal" data-bs-target="#deleteBackupModal"
+                                                data-filename="{{ backup.filename }}">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
             
-            {% if backups and backups|length > 0 %}
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Filename</th>
-                                <th>Type</th>
-                                <th>Size</th>
-                                <th>Date</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
+            <!-- Pagination -->
+            <nav aria-label="Backup pagination" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item {% if current_page|default(1) == 1 %}disabled{% endif %}">
+                        <a class="page-link" href="?page={{ current_page|default(1) - 1 }}{% if request.args.get('q') %}&q={{ request.args.get('q') }}{% endif %}{% if request.args.get('backup_type') %}&backup_type={{ request.args.get('backup_type') }}{% endif %}" tabindex="-1" aria-disabled="true">Previous</a>
+                    </li>
+                    
+                    {% for page in range(1, (total_pages|default(1)) + 1) %}
+                        {% if page >= (current_page|default(1)) - 2 and page <= (current_page|default(1)) + 2 %}
+                            <li class="page-item {% if page == current_page|default(1) %}active{% endif %}">
+                                <a class="page-link" href="?page={{ page }}{% if request.args.get('q') %}&q={{ request.args.get('q') }}{% endif %}{% if request.args.get('backup_type') %}&backup_type={{ request.args.get('backup_type') }}{% endif %}">{{ page }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    <li class="page-item {% if current_page|default(1) == total_pages|default(1) %}disabled{% endif %}">
+                        <a class="page-link" href="?page={{ current_page|default(1) + 1 }}{% if request.args.get('q') %}&q={{ request.args.get('q') }}{% endif %}{% if request.args.get('backup_type') %}&backup_type={{ request.args.get('backup_type') }}{% endif %}">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        {% else %}
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                No backup files found. Use the "Create New Backup" button to create your first backup.
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Backup Information Card -->
+<div class="dashboard-card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0">Backup Information</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-4">
+                    <h6>Backup Schedule</h6>
+                    <table class="table table-sm">
                         <tbody>
-                            {% for backup in backups %}
-                                <tr>
-                                    <td>{{ backup.filename }}</td>
-                                    <td><span class="badge bg-secondary">{{ backup.type }}</span></td>
-                                    <td>{{ backup.size }}</td>
-                                    <td>{{ backup.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
-                                    <td>
-                                        <div class="btn-group btn-group-sm">
-                                            <a href="{{ url_for('admin.download_backup', filename=backup.filename) }}" class="btn btn-outline-primary" title="Download">
-                                                <i class="bi bi-download"></i>
-                                            </a>
-                                            <button type="button" class="btn btn-outline-success" title="Restore" 
-                                                    data-bs-toggle="modal" data-bs-target="#restoreBackupModal" 
-                                                    data-filename="{{ backup.filename }}">
-                                                <i class="bi bi-arrow-counterclockwise"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-outline-danger" title="Delete"
-                                                    data-bs-toggle="modal" data-bs-target="#deleteBackupModal"
-                                                    data-filename="{{ backup.filename }}">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            {% endfor %}
+                            <tr>
+                                <th width="40%">Auto Backup</th>
+                                <td>
+                                    <span class="badge {{ 'bg-success' if auto_backup_enabled|default(True) else 'bg-danger' }}">
+                                        {{ 'Enabled' if auto_backup_enabled|default(True) else 'Disabled' }}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Frequency</th>
+                                <td>{{ backup_frequency|default('Weekly') }}</td>
+                            </tr>
+                            <tr>
+                                <th>Time</th>
+                                <td>{{ backup_time|default('02:00 AM') }}</td>
+                            </tr>
+                            <tr>
+                                <th>Type</th>
+                                <td>{{ backup_type|default('Full Backup') }}</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
-            {% else %}
-                <div class="alert alert-info">
-                    No backup files found. Use the "Create Backup Now" button to create your first backup.
+            </div>
+            
+            <div class="col-md-6">
+                <div class="mb-4">
+                    <h6>Retention Policy</h6>
+                    <table class="table table-sm">
+                        <tbody>
+                            <tr>
+                                <th width="40%">Retention Period</th>
+                                <td>{{ retention_days|default('30') }} days</td>
+                            </tr>
+                            <tr>
+                                <th>Maximum Backups</th>
+                                <td>{{ max_backups|default('10') }}</td>
+                            </tr>
+                            <tr>
+                                <th>Storage Location</th>
+                                <td>{{ backup_location|default('backups/') }}</td>
+                            </tr>
+                            <tr>
+                                <th>External Storage</th>
+                                <td>
+                                    <span class="badge {{ 'bg-success' if external_storage_enabled|default(False) else 'bg-secondary' }}">
+                                        {{ 'Enabled' if external_storage_enabled|default(False) else 'Disabled' }}
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-            {% endif %}
+            </div>
+        </div>
+        
+        <div class="mt-3">
+            <a href="{{ url_for('admin.settings', tab='backup') }}" class="btn btn-outline-primary">
+                <i class="bi bi-gear me-1"></i> Edit Backup Settings
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- Create Backup Modal -->
+<div class="modal fade" id="createBackupModal" tabindex="-1" aria-labelledby="createBackupModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createBackupModalLabel">Create New Backup</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('admin.create_backup_route') }}" method="post">
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="mb-3">
+                        <label for="backupType" class="form-label">Backup Type</label>
+                        <select class="form-select" id="backupType" name="backup_type">
+                            <option value="full" selected>Full Backup</option>
+                            <option value="users">Users Only</option>
+                            <option value="transactions">Transactions Only</option>
+                            <option value="subscriptions">Subscriptions Only</option>
+                        </select>
+                        <div class="form-text">Select the type of data to include in this backup.</div>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input class="form-check-input" type="checkbox" id="compressBackup" name="compress_backup" checked>
+                        <label class="form-check-label" for="compressBackup">Compress Backup</label>
+                        <div class="form-text">Compress the backup file to save disk space.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-cloud-arrow-up me-1"></i> Create Backup
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -311,10 +360,12 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
+{% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Restore backup modal
+    // Restore backup modal setup
     const restoreBackupModal = document.getElementById('restoreBackupModal');
     if (restoreBackupModal) {
         restoreBackupModal.addEventListener('show.bs.modal', function(event) {
@@ -326,7 +377,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Delete backup modal
+    // Delete backup modal setup
     const deleteBackupModal = document.getElementById('deleteBackupModal');
     if (deleteBackupModal) {
         deleteBackupModal.addEventListener('show.bs.modal', function(event) {
@@ -339,3 +390,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+{% endblock %}

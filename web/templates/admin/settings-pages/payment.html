@@ -1,16 +1,13 @@
 <!-- Payment Settings -->
-<div class="row">
-    <div class="col-lg-8 mx-auto">
-        {% with 
-            form_id="paymentSettingsForm",
-            form_title="Payment Gateway Configuration",
-            form_description="Configure payment gateway settings",
-            form_type="payment",
-            form_submit_text="Save Payment Settings",
-            form_submit_icon="save",
-            reset_button=true
-        %}
-        {% include 'admin/components/admin-settings-form.html' %}
+<div class="dashboard-card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Payment Gateway Configuration</h5>
+    </div>
+    <div class="card-body">
+        <form id="paymentSettingsForm" action="{{ url_for('admin.settings') }}" method="post">
+            <input type="hidden" name="form_type" value="payment">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
             <!-- PayPal Section -->
             <div class="border-bottom pb-2 mb-4">
                 <h6>PayPal Settings</h6>
@@ -168,41 +165,55 @@
             %}
                 {% include 'admin/components/admin-form-select.html' %}
             {% endwith %}
-        {% endwith %}
-        
-        <!-- Payment Test Section -->
-        <div class="dashboard-card mt-4">
-            <h5 class="mb-3">Test Payment Configuration</h5>
-            <p>Verify your payment gateway configuration by making a test transaction.</p>
             
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header bg-primary text-white">
-                            <h6 class="m-0">PayPal Test</h6>
-                        </div>
-                        <div class="card-body">
-                            <p>Run a PayPal sandbox transaction to verify your configuration.</p>
-                            <button type="button" class="btn btn-outline-primary" {% if not settings.payment.paypal_enabled %}disabled{% endif %}
-                                    onclick="testPaymentGateway('paypal')">
-                                <i class="bi bi-paypal me-1"></i> Test PayPal
-                            </button>
-                        </div>
+            <!-- Form Buttons -->
+            <div class="mt-4 d-flex justify-content-end">
+                <button type="reset" class="btn btn-outline-secondary me-2">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save me-1"></i> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Payment Test Section -->
+<div class="dashboard-card">
+    <div class="card-header">
+        <h5 class="mb-0">Test Payment Configuration</h5>
+    </div>
+    <div class="card-body">
+        <p>Verify your payment gateway configuration by making a test transaction.</p>
+        
+        <div class="row">
+            <div class="col-md-6 mb-3 mb-md-0">
+                <div class="card h-100">
+                    <div class="card-header bg-primary text-white">
+                        <h6 class="m-0">PayPal Test</h6>
+                    </div>
+                    <div class="card-body">
+                        <p>Run a PayPal sandbox transaction to verify your configuration.</p>
+                        <button type="button" class="btn btn-outline-primary" {% if not settings.payment.paypal_enabled %}disabled{% endif %}
+                                onclick="testPaymentGateway('paypal')">
+                            <i class="bi bi-paypal me-1"></i> Test PayPal
+                        </button>
                     </div>
                 </div>
-                
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header bg-primary text-white">
-                            <h6 class="m-0">Stripe Test</h6>
-                        </div>
-                        <div class="card-body">
-                            <p>Run a Stripe test transaction to verify your configuration.</p>
-                            <button type="button" class="btn btn-outline-primary" {% if not settings.payment.get('stripe_enabled', False) %}disabled{% endif %}
-                                    onclick="testPaymentGateway('stripe')">
-                                <i class="bi bi-stripe me-1"></i> Test Stripe
-                            </button>
-                        </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header bg-primary text-white">
+                        <h6 class="m-0">Stripe Test</h6>
+                    </div>
+                    <div class="card-body">
+                        <p>Run a Stripe test transaction to verify your configuration.</p>
+                        <button type="button" class="btn btn-outline-primary" {% if not settings.payment.get('stripe_enabled', False) %}disabled{% endif %}
+                                onclick="testPaymentGateway('stripe')">
+                            <i class="bi bi-stripe me-1"></i> Test Stripe
+                        </button>
                     </div>
                 </div>
             </div>

@@ -1,16 +1,13 @@
 <!-- General Settings -->
-<div class="row">
-    <div class="col-lg-8 mx-auto">
-        {% with 
-            form_id="generalSettingsForm",
-            form_title="General Settings",
-            form_description="Configure basic site settings and preferences",
-            form_type="general",
-            form_submit_text="Save General Settings",
-            form_submit_icon="save",
-            reset_button=true
-        %}
-        {% include 'admin/components/admin-settings-form.html' %}
+<div class="dashboard-card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">General Settings</h5>
+    </div>
+    <div class="card-body">
+        <form id="generalSettingsForm" action="{{ url_for('admin.settings') }}" method="post">
+            <input type="hidden" name="form_type" value="general">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
             <!-- Site Name -->
             {% with 
                 field_type="text",
@@ -57,6 +54,11 @@
                 {% include 'admin/components/admin-form-select.html' %}
             {% endwith %}
             
+            <!-- Maintenance Mode Settings -->
+            <div class="border-bottom pb-2 mb-4 mt-5">
+                <h6>Maintenance Mode</h6>
+            </div>
+            
             <!-- Maintenance Mode -->
             {% with 
                 checkbox_id="maintenanceMode",
@@ -82,19 +84,29 @@
             %}
                 {% include 'admin/components/admin-form-field.html' %}
             {% endwith %}
-        {% endwith %}
-        
-        <!-- Maintenance Mode Alert -->
-        {% if settings.general.maintenance_mode %}
-            {% with 
-                alert_type="warning",
-                alert_title="Maintenance Mode Active",
-                alert_message="Your site is currently in maintenance mode and is not accessible to regular users.",
-                alert_icon="exclamation-triangle-fill",
-                dismissible=true
-            %}
-                {% include 'admin/components/admin-alert.html' %}
-            {% endwith %}
-        {% endif %}
+            
+            <!-- Form Buttons -->
+            <div class="mt-4 d-flex justify-content-end">
+                <button type="reset" class="btn btn-outline-secondary me-2">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save me-1"></i> Save Changes
+                </button>
+            </div>
+        </form>
     </div>
 </div>
+
+<!-- Maintenance Mode Alert -->
+{% if settings.general.maintenance_mode %}
+    {% with 
+        alert_type="warning",
+        alert_title="Maintenance Mode Active",
+        alert_message="Your site is currently in maintenance mode and is not accessible to regular users.",
+        alert_icon="exclamation-triangle-fill",
+        dismissible=true
+    %}
+        {% include 'admin/components/admin-alert.html' %}
+    {% endwith %}
+{% endif %}
