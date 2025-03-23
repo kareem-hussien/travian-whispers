@@ -24,7 +24,7 @@ database/models/proxy_service.py - Interface to proxy providers
 startup/ip_manager.py - IP allocation and rotation logic
 startup/session_isolation.py - Session management utilities
 tasks/ip_rotation.py - IP rotation scheduling
-web/templates/admin/ip_management.html - Admin IP management interface
+web/templates/admin/ip_management.html - Admin IP anagement interface
 web/templates/user/ip_status.html - User IP status view
 utils/ban_detection.py - Ban detection algorithms
 utils/geo_ip.py - Geographical IP utilities
