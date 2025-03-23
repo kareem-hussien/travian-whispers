@@ -271,3 +271,36 @@ def start_scheduler():
     scheduler_thread.start()
     logger.info("Cron job scheduler started.")
     return scheduler_thread
+
+# IP rotation job
+@scheduler.scheduled_job('interval', minutes=15)
+def rotate_ips():
+    from utils.rotation_strategy import RotationStrategy
+    
+    strategy = RotationStrategy()
+    rotated = strategy.apply_rotation_strategy(strategy.STRATEGY_PATTERN_BASED)
+    
+    logger.info(f"Scheduled IP rotation: {rotated} IPs rotated")
+
+# Proxy health check job
+@scheduler.scheduled_job('interval', hours=2)
+def check_proxy_health():
+    from utils.proxy_metrics import ProxyHealthCheck
+    
+    health_check = ProxyHealthCheck()
+    actions = health_check.handle_failing_proxies()
+    
+    logger.info(f"Proxy health check: "
+                f"{len(actions['banned'])} banned, "
+                f"{len(actions['flagged'])} flagged, "
+                f"{len(actions['rotated'])} rotated")
+
+# Fetch new proxies job
+@scheduler.scheduled_job('interval', hours=6)
+def fetch_new_proxies():
+    from database.models.proxy_service import ProxyService
+    
+    proxy_service = ProxyService()
+    fetched = proxy_service.auto_fetch_proxies()
+    
+    logger.info(f"Auto-fetched {fetched} new proxies")

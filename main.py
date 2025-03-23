@@ -22,6 +22,20 @@ import threading
 import traceback
 import datetime
 from pathlib import Path
+from startup.ip_manager import IPManager
+from utils.proxy_metrics import ProxyHealthCheck
+
+ip_manager = IPManager()
+ip_manager.initialize()
+
+# Create indexes
+proxy_metrics = ProxyMetrics()
+proxy_metrics.create_indexes()
+
+# Initial health check
+proxy_health = ProxyHealthCheck()
+app.ip_manager = ip_manager
+app.proxy_health = proxy_health
 
 # Load environment variables if .env file exists
 try:
