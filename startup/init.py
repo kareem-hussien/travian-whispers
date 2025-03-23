@@ -5,6 +5,11 @@ This module loads and initializes all necessary components.
 import logging
 import os
 import sys
+from dotenv import load_dotenv
+
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Configure logger
 logging.basicConfig(
