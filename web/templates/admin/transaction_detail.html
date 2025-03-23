@@ -1,0 +1,428 @@
+{% extends 'admin/components/admin-layout.html' %}
+
+{% block title %}Transaction Details{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin.transactions') }}">Transactions</a></li>
+<li class="breadcrumb-item active" aria-current="page">Transaction Details</li>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+{% with 
+    title="Transaction Details",
+    subtitle="View detailed transaction information",
+    show_buttons=true,
+    primary_button_text="Back to Transactions",
+    primary_button_icon="arrow-left",
+    primary_button_url=url_for('admin.transactions')
+%}
+    {% include 'admin/components/admin-page-header.html' %}
+{% endwith %}
+
+<div class="row">
+    <!-- Transaction Information -->
+    <div class="col-lg-8 mb-4">
+        <div class="dashboard-card">
+            <div class="d-flex align-items-center mb-4">
+                <div class="me-auto">
+                    <h5 class="mb-0">Transaction #{{ transaction.id }}</h5>
+                    <p class="text-muted mb-0">Created on {{ transaction.date }}</p>
+                </div>
+                <span class="ms-2 badge {% if transaction.status == 'completed' %}bg-success{% elif transaction.status == 'pending' %}bg-warning{% elif transaction.status == 'failed' %}bg-danger{% elif transaction.status == 'refunded' %}bg-info{% else %}bg-secondary{% endif %} fs-6">
+                    {{ transaction.status|capitalize }}
+                </span>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h6 class="text-muted mb-3">Transaction Details</h6>
+                    <table class="table table-sm">
+                        <tbody>
+                            <tr>
+                                <th width="40%">Transaction ID</th>
+                                <td>{{ transaction.id }}</td>
+                            </tr>
+                            <tr>
+                                <th>Date</th>
+                                <td>{{ transaction.date }}</td>
+                            </tr>
+                            <tr>
+                                <th>Amount</th>
+                                <td class="fw-bold">{{ transaction.amount }}</td>
+                            </tr>
+                            <tr>
+                                <th>Payment Method</th>
+                                <td>
+                                    {% if transaction.payment_method == 'paypal' %}
+                                        <span class="badge bg-info">PayPal</span>
+                                    {% elif transaction.payment_method == 'credit_card' %}
+                                        <span class="badge bg-secondary">Credit Card</span>
+                                    {% elif transaction.payment_method == 'manual' %}
+                                        <span class="badge bg-dark">Manual</span>
+                                    {% else %}
+                                        <span class="badge bg-light text-dark">{{ transaction.payment_method }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Payment ID</th>
+                                <td>{{ transaction.payment_id }}</td>
+                            </tr>
+                            <tr>
+                                <th>Billing Period</th>
+                                <td>{{ transaction.billing_period|capitalize }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="col-md-6">
+                    <h6 class="text-muted mb-3">Subscription Details</h6>
+                    <table class="table table-sm">
+                        <tbody>
+                            <tr>
+                                <th width="40%">User</th>
+                                <td>
+                                    <a href="{{ url_for('admin.user_edit', user_id=transaction.user_id) }}">{{ transaction.user }}</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Email</th>
+                                <td>{{ transaction.user_email }}</td>
+                            </tr>
+                            <tr>
+                                <th>Plan</th>
+                                <td>{{ transaction.plan }}</td>
+                            </tr>
+                            <tr>
+                                <th>Start Date</th>
+                                <td>{{ transaction.subscription_start }}</td>
+                            </tr>
+                            <tr>
+                                <th>End Date</th>
+                                <td>{{ transaction.subscription_end }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            {% if transaction.status == 'pending' %}
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <strong>Note:</strong> This transaction is still pending. You can mark it as completed once payment is confirmed.
+            </div>
+            {% endif %}
+            
+            {% if transaction.status == 'failed' %}
+            <div class="alert alert-danger">
+                <i class="bi bi-x-circle-fill me-2"></i>
+                <strong>Note:</strong> This transaction has failed. The user's subscription was not activated.
+            </div>
+            {% endif %}
+            
+            {% if transaction.status == 'refunded' %}
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                <strong>Note:</strong> This transaction has been refunded. The user's subscription has been canceled.
+            </div>
+            {% endif %}
+            
+            <!-- Transaction Actions -->
+            <div class="mt-4">
+                <h6 class="text-muted mb-3">Actions</h6>
+                <div class="d-flex flex-wrap gap-2">
+                    {% if transaction.status == 'pending' %}
+                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#updateStatusModal" data-status="completed">
+                        <i class="bi bi-check-circle me-1"></i> Mark as Completed
+                    </button>
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#updateStatusModal" data-status="failed">
+                        <i class="bi bi-x-circle me-1"></i> Mark as Failed
+                    </button>
+                    {% endif %}
+                    
+                    {% if transaction.status == 'completed' %}
+                    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#updateStatusModal" data-status="refunded">
+                        <i class="bi bi-arrow-return-left me-1"></i> Process Refund
+                    </button>
+                    {% endif %}
+                    
+                    <button type="button" class="btn btn-outline-primary" onclick="sendReceipt('{{ transaction.id }}')">
+                        <i class="bi bi-envelope me-1"></i> Send Receipt
+                    </button>
+                    
+                    <button type="button" class="btn btn-outline-secondary" onclick="downloadInvoice('{{ transaction.id }}')">
+                        <i class="bi bi-file-pdf me-1"></i> Download Invoice
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Payment Gateway Details -->
+    <div class="col-lg-4 mb-4">
+        <div class="dashboard-card">
+            <h5 class="mb-3">Payment Gateway Response</h5>
+            
+            <div class="alert alert-light mb-3">
+                These are the details received from the payment gateway for this transaction.
+            </div>
+            
+            <table class="table table-sm">
+                <tbody>
+                    <tr>
+                        <th width="40%">Transaction ID</th>
+                        <td>{{ transaction.gateway_response.transaction_id }}</td>
+                    </tr>
+                    <tr>
+                        <th>Payer ID</th>
+                        <td>{{ transaction.gateway_response.payer_id }}</td>
+                    </tr>
+                    <tr>
+                        <th>Payer Email</th>
+                        <td>{{ transaction.gateway_response.payer_email }}</td>
+                    </tr>
+                    <tr>
+                        <th>Payment Status</th>
+                        <td>{{ transaction.gateway_response.payment_status }}</td>
+                    </tr>
+                    <tr>
+                        <th>Payment Time</th>
+                        <td>{{ transaction.gateway_response.payment_time }}</td>
+                    </tr>
+                    <tr>
+                        <th>Currency</th>
+                        <td>{{ transaction.gateway_response.currency }}</td>
+                    </tr>
+                    <tr>
+                        <th>Fee</th>
+                        <td>${{ transaction.gateway_response.fee }}</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            {% if transaction.payment_method == 'paypal' %}
+            <div class="d-grid mt-3">
+                <a href="https://www.paypal.com/activity/payment/{{ transaction.payment_id }}" target="_blank" class="btn btn-outline-info">
+                    <i class="bi bi-paypal me-1"></i> View in PayPal
+                </a>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Transaction History -->
+        <div class="dashboard-card mt-4">
+            <h5 class="mb-3">Transaction History</h5>
+            
+            <ul class="list-group list-group-flush">
+                {% for event in transaction_history|default([]) %}
+                <li class="list-group-item px-0">
+                    <div class="d-flex">
+                        <div class="me-3">
+                            <span class="badge {{ event.badge_class }} rounded-circle p-2">
+                                <i class="bi bi-{{ event.icon }}"></i>
+                            </span>
+                        </div>
+                        <div>
+                            <div>{{ event.description }}</div>
+                            <small class="text-muted">{{ event.timestamp }}</small>
+                        </div>
+                    </div>
+                </li>
+                {% endfor %}
+                
+                {% if not transaction_history or transaction_history|length == 0 %}
+                <li class="list-group-item px-0">
+                    <div class="text-center text-muted">
+                        No history records available
+                    </div>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Admin Notes -->
+<div class="dashboard-card mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Admin Notes</h5>
+        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addNoteModal">
+            <i class="bi bi-plus"></i> Add Note
+        </button>
+    </div>
+    
+    {% if admin_notes and admin_notes|length > 0 %}
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Admin</th>
+                    <th>Note</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for note in admin_notes %}
+                <tr>
+                    <td class="text-nowrap">{{ note.timestamp }}</td>
+                    <td>{{ note.admin }}</td>
+                    <td>{{ note.content }}</td>
+                    <td class="text-end">
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteNote('{{ note.id }}')">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-light">
+        No admin notes have been added to this transaction yet.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- Update Transaction Status Modal -->
+<div class="modal fade" id="updateStatusModal" tabindex="-1" aria-labelledby="updateStatusModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="updateStatusModalLabel">Update Transaction Status</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="updateStatusForm" action="{{ url_for('admin.update_transaction_status', transaction_id=transaction.id) }}" method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <p>You are about to change the status of transaction <strong>#{{ transaction.id }}</strong>.</p>
+                    
+                    <div class="mb-3">
+                        <label for="newStatus" class="form-label">New Status</label>
+                        <select class="form-select" id="newStatus" name="status" required>
+                            <option value="completed">Completed</option>
+                            <option value="pending">Pending</option>
+                            <option value="failed">Failed</option>
+                            <option value="refunded">Refunded</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="statusNotes" class="form-label">Admin Notes (Optional)</label>
+                        <textarea class="form-control" id="statusNotes" name="notes" rows="3" placeholder="Enter notes about this status change"></textarea>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <strong>Note:</strong> Changing transaction status may affect user subscriptions.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Status</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Note Modal -->
+<div class="modal fade" id="addNoteModal" tabindex="-1" aria-labelledby="addNoteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addNoteModalLabel">Add Admin Note</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('admin.add_transaction_note', transaction_id=transaction.id) }}" method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="noteContent" class="form-label">Note Content</label>
+                        <textarea class="form-control" id="noteContent" name="content" rows="3" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Note</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize update status modal
+    const updateStatusModal = document.getElementById('updateStatusModal');
+    if (updateStatusModal) {
+        updateStatusModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const status = button.getAttribute('data-status');
+            document.getElementById('newStatus').value = status;
+        });
+    }
+    
+    // Function to send receipt email
+    window.sendReceipt = function(transactionId) {
+        // In a real implementation, this would make an AJAX call to send a receipt
+        fetch(`{{ url_for('admin.send_receipt') }}?transaction_id=${transactionId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Receipt sent successfully!');
+            } else {
+                alert('Failed to send receipt: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while sending the receipt.');
+        });
+    };
+    
+    // Function to download invoice
+    window.downloadInvoice = function(transactionId) {
+        window.location.href = `{{ url_for('admin.download_invoice') }}?transaction_id=${transactionId}`;
+    };
+    
+    // Function to delete note
+    window.deleteNote = function(noteId) {
+        if (confirm('Are you sure you want to delete this note?')) {
+            fetch(`{{ url_for('admin.delete_transaction_note') }}?note_id=${noteId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Failed to delete note: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while deleting the note.');
+            });
+        }
+    };
+});
+</script>
+{% endblock %}
