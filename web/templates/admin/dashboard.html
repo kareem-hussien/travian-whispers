@@ -15,6 +15,41 @@
     </div>
 </div>
 
+<!-- Quick Actions -->
+<div class="row">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <div class="row">
+                <div class="col-md-3 col-sm-6 mb-3 mb-md-0">
+                    <a href="{{ url_for('admin.user_create') }}" class="btn btn-outline-primary d-block p-3">
+                        <i class="bi bi-person-plus fs-4 d-block mb-2"></i>
+                        Add New User
+                    </a>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-3 mb-md-0">
+                    <a href="{{ url_for('admin.create_plan') }}" class="btn btn-outline-info d-block p-3">
+                        <i class="bi bi-plus-circle fs-4 d-block mb-2"></i>
+                        Create Plan
+                    </a>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-3 mb-md-0">
+                    <button type="button" class="btn btn-outline-warning d-block p-3 w-100" data-bs-toggle="modal" data-bs-target="#backupModal">
+                        <i class="bi bi-cloud-arrow-up fs-4 d-block mb-2"></i>
+                        Database Backup
+                    </button>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <button type="button" class="btn btn-outline-secondary d-block p-3 w-100" data-bs-toggle="modal" data-bs-target="#maintenanceModal">
+                        <i class="bi bi-tools fs-4 d-block mb-2"></i>
+                        Maintenance Mode
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
 <!-- Stats Cards Row -->
 <div class="row mb-4">
     <!-- Users Stat Card -->
@@ -231,40 +266,6 @@
     </div>
 </div>
 
-<!-- Quick Actions -->
-<div class="row">
-    <div class="col-12">
-        <div class="dashboard-card">
-            <h5 class="mb-4">Quick Actions</h5>
-            <div class="row">
-                <div class="col-md-3 col-sm-6 mb-3 mb-md-0">
-                    <a href="{{ url_for('admin.user_create') }}" class="btn btn-outline-primary d-block p-3">
-                        <i class="bi bi-person-plus fs-4 d-block mb-2"></i>
-                        Add New User
-                    </a>
-                </div>
-                <div class="col-md-3 col-sm-6 mb-3 mb-md-0">
-                    <a href="{{ url_for('admin.create_plan') }}" class="btn btn-outline-info d-block p-3">
-                        <i class="bi bi-plus-circle fs-4 d-block mb-2"></i>
-                        Create Plan
-                    </a>
-                </div>
-                <div class="col-md-3 col-sm-6 mb-3 mb-md-0">
-                    <button type="button" class="btn btn-outline-warning d-block p-3 w-100" data-bs-toggle="modal" data-bs-target="#backupModal">
-                        <i class="bi bi-cloud-arrow-up fs-4 d-block mb-2"></i>
-                        Database Backup
-                    </button>
-                </div>
-                <div class="col-md-3 col-sm-6">
-                    <button type="button" class="btn btn-outline-secondary d-block p-3 w-100" data-bs-toggle="modal" data-bs-target="#maintenanceModal">
-                        <i class="bi bi-tools fs-4 d-block mb-2"></i>
-                        Maintenance Mode
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}
 
 {% block modals %}

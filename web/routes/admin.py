@@ -357,11 +357,10 @@ def user_create():
     
     # Render user create template
     return render_template(
-        'admin/user_create.html', 
+        'admin/users/create.html', 
         current_user=current_user,
         title='Create User'
     )
-
 
 @admin_bp.route('/users/edit/<user_id>', methods=['GET', 'POST'])
 @admin_required
@@ -425,7 +424,7 @@ def user_edit(user_id):
     
     # Render user edit template
     return render_template(
-        'admin/user_edit.html', 
+        'admin/users/edit.html', 
         user=formatted_user, 
         current_user=current_user,
         title='Edit User'
