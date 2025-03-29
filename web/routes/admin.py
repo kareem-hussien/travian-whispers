@@ -330,7 +330,7 @@ def user_create():
         if not username or not email or not password:
             flash('All fields are required', 'danger')
             return render_template(
-                'admin/user_create.html', 
+                'admin/users/create.html', 
                 current_user=current_user,
                 title='Create User'
             )
@@ -1446,10 +1446,24 @@ def logs():
     if user_filter:
         logs = [log for log in logs if user_filter.lower() in log['user'].lower()]
     
+    # Count logs by level
+    info_count = sum(1 for log in logs if log['level'] == 'INFO')
+    warning_count = sum(1 for log in logs if log['level'] == 'WARNING')
+    error_count = sum(1 for log in logs if log['level'] == 'ERROR')
+    
+    # Create log stats dictionary
+    log_stats = {
+        'total': len(logs),
+        'info': info_count,
+        'warning': warning_count,
+        'error': error_count
+    }
+    
     # Render logs template
     return render_template(
-        'admin/logs.html', 
-        logs=logs, 
+        'admin/logs.html',
+        logs=logs,
+        log_stats=log_stats,
         current_user=current_user,
         title='System Logs'
     )

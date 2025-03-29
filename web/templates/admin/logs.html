@@ -1,0 +1,425 @@
+{% extends 'admin/components/admin-layout.html' %}
+
+{% block title %}System Logs{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item active" aria-current="page">System Logs</li>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+{% with 
+    title="System Logs",
+    subtitle="View and monitor system activity and error logs",
+    show_buttons=true,
+    primary_button_text="Download Logs",
+    primary_button_icon="download",
+    primary_button_id="downloadLogsBtn"
+%}
+    {% include 'admin/components/admin-page-header.html' %}
+{% endwith %}
+
+<!-- Search and Filter -->
+<div class="dashboard-card mb-4">
+    <div class="card-body">
+        <form method="get" action="{{ url_for('admin.logs') }}" class="row g-3">
+            <div class="col-md-2">
+                <label for="level" class="form-label">Log Level</label>
+                <select class="form-select" id="level" name="level">
+                    <option value="">All Levels</option>
+                    <option value="info" {% if request.args.get('level') == 'info' %}selected{% endif %}>INFO</option>
+                    <option value="warning" {% if request.args.get('level') == 'warning' %}selected{% endif %}>WARNING</option>
+                    <option value="error" {% if request.args.get('level') == 'error' %}selected{% endif %}>ERROR</option>
+                    <option value="debug" {% if request.args.get('level') == 'debug' %}selected{% endif %}>DEBUG</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="user" class="form-label">User</label>
+                <input type="text" class="form-control" id="user" name="user" placeholder="Filter by user" value="{{ request.args.get('user', '') }}">
+            </div>
+            <div class="col-md-3">
+                <label for="dateFrom" class="form-label">Date From</label>
+                <input type="date" class="form-control" id="dateFrom" name="date_from" value="{{ request.args.get('date_from', '') }}">
+            </div>
+            <div class="col-md-3">
+                <label for="dateTo" class="form-label">Date To</label>
+                <input type="date" class="form-control" id="dateTo" name="date_to" value="{{ request.args.get('date_to', '') }}">
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Log Stats Cards -->
+<div class="row mb-4">
+    <!-- Total Logs Card -->
+    <div class="col-xl-3 col-md-6 mb-3">
+        {% with 
+            icon="journal-text",
+            icon_bg="bg-primary-light",
+            title="Total Logs",
+            value=(log_stats.total if log_stats is defined else 0)
+        %}
+            {% include 'admin/components/admin-stat-card.html' %}
+        {% endwith %}
+    </div>
+
+    <!-- Info Logs Card -->
+    <div class="col-xl-3 col-md-6 mb-3">
+        {% with 
+            icon="info-circle",
+            icon_bg="bg-info-light",
+            title="INFO Logs",
+            value=log_stats.info|default(0)
+        %}
+            {% include 'admin/components/admin-stat-card.html' %}
+        {% endwith %}
+    </div>
+
+    <!-- Warning Logs Card -->
+    <div class="col-xl-3 col-md-6 mb-3">
+        {% with 
+            icon="exclamation-triangle",
+            icon_bg="bg-warning-light",
+            title="WARNING Logs",
+            value=log_stats.warning|default(0)
+        %}
+            {% include 'admin/components/admin-stat-card.html' %}
+        {% endwith %}
+    </div>
+
+    <!-- Error Logs Card -->
+    <div class="col-xl-3 col-md-6 mb-3">
+        {% with 
+            icon="exclamation-octagon",
+            icon_bg="bg-danger-light",
+            title="ERROR Logs",
+            value=log_stats.error|default(0)
+        %}
+            {% include 'admin/components/admin-stat-card.html' %}
+        {% endwith %}
+    </div>
+</div>
+
+<!-- Logs Table -->
+<div class="dashboard-card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Level</th>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>IP Address</th>
+                        <th>Details</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') if log.timestamp else 'N/A' }}</td>
+                        <td>
+                            <span class="badge 
+                                {% if log.level == 'INFO' %}bg-info
+                                {% elif log.level == 'WARNING' %}bg-warning
+                                {% elif log.level == 'ERROR' %}bg-danger
+                                {% elif log.level == 'DEBUG' %}bg-secondary
+                                {% else %}bg-primary{% endif %}">
+                                {{ log.level }}
+                            </span>
+                        </td>
+                        <td>{{ log.user }}</td>
+                        <td>{{ log.action }}</td>
+                        <td>{{ log.ip_address }}</td>
+                        <td class="text-truncate" style="max-width: 250px;">{{ log.details }}</td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#logDetailModal" 
+                                    data-log-id="{{ log.id }}" data-log-details="{{ log.details }}">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">No logs found matching your criteria.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if logs and logs|length > 0 %}
+        <nav aria-label="Logs pagination" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item {% if current_page|default(1) == 1 %}disabled{% endif %}">
+                    <a class="page-link" href="?page={{ current_page|default(1) - 1 }}{% if request.args.get('level') %}&level={{ request.args.get('level') }}{% endif %}{% if request.args.get('user') %}&user={{ request.args.get('user') }}{% endif %}" tabindex="-1">Previous</a>
+                </li>
+                
+                {% for page in range(1, (total_pages|default(1)) + 1) %}
+                    {% if page >= (current_page|default(1)) - 2 and page <= (current_page|default(1)) + 2 %}
+                        <li class="page-item {% if page == current_page|default(1) %}active{% endif %}">
+                            <a class="page-link" href="?page={{ page }}{% if request.args.get('level') %}&level={{ request.args.get('level') }}{% endif %}{% if request.args.get('user') %}&user={{ request.args.get('user') }}{% endif %}">{{ page }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                <li class="page-item {% if current_page|default(1) == total_pages|default(1) %}disabled{% endif %}">
+                    <a class="page-link" href="?page={{ current_page|default(1) + 1 }}{% if request.args.get('level') %}&level={{ request.args.get('level') }}{% endif %}{% if request.args.get('user') %}&user={{ request.args.get('user') }}{% endif %}">Next</a>
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Log Timeline Visualization -->
+<div class="dashboard-card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0">Log Activity Timeline</h5>
+    </div>
+    <div class="card-body">
+        <div class="chart-container" style="position: relative; height: 300px;">
+            <canvas id="logTimelineChart"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- Log Details Modal -->
+<div class="modal fade" id="logDetailModal" tabindex="-1" aria-labelledby="logDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="logDetailModalLabel">Log Entry Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Log ID</label>
+                    <div class="form-control bg-light" id="modalLogId"></div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Timestamp</label>
+                    <div class="form-control bg-light" id="modalLogTimestamp"></div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">User</label>
+                    <div class="form-control bg-light" id="modalLogUser"></div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Details</label>
+                    <textarea class="form-control bg-light" id="modalLogDetails" rows="5" readonly></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Stack Trace (if available)</label>
+                    <pre class="form-control bg-light" id="modalLogStackTrace" style="min-height: 100px;"></pre>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Download Logs Modal -->
+<div class="modal fade" id="downloadLogsModal" tabindex="-1" aria-labelledby="downloadLogsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="downloadLogsModalLabel">Download Logs</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="downloadLogsForm" action="{{ url_for('admin.download_logs') }}" method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="mb-3">
+                        <label for="downloadLogLevel" class="form-label">Log Level</label>
+                        <select class="form-select" id="downloadLogLevel" name="level">
+                            <option value="all" selected>All Levels</option>
+                            <option value="info">INFO Only</option>
+                            <option value="warning">WARNING Only</option>
+                            <option value="error">ERROR Only</option>
+                            <option value="debug">DEBUG Only</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="downloadDateRange" class="form-label">Date Range</label>
+                        <select class="form-select" id="downloadDateRange" name="date_range">
+                            <option value="today">Today</option>
+                            <option value="yesterday">Yesterday</option>
+                            <option value="last7days" selected>Last 7 Days</option>
+                            <option value="last30days">Last 30 Days</option>
+                            <option value="thisMonth">This Month</option>
+                            <option value="lastMonth">Last Month</option>
+                            <option value="all">All Time</option>
+                            <option value="custom">Custom Range</option>
+                        </select>
+                    </div>
+                    
+                    <div id="customDateFields" class="row mb-3" style="display: none;">
+                        <div class="col-md-6">
+                            <label for="downloadDateFrom" class="form-label">From</label>
+                            <input type="date" class="form-control" id="downloadDateFrom" name="date_from">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="downloadDateTo" class="form-label">To</label>
+                            <input type="date" class="form-control" id="downloadDateTo" name="date_to">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="downloadFormat" class="form-label">Format</label>
+                        <select class="form-select" id="downloadFormat" name="format">
+                            <option value="csv" selected>CSV</option>
+                            <option value="json">JSON</option>
+                            <option value="txt">Plain Text</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" form="downloadLogsForm" class="btn btn-primary">Download</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle log detail modal
+    const logDetailModal = document.getElementById('logDetailModal');
+    if (logDetailModal) {
+        logDetailModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const logId = button.getAttribute('data-log-id');
+            const logDetails = button.getAttribute('data-log-details');
+            
+            // In a real application, you would fetch additional log details via AJAX
+            // For demonstration, we'll just use the data attributes
+            
+            document.getElementById('modalLogId').textContent = logId;
+            document.getElementById('modalLogDetails').textContent = logDetails;
+            
+            // Fake data for demonstration
+            document.getElementById('modalLogTimestamp').textContent = '2025-03-29 15:30:45';
+            document.getElementById('modalLogUser').textContent = 'admin';
+            document.getElementById('modalLogStackTrace').textContent = 'No stack trace available';
+        });
+    }
+    
+    // Handle download logs button
+    const downloadLogsBtn = document.getElementById('downloadLogsBtn');
+    if (downloadLogsBtn) {
+        downloadLogsBtn.addEventListener('click', function() {
+            const downloadLogsModal = new bootstrap.Modal(document.getElementById('downloadLogsModal'));
+            downloadLogsModal.show();
+        });
+    }
+    
+    // Toggle custom date fields in download modal
+    const downloadDateRange = document.getElementById('downloadDateRange');
+    const customDateFields = document.getElementById('customDateFields');
+    
+    if (downloadDateRange && customDateFields) {
+        downloadDateRange.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                customDateFields.style.display = 'flex';
+            } else {
+                customDateFields.style.display = 'none';
+            }
+        });
+    }
+    
+    // Initialize log timeline chart
+    const logTimelineCtx = document.getElementById('logTimelineChart');
+    if (logTimelineCtx) {
+        // Sample data - in a real app, this would come from the backend
+        const labels = ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00'];
+        const infoData = [5, 8, 4, 12, 20, 15, 10, 7];
+        const warningData = [2, 1, 0, 3, 5, 2, 1, 0];
+        const errorData = [0, 0, 1, 0, 2, 1, 0, 0];
+        
+        new Chart(logTimelineCtx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'INFO',
+                        data: infoData,
+                        borderColor: 'rgba(13, 110, 253, 1)',
+                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                        pointBackgroundColor: 'rgba(13, 110, 253, 1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'WARNING',
+                        data: warningData,
+                        borderColor: 'rgba(255, 193, 7, 1)',
+                        backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                        pointBackgroundColor: 'rgba(255, 193, 7, 1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'ERROR',
+                        data: errorData,
+                        borderColor: 'rgba(220, 53, 69, 1)',
+                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                        pointBackgroundColor: 'rgba(220, 53, 69, 1)',
+                        tension: 0.4,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Log Count'
+                        },
+                        ticks: {
+                            precision: 0
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Time of Day'
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    legend: {
+                        position: 'top',
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

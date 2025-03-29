@@ -12,19 +12,19 @@
   - progress_value: Progress bar value (0-100) (optional)
   - progress_label: Progress bar label (optional)
 -->
+<!-- admin-stat-card.html -->
 <div class="dashboard-card">
-    <div class="card-icon {{ icon_bg }}">
-        <i class="bi bi-{{ icon }}"></i>
+    <div class="card-icon {{ icon_bg|default('bg-primary-light') }}">
+        <i class="bi bi-{{ icon|default('info-circle') }}"></i>
     </div>
-    <div class="stat-title">{{ title }}</div>
-    <div class="stat-value">{{ value }}</div>
-    
+    <div class="stat-title">{{ title|default('Stat') }}</div>
+    <div class="stat-value">{{ value|default(0) }}</div>
     {% if change_value is defined %}
     <div class="stat-change {% if change_direction == 'up' %}text-success{% elif change_direction == 'down' %}text-danger{% endif %}">
         <i class="bi bi-graph-{% if change_direction == 'up' %}up{% elif change_direction == 'down' %}down{% else %}up{% endif %}"></i> 
         {{ change_value }}
     </div>
-    {% elif subtitle %}
+    {% elif subtitle is defined %}
     <div class="stat-change">{{ subtitle }}</div>
     {% endif %}
     
