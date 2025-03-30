@@ -12,27 +12,27 @@
                         <tbody>
                             <tr>
                                 <th width="40%">Version</th>
-                                <td>{{ settings.system.version }}</td>
+                                <td>{{ system_info.version }}</td>
                             </tr>
                             <tr>
                                 <th>Environment</th>
                                 <td>
-                                    <span class="badge {{ 'bg-success' if settings.system.environment == 'Production' else 'bg-warning' }}">
-                                        {{ settings.system.environment }}
+                                    <span class="badge {{ 'bg-success' if system_info.environment == 'Production' else 'bg-warning' }}">
+                                        {{ system_info.environment }}
                                     </span>
                                 </td>
                             </tr>
                             <tr>
                                 <th>Debug Mode</th>
                                 <td>
-                                    <span class="badge {{ 'bg-danger' if settings.system.debug_mode else 'bg-success' }}">
-                                        {{ 'Enabled' if settings.system.debug_mode else 'Disabled' }}
+                                    <span class="badge {{ 'bg-danger' if system_info.debug_mode else 'bg-success' }}">
+                                        {{ 'Enabled' if system_info.debug_mode else 'Disabled' }}
                                     </span>
                                 </td>
                             </tr>
                             <tr>
                                 <th>Uptime</th>
-                                <td>{{ settings.system.uptime }}</td>
+                                <td>{{ system_stats.uptime }}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -46,19 +46,19 @@
                         <tbody>
                             <tr>
                                 <th width="40%">Python Version</th>
-                                <td>{{ settings.system.python_version }}</td>
+                                <td>{{ system_info.python_version }}</td>
                             </tr>
                             <tr>
                                 <th>Web Server</th>
-                                <td>{{ settings.system.server_software }}</td>
+                                <td>{{ system_info.server_software }}</td>
                             </tr>
                             <tr>
                                 <th>Database</th>
-                                <td>{{ settings.system.database }}</td>
+                                <td>{{ system_info.database }}</td>
                             </tr>
                             <tr>
                                 <th>Operating System</th>
-                                <td>{{ os_info|default('Linux/Unix') }}</td>
+                                <td>{{ os_info|default(platform.platform()) }}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -122,57 +122,6 @@
         
         <div class="row">
             <div class="col-12">
-                <h6>Database Information</h6>
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Collection</th>
-                                <th>Documents</th>
-                                <th>Size</th>
-                                <th>Indexes</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- In a real application, this would be populated with actual database info -->
-                            <tr>
-                                <td>users</td>
-                                <td>{{ user_count|default(287) }}</td>
-                                <td>12.4 MB</td>
-                                <td>5</td>
-                            </tr>
-                            <tr>
-                                <td>transactions</td>
-                                <td>{{ transaction_count|default(1521) }}</td>
-                                <td>18.2 MB</td>
-                                <td>6</td>
-                            </tr>
-                            <tr>
-                                <td>subscriptionPlans</td>
-                                <td>3</td>
-                                <td>48 KB</td>
-                                <td>2</td>
-                            </tr>
-                            <tr>
-                                <td>activityLogs</td>
-                                <td>{{ activity_log_count|default(8954) }}</td>
-                                <td>32.7 MB</td>
-                                <td>3</td>
-                            </tr>
-                            <tr>
-                                <td>systemLogs</td>
-                                <td>{{ system_log_count|default(4625) }}</td>
-                                <td>26.8 MB</td>
-                                <td>2</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        
-        <div class="row">
-            <div class="col-12">
                 <h6>Dependencies</h6>
                 <div class="table-responsive">
                     <table class="table">
@@ -184,31 +133,19 @@
                             </tr>
                         </thead>
                         <tbody>
+                            {% for package, version in dependencies.items() %}
                             <tr>
-                                <td>Flask</td>
-                                <td>{{ dependencies.flask|default('2.3.2') }}</td>
-                                <td><span class="badge bg-success">Up to date</span></td>
+                                <td>{{ package }}</td>
+                                <td>{{ version }}</td>
+                                <td>
+                                    {% if version == 'Not installed' %}
+                                        <span class="badge bg-danger">Not Installed</span>
+                                    {% else %}
+                                        <span class="badge bg-success">Installed</span>
+                                    {% endif %}
+                                </td>
                             </tr>
-                            <tr>
-                                <td>PyMongo</td>
-                                <td>{{ dependencies.pymongo|default('4.5.0') }}</td>
-                                <td><span class="badge bg-success">Up to date</span></td>
-                            </tr>
-                            <tr>
-                                <td>Flask-WTF</td>
-                                <td>{{ dependencies.flask_wtf|default('1.1.1') }}</td>
-                                <td><span class="badge bg-success">Up to date</span></td>
-                            </tr>
-                            <tr>
-                                <td>passlib</td>
-                                <td>{{ dependencies.passlib|default('1.7.4') }}</td>
-                                <td><span class="badge bg-success">Up to date</span></td>
-                            </tr>
-                            <tr>
-                                <td>psutil</td>
-                                <td>{{ dependencies.psutil|default('5.9.5') }}</td>
-                                <td><span class="badge bg-warning">Update available</span></td>
-                            </tr>
+                            {% endfor %}
                         </tbody>
                     </table>
                 </div>
@@ -233,20 +170,37 @@
 
 <script>
 function refreshSystemInfo() {
-    // In a real app, this would make an AJAX call to refresh system info
-    alert('Refreshing system information...');
-    location.reload();
+    window.location.href = "{{ url_for('admin.settings', tab='system') }}";
 }
 
 function downloadSystemReport() {
-    // In a real app, this would trigger a download of a system report
-    alert('Generating and downloading system report...');
+    // In a real implementation, this would call an endpoint to generate a report
+    window.location.href = "{{ url_for('admin.download_system_report') }}";
 }
 
 function clearCaches() {
-    // In a real app, this would make an AJAX call to clear system caches
     if (confirm('Are you sure you want to clear all system caches? This might temporarily affect system performance.')) {
-        alert('Clearing system caches...');
+        // In a real implementation, this would call an endpoint to clear caches
+        fetch("{{ url_for('admin.clear_caches') }}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('System caches cleared successfully!');
+                window.location.reload();
+            } else {
+                alert('Failed to clear caches: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while clearing caches.');
+        });
     }
 }
 </script>

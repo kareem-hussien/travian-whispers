@@ -1,0 +1,161 @@
+{% extends 'admin/components/admin-layout.html' %}
+
+{% block title %}User Activity Logs{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin.users') }}">User Management</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('admin.user_edit', user_id=user.id) }}">{{ user.username }}</a></li>
+<li class="breadcrumb-item active" aria-current="page">Activity Logs</li>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+{% with 
+    title="Activity Logs: " + user.username,
+    subtitle="View user activity history",
+    show_buttons=false
+%}
+    {% include 'admin/components/admin-page-header.html' %}
+{% endwith %}
+
+<div class="row">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <!-- Log filters -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h6 class="mb-0">Activity Logs</h6>
+                </div>
+                <div class="d-flex gap-2">
+                    <select class="form-select form-select-sm" id="logType">
+                        <option value="">All Activities</option>
+                        <option value="login">Login</option>
+                        <option value="update">Updates</option>
+                        <option value="subscription">Subscription</option>
+                    </select>
+                    <select class="form-select form-select-sm" id="logStatus">
+                        <option value="">All Statuses</option>
+                        <option value="success">Success</option>
+                        <option value="error">Error</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Activity logs table -->
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th width="20%">Timestamp</th>
+                            <th width="40%">Action</th>
+                            <th width="20%">Status</th>
+                            <th width="20%">IP Address</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if logs and logs|length > 0 %}
+                            {% for log in logs %}
+                            <tr class="log-item" 
+                                data-type="{{ log.action.split(' ')[0]|lower }}" 
+                                data-status="{{ log.status }}">
+                                <td>{{ log.timestamp }}</td>
+                                <td>{{ log.action }}</td>
+                                <td>
+                                    <span class="badge {{ 'bg-success' if log.status == 'success' else 'bg-danger' }}">
+                                        {{ log.status }}
+                                    </span>
+                                </td>
+                                <td>{{ log.ip_address }}</td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4">
+                                    No activity logs found.
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination (if needed) -->
+            {% if logs and logs|length > 10 %}
+            <nav aria-label="Activity log pagination" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1">Previous</a>
+                    </li>
+                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">Next</a>
+                    </li>
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Log filtering functionality
+    const logType = document.getElementById('logType');
+    const logStatus = document.getElementById('logStatus');
+    const logItems = document.querySelectorAll('.log-item');
+    
+    function filterLogs() {
+        const typeFilter = logType.value;
+        const statusFilter = logStatus.value;
+        
+        logItems.forEach(item => {
+            const itemType = item.dataset.type;
+            const itemStatus = item.dataset.status;
+            
+            // Check if item matches both filters
+            const matchesType = !typeFilter || itemType.includes(typeFilter);
+            const matchesStatus = !statusFilter || itemStatus === statusFilter;
+            
+            // Show or hide based on filters
+            if (matchesType && matchesStatus) {
+                item.style.display = '';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+        
+        // Check if any logs are visible
+        const visibleLogs = document.querySelectorAll('.log-item[style=""]');
+        const noLogsRow = document.querySelector('.no-logs-row');
+        
+        if (visibleLogs.length === 0) {
+            // No logs match the filter criteria
+            if (!noLogsRow) {
+                const tableBody = document.querySelector('tbody');
+                const newRow = document.createElement('tr');
+                newRow.className = 'no-logs-row';
+                newRow.innerHTML = `
+                    <td colspan="4" class="text-center py-4">
+                        No logs match the selected filters.
+                    </td>
+                `;
+                tableBody.appendChild(newRow);
+            } else {
+                noLogsRow.style.display = '';
+            }
+        } else if (noLogsRow) {
+            // Hide the "no logs" message if logs are visible
+            noLogsRow.style.display = 'none';
+        }
+    }
+    
+    // Add event listeners
+    logType.addEventListener('change', filterLogs);
+    logStatus.addEventListener('change', filterLogs);
+});
+</script>
+{% endblock %}

@@ -301,25 +301,39 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Handle log detail modal
-    const logDetailModal = document.getElementById('logDetailModal');
-    if (logDetailModal) {
-        logDetailModal.addEventListener('show.bs.modal', function(event) {
-            const button = event.relatedTarget;
-            const logId = button.getAttribute('data-log-id');
-            const logDetails = button.getAttribute('data-log-details');
-            
-            // In a real application, you would fetch additional log details via AJAX
-            // For demonstration, we'll just use the data attributes
-            
-            document.getElementById('modalLogId').textContent = logId;
-            document.getElementById('modalLogDetails').textContent = logDetails;
-            
-            // Fake data for demonstration
-            document.getElementById('modalLogTimestamp').textContent = '2025-03-29 15:30:45';
-            document.getElementById('modalLogUser').textContent = 'admin';
-            document.getElementById('modalLogStackTrace').textContent = 'No stack trace available';
+    // Handle log detail modal
+const logDetailModal = document.getElementById('logDetailModal');
+if (logDetailModal) {
+    logDetailModal.addEventListener('show.bs.modal', function(event) {
+        const button = event.relatedTarget;
+        const logId = button.getAttribute('data-log-id');
+        
+        // Fetch log details from API
+        fetch(`/admin/api/logs/${logId}`, {
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const log = data.log;
+                document.getElementById('modalLogId').textContent = log.id;
+                document.getElementById('modalLogTimestamp').textContent = log.timestamp;
+                document.getElementById('modalLogUser').textContent = log.user;
+                document.getElementById('modalLogDetails').textContent = log.details;
+                document.getElementById('modalLogStackTrace').textContent = log.stack_trace || 'No stack trace available';
+            } else {
+                document.getElementById('modalLogDetails').textContent = 'Error loading log details';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('modalLogDetails').textContent = 'Error loading log details';
         });
-    }
+    });
+}
     
     // Handle download logs button
     const downloadLogsBtn = document.getElementById('downloadLogsBtn');

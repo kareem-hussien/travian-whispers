@@ -1,0 +1,226 @@
+{% extends 'admin/components/admin-layout.html' %}
+
+{% block title %}Manage Subscription{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin.users') }}">User Management</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('admin.user_edit', user_id=user.id) }}">{{ user.username }}</a></li>
+<li class="breadcrumb-item active" aria-current="page">Manage Subscription</li>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+{% with 
+    title="Manage Subscription: " + user.username,
+    subtitle="Update subscription status and plan",
+    show_buttons=false
+%}
+    {% include 'admin/components/admin-page-header.html' %}
+{% endwith %}
+
+<div class="row">
+    <!-- Subscription Management Form -->
+    <div class="col-lg-8">
+        <div class="dashboard-card mb-4">
+            <form action="{{ url_for('admin.user_subscription', user_id=user.id) }}" method="post" id="subscriptionForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <!-- Current Subscription Status -->
+                <div class="mb-4">
+                    <h6 class="text-uppercase text-muted mb-2">Current Subscription</h6>
+                    <div class="row g-3 align-items-center mb-3">
+                        <div class="col-md-4">
+                            <span class="text-secondary">Status:</span>
+                        </div>
+                        <div class="col-md-8">
+                            <span class="badge {{ 'bg-success' if user.subscription.status == 'active' else 'bg-secondary' }}">
+                                {{ user.subscription.status|title }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-3 align-items-center mb-3">
+                        <div class="col-md-4">
+                            <span class="text-secondary">Current Plan:</span>
+                        </div>
+                        <div class="col-md-8">
+                            <span>{{ user.subscription.plan.name if user.subscription.plan else 'None' }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-3 align-items-center mb-3">
+                        <div class="col-md-4">
+                            <span class="text-secondary">Start Date:</span>
+                        </div>
+                        <div class="col-md-8">
+                            <span>{{ user.subscription.start_date if user.subscription.start_date else 'N/A' }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-3 align-items-center mb-3">
+                        <div class="col-md-4">
+                            <span class="text-secondary">End Date:</span>
+                        </div>
+                        <div class="col-md-8">
+                            <span>{{ user.subscription.end_date if user.subscription.end_date else 'N/A' }}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <!-- Update Subscription Section -->
+                <div class="mt-4">
+                    <h6 class="text-uppercase text-muted mb-4">Update Subscription</h6>
+                    
+                    <!-- Subscription Status -->
+                    {% with 
+                        select_id="subscriptionStatus",
+                        select_name="subscriptionStatus",
+                        select_label="Subscription Status",
+                        select_options=[
+                            {'value': 'inactive', 'text': 'Inactive'},
+                            {'value': 'active', 'text': 'Active'}
+                        ],
+                        select_selected=user.subscription.status,
+                        select_required=true
+                    %}
+                        {% include 'admin/components/admin-form-select.html' %}
+                    {% endwith %}
+                    
+                    <!-- Subscription Plan -->
+                    {% with 
+                        select_id="subscriptionPlan",
+                        select_name="subscriptionPlan",
+                        select_label="Subscription Plan",
+                        select_options=plans,
+                        select_selected=user.subscription.plan_id if user.subscription.plan else '',
+                        select_required=false,
+                        select_help="Only applicable if subscription status is set to Active."
+                    %}
+                        {% include 'admin/components/admin-form-select.html' %}
+                    {% endwith %}
+                    
+                    <!-- Billing Period -->
+                    {% with 
+                        select_id="billingPeriod",
+                        select_name="billingPeriod",
+                        select_label="Billing Period",
+                        select_options=[
+                            {'value': 'monthly', 'text': 'Monthly'},
+                            {'value': 'yearly', 'text': 'Yearly'}
+                        ],
+                        select_selected='monthly',
+                        select_required=true,
+                        select_help="Monthly: 30 days. Yearly: 365 days."
+                    %}
+                        {% include 'admin/components/admin-form-select.html' %}
+                    {% endwith %}
+                </div>
+                
+                <!-- Form Buttons -->
+                <div class="mt-4 d-flex justify-content-between">
+                    <a href="{{ url_for('admin.user_edit', user_id=user.id) }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i> Back
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-1"></i> Update Subscription
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Subscription Info Sidebar -->
+    <div class="col-lg-4">
+        <div class="dashboard-card mb-4">
+            <h6 class="mb-3">User Information</h6>
+            
+            <div class="d-flex align-items-center mb-4">
+                <div class="d-flex align-items-center justify-content-center bg-light rounded-circle me-3" style="width: 48px; height: 48px;">
+                    <span class="fs-5 text-secondary">{{ user.username[0]|upper }}</span>
+                </div>
+                <div>
+                    <h6 class="mb-0">{{ user.username }}</h6>
+                    <p class="small text-muted mb-0">{{ user.email }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Available Plans -->
+        <div class="dashboard-card">
+            <h6 class="mb-3">Available Plans</h6>
+            
+            {% if plans %}
+                {% for plan in plans %}
+                    <div class="card mb-3 border {{ 'border-primary' if user.subscription.plan_id == plan.value }}">
+                        <div class="card-body p-3">
+                            <h6 class="card-title">{{ plan.text }}</h6>
+                            <p class="small mb-0">Click on a plan to select it in the form.</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center text-muted py-3">
+                    <p class="mb-0">No subscription plans available</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle subscription plan field based on status
+    const subscriptionStatus = document.getElementById('subscriptionStatus');
+    const subscriptionPlan = document.getElementById('subscriptionPlan');
+    const billingPeriod = document.getElementById('billingPeriod');
+    
+    function togglePlanVisibility() {
+        const planGroup = subscriptionPlan.closest('.mb-3');
+        const periodGroup = billingPeriod.closest('.mb-3');
+        
+        if (subscriptionStatus.value === 'active') {
+            planGroup.style.display = 'block';
+            periodGroup.style.display = 'block';
+        } else {
+            planGroup.style.display = 'none';
+            periodGroup.style.display = 'none';
+            subscriptionPlan.value = '';
+        }
+    }
+    
+    // Setup event listeners
+    subscriptionStatus.addEventListener('change', togglePlanVisibility);
+    
+    // Initialize visibility
+    togglePlanVisibility();
+    
+    // Make plan cards clickable
+    const planCards = document.querySelectorAll('.dashboard-card .card');
+    planCards.forEach(card => {
+        card.addEventListener('click', function() {
+            // Extract plan ID from card text content
+            const planText = this.querySelector('.card-title').textContent;
+            const planValue = planText.split(' - ')[0]; // Get plan name
+            
+            // Find and select the matching option in the dropdown
+            Array.from(subscriptionPlan.options).forEach(option => {
+                if (option.text.includes(planValue)) {
+                    subscriptionPlan.value = option.value;
+                    // Make sure subscription is active
+                    subscriptionStatus.value = 'active';
+                    togglePlanVisibility();
+                }
+            });
+            
+            // Highlight selected card
+            planCards.forEach(c => c.classList.remove('border-primary'));
+            this.classList.add('border-primary');
+        });
+    });
+});
+</script>
+{% endblock %}
