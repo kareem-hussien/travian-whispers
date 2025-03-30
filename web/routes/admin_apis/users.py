@@ -25,8 +25,6 @@ def register_routes(admin_bp):
     admin_bp.route('/users/edit/<user_id>', methods=['GET', 'POST'])(admin_required(user_edit))
     admin_bp.route('/users/delete/<user_id>', methods=['POST'])(admin_required(user_delete))
     admin_bp.route('/user/<user_id>', methods=['GET'])(admin_required(admin_get_user))
-    admin_bp.route('/users/subscription/<user_id>', methods=['GET', 'POST'])(admin_required(user_subscription))
-    admin_bp.route('/users/logs/<user_id>')(admin_required(user_logs))
 
 def users():
     """User management page."""
@@ -187,14 +185,6 @@ def user_create():
     subscription_model = SubscriptionPlan()
     all_plans = subscription_model.list_plans()
     
-    # Format plans for select
-    formatted_plans = []
-    for plan in all_plans:
-        formatted_plans.append({
-            'value': str(plan['_id']),
-            'text': f"{plan['name']} - ${plan['price']['monthly']}/month"
-        })
-    
     if request.method == 'POST':
         # Process form data
         username = request.form.get('username')
@@ -211,7 +201,6 @@ def user_create():
             return render_template(
                 'admin/users/create.html', 
                 current_user=current_user,
-                plans=formatted_plans,
                 title='Create User'
             )
         
@@ -276,7 +265,6 @@ def user_create():
     return render_template(
         'admin/users/create.html', 
         current_user=current_user,
-        plans=formatted_plans,
         title='Create User'
     )
 
@@ -297,21 +285,14 @@ def user_edit(user_id):
     subscription_model = SubscriptionPlan()
     all_plans = subscription_model.list_plans()
     
-    # Get user activity if available (mock for now)
-    user_activity = [
-        {
-            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M'),
-            'action': 'Logged in to the system'
-        },
-        {
-            'timestamp': (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d %H:%M'),
-            'action': 'Updated profile information'
-        },
-        {
-            'timestamp': (datetime.now() - timedelta(days=2)).strftime('%Y-%m-%d %H:%M'),
-            'action': 'Changed password'
-        }
-    ]
+    # Format plans for select
+    formatted_plans = []
+    for plan in all_plans:
+        formatted_plans.append({
+            '_id': str(plan['_id']),
+            'name': plan['name'],
+            'price': plan['price']
+        })
     
     if request.method == 'POST':
         # Process form data
@@ -319,6 +300,8 @@ def user_edit(user_id):
         role = request.form.get('role')
         status = request.form.get('status')
         new_password = request.form.get('new_password')
+        subscription_plan = request.form.get('subscription_plan')
+        billing_period = request.form.get('billing_period', 'monthly')
         
         # Check if user is trying to downgrade themselves from admin
         if str(user["_id"]) == session['user_id'] and role != 'admin' and user['role'] == 'admin':
@@ -357,6 +340,49 @@ def user_edit(user_id):
                 
                 if not password_updated:
                     flash('User updated but failed to update password', 'warning')
+            
+            # Update subscription if needed
+            if subscription_plan and subscription_plan != 'none':
+                try:
+                    # Set subscription start and end dates
+                    start_date = datetime.utcnow()
+                    
+                    # Determine duration based on billing period
+                    duration_days = 365 if billing_period == 'yearly' else 30
+                    
+                    end_date = start_date + timedelta(days=duration_days)
+                    
+                    # Update user's subscription
+                    subscription_data = {
+                        'subscription': {
+                            'planId': ObjectId(subscription_plan),
+                            'status': 'active',
+                            'startDate': start_date,
+                            'endDate': end_date,
+                            # Preserve existing payment history
+                            'paymentHistory': user['subscription'].get('paymentHistory', [])
+                        }
+                    }
+                    
+                    user_model.update_user(user_id, subscription_data)
+                    logger.info(f"Admin '{current_user['username']}' updated subscription for user '{user['username']}'")
+                except Exception as e:
+                    logger.error(f"Error updating subscription: {e}")
+                    flash('User updated but failed to update subscription plan', 'warning')
+            elif subscription_plan == 'none':
+                # Remove subscription
+                subscription_data = {
+                    'subscription': {
+                        'planId': None,
+                        'status': 'inactive',
+                        'startDate': None,
+                        'endDate': None,
+                        # Preserve existing payment history
+                        'paymentHistory': user['subscription'].get('paymentHistory', [])
+                    }
+                }
+                user_model.update_user(user_id, subscription_data)
+                logger.info(f"Admin '{current_user['username']}' removed subscription for user '{user['username']}'")
                     
             flash('User updated successfully', 'success')
             logger.info(f"Admin '{current_user['username']}' updated user '{user['username']}'")
@@ -367,10 +393,16 @@ def user_edit(user_id):
     
     # Get current subscription data
     current_plan = None
+    current_plan_id = None
+    
     if user['subscription']['planId']:
-        plan = subscription_model.get_plan_by_id(user['subscription']['planId'])
+        current_plan_id = str(user['subscription']['planId'])
+        plan = subscription_model.get_plan_by_id(current_plan_id)
         if plan:
-            current_plan = plan["name"]
+            current_plan = {
+                'name': plan['name'],
+                'price': plan['price']
+            }
     
     # Format for template
     formatted_user = {
@@ -379,11 +411,10 @@ def user_edit(user_id):
         'email': user["email"],
         'role': user["role"],
         'status': "active" if user.get("isVerified", False) else "inactive",
-        'joined': user["createdAt"].strftime('%Y-%m-%d'),
-        'last_login': user.get("lastLoginAt", "Never"),
         'subscription': {
             'status': user['subscription']['status'],
             'plan': current_plan,
+            'plan_id': current_plan_id,
             'start_date': user['subscription'].get('startDate').strftime('%Y-%m-%d') if user['subscription'].get('startDate') else None,
             'end_date': user['subscription'].get('endDate').strftime('%Y-%m-%d') if user['subscription'].get('endDate') else None
         }
@@ -394,7 +425,7 @@ def user_edit(user_id):
         'admin/users/edit.html', 
         user=formatted_user, 
         current_user=current_user,
-        user_activity=user_activity,
+        plans=formatted_plans,
         title='Edit User'
     )
 
@@ -493,192 +524,3 @@ def admin_get_user(user_id):
         'success': True,
         'data': user_data
     })
-
-def user_subscription(user_id):
-    """Manage user subscription."""
-    # Get current user for the template
-    user_model = User()
-    current_user = user_model.get_user_by_id(session['user_id'])
-    
-    # Get user to manage
-    user = user_model.get_user_by_id(user_id)
-    
-    if not user:
-        flash('User not found', 'danger')
-        return redirect(url_for('admin.users'))
-    
-    # Get all subscription plans
-    subscription_model = SubscriptionPlan()
-    all_plans = subscription_model.list_plans()
-    
-    # Format plans for select
-    formatted_plans = []
-    for plan in all_plans:
-        formatted_plans.append({
-            'value': str(plan['_id']),
-            'text': f"{plan['name']} - ${plan['price']['monthly']}/month"
-        })
-    
-    if request.method == 'POST':
-        # Process form data
-        subscription_status = request.form.get('subscriptionStatus', 'inactive')
-        subscription_plan_id = request.form.get('subscriptionPlan', '')
-        billing_period = request.form.get('billingPeriod', 'monthly')
-        
-        try:
-            # Set subscription start and end dates
-            start_date = datetime.utcnow()
-            
-            if subscription_status == 'active' and subscription_plan_id:
-                # Get the plan to determine duration
-                plan = subscription_model.get_plan_by_id(subscription_plan_id)
-                
-                # Determine duration based on billing period
-                duration_days = 365 if billing_period == 'yearly' else 30
-                
-                end_date = start_date + timedelta(days=duration_days)
-                
-                # Update user's subscription
-                subscription_data = {
-                    'subscription': {
-                        'planId': ObjectId(subscription_plan_id),
-                        'status': 'active',
-                        'startDate': start_date,
-                        'endDate': end_date,
-                        # Preserve existing payment history
-                        'paymentHistory': user['subscription'].get('paymentHistory', [])
-                    }
-                }
-            else:
-                # Set subscription as inactive
-                subscription_data = {
-                    'subscription': {
-                        'planId': None,
-                        'status': 'inactive',
-                        'startDate': None,
-                        'endDate': None,
-                        # Preserve existing payment history
-                        'paymentHistory': user['subscription'].get('paymentHistory', [])
-                    }
-                }
-            
-            # Update user
-            success = user_model.update_user(user_id, subscription_data)
-            
-            if success:
-                flash('Subscription updated successfully', 'success')
-                logger.info(f"Admin '{current_user['username']}' updated subscription for user '{user['username']}'")
-            else:
-                flash('Failed to update subscription', 'danger')
-                logger.warning(f"Admin '{current_user['username']}' failed to update subscription for user '{user['username']}'")
-                
-        except Exception as e:
-            logger.error(f"Error updating subscription: {e}")
-            flash(f'An error occurred: {str(e)}', 'danger')
-            
-        return redirect(url_for('admin.user_edit', user_id=user_id))
-    
-    # Get current subscription data
-    current_plan = None
-    current_plan_id = None
-    
-    if user['subscription']['planId']:
-        current_plan_id = str(user['subscription']['planId'])
-        plan = subscription_model.get_plan_by_id(current_plan_id)
-        if plan:
-            current_plan = {
-                'id': current_plan_id,
-                'name': plan['name'],
-                'monthly_price': plan['price']['monthly'],
-                'yearly_price': plan['price'].get('yearly', plan['price']['monthly'] * 10),
-                'features': plan['features']
-            }
-    
-    # Format for template
-    formatted_user = {
-        'id': user["_id"],
-        'username': user["username"],
-        'email': user["email"],
-        'subscription': {
-            'status': user['subscription']['status'],
-            'plan': current_plan,
-            'plan_id': current_plan_id,
-            'start_date': user['subscription'].get('startDate').strftime('%Y-%m-%d') if user['subscription'].get('startDate') else None,
-            'end_date': user['subscription'].get('endDate').strftime('%Y-%m-%d') if user['subscription'].get('endDate') else None,
-            'payment_history': user['subscription'].get('paymentHistory', [])
-        }
-    }
-    
-    # Render subscription management template
-    return render_template(
-        'admin/users/subscription.html',
-        user=formatted_user,
-        plans=formatted_plans,
-        current_user=current_user,
-        title=f'Manage Subscription - {user["username"]}'
-    )
-
-def user_logs(user_id):
-    """View user activity logs."""
-    # Get current user for the template
-    user_model = User()
-    current_user = user_model.get_user_by_id(session['user_id'])
-    
-    # Get user
-    user = user_model.get_user_by_id(user_id)
-    
-    if not user:
-        flash('User not found', 'danger')
-        return redirect(url_for('admin.users'))
-    
-    # In a production environment, you would get real logs from a database
-    # For demonstration, we'll use mock data
-    user_logs = [
-        {
-            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M'),
-            'action': 'Logged in to the system',
-            'status': 'success',
-            'ip_address': '192.168.1.1'
-        },
-        {
-            'timestamp': (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d %H:%M'),
-            'action': 'Updated profile information',
-            'status': 'success',
-            'ip_address': '192.168.1.1'
-        },
-        {
-            'timestamp': (datetime.now() - timedelta(days=2)).strftime('%Y-%m-%d %H:%M'),
-            'action': 'Changed password',
-            'status': 'success',
-            'ip_address': '192.168.1.1'
-        },
-        {
-            'timestamp': (datetime.now() - timedelta(days=3)).strftime('%Y-%m-%d %H:%M'),
-            'action': 'Failed login attempt',
-            'status': 'error',
-            'ip_address': '192.168.1.2'
-        },
-        {
-            'timestamp': (datetime.now() - timedelta(days=5)).strftime('%Y-%m-%d %H:%M'),
-            'action': 'Subscription renewed',
-            'status': 'success',
-            'ip_address': '192.168.1.1'
-        }
-    ]
-    
-    # Format user data for the template
-    formatted_user = {
-        'id': user["_id"],
-        'username': user["username"],
-        'email': user["email"],
-        'status': "active" if user.get("isVerified", False) else "inactive"
-    }
-    
-    # Render logs template
-    return render_template(
-        'admin/users/logs.html',
-        user=formatted_user,
-        logs=user_logs,
-        current_user=current_user,
-        title=f'Activity Logs - {user["username"]}'
-    )

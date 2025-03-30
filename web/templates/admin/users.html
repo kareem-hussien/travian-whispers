@@ -3,125 +3,250 @@
 {% block title %}User Management{% endblock %}
 
 {% block breadcrumb %}
-<li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
-<li class="breadcrumb-item active" aria-current="page">Users</li>
+<li class="breadcrumb-item active" aria-current="page">User Management</li>
 {% endblock %}
 
 {% block content %}
-<div class="content">
-    <!-- Page Header -->
-    {% with 
-        title="User Management",
-        subtitle="Manage user accounts and permissions",
-        show_buttons=true,
-        primary_button_text="Add New User",
-        primary_button_icon="person-plus",
-        primary_button_url=url_for('admin.user_create')
-    %}
-        {% include 'admin/components/admin-page-header.html' %}
-    {% endwith %}
-    
-    <!-- Flash Messages -->
-    {% include 'admin/components/admin-flash-messages.html' %}
-    
-    <!-- Search and Filter Form -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <form method="get" action="{{ url_for('admin.users') }}" class="row g-3">
-                <div class="col-md-3">
-                    <label for="status" class="form-label">Status</label>
-                    <select class="form-select" id="status" name="status">
-                        <option value="">All Statuses</option>
-                        <option value="active" {% if request.args.get('status') == 'active' %}selected{% endif %}>Active</option>
-                        <option value="inactive" {% if request.args.get('status') == 'inactive' %}selected{% endif %}>Inactive</option>
-                    </select>
+<!-- Page Header -->
+{% with 
+    title="User Management",
+    subtitle="Manage user accounts and permissions",
+    show_buttons=true,
+    primary_button_text="Add New User",
+    primary_button_icon="person-plus",
+    primary_button_url=url_for('admin.user_create')
+%}
+    {% include 'admin/components/admin-page-header.html' %}
+{% endwith %}
+
+<!-- Search and Filters -->
+<div class="dashboard-card mb-4">
+    <form method="get" action="{{ url_for('admin.users') }}" class="row g-3">
+        <div class="col-md-3">
+            <label for="status" class="form-label">Status</label>
+            <select class="form-select" id="status" name="status">
+                <option value="">All Statuses</option>
+                <option value="active" {% if request.args.get('status') == 'active' %}selected{% endif %}>Active</option>
+                <option value="inactive" {% if request.args.get('status') == 'inactive' %}selected{% endif %}>Inactive</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="role" class="form-label">Role</label>
+            <select class="form-select" id="role" name="role">
+                <option value="">All Roles</option>
+                <option value="user" {% if request.args.get('role') == 'user' %}selected{% endif %}>User</option>
+                <option value="admin" {% if request.args.get('role') == 'admin' %}selected{% endif %}>Admin</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label for="q" class="form-label">Search</label>
+            <div class="input-group">
+                <input type="text" class="form-control" id="q" name="q" placeholder="Username or email" value="{{ request.args.get('q', '') }}">
+                <button class="btn btn-outline-secondary" type="submit">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <a href="{{ url_for('admin.users') }}" class="btn btn-outline-secondary w-100">Reset</a>
+        </div>
+    </form>
+</div>
+
+<!-- Users Stats Row -->
+<div class="row mb-4">
+    <!-- Total Users Card -->
+    <div class="col-lg-3 col-sm-6 mb-3">
+        <div class="dashboard-card">
+            <div class="d-flex align-items-center">
+                <div class="card-icon bg-primary-light me-3">
+                    <i class="bi bi-people"></i>
                 </div>
-                <div class="col-md-3">
-                    <label for="role" class="form-label">Role</label>
-                    <select class="form-select" id="role" name="role">
-                        <option value="">All Roles</option>
-                        <option value="user" {% if request.args.get('role') == 'user' %}selected{% endif %}>User</option>
-                        <option value="admin" {% if request.args.get('role') == 'admin' %}selected{% endif %}>Admin</option>
-                    </select>
+                <div>
+                    <h6 class="text-muted mb-0">Total Users</h6>
+                    <h3 class="mb-0">{{ stats.total|default(0) }}</h3>
                 </div>
-                <div class="col-md-4">
-                    <label for="q" class="form-label">Search</label>
-                    <input type="text" class="form-control" id="q" name="q" placeholder="Username or email" value="{{ request.args.get('q', '') }}">
-                </div>
-                <div class="col-md-2 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100">Filter</button>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
     
-    <!-- Users Table -->
-    <div class="card">
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-striped table-hover">
-                    <thead>
-                        <tr>
-                            <th>Username</th>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th>Status</th>
-                            <th>Joined</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for user in users %}
-                        <tr>
-                            <td>{{ user.username }}</td>
-                            <td>{{ user.email }}</td>
-                            <td>
-                                <span class="badge bg-{{ 'primary' if user.role == 'admin' else 'secondary' }}">
-                                    {{ user.role|title }}
-                                </span>
-                            </td>
-                            <td>
-                                <span class="badge bg-{{ 'success' if user.status == 'active' else 'danger' }}">
-                                    {{ user.status|title }}
-                                </span>
-                            </td>
-                            <td>{{ user.joined }}</td>
-                            <td>
-                                <div class="btn-group btn-group-sm" role="group">
-                                    <a href="{{ url_for('admin.user_edit', user_id=user.id) }}" class="btn btn-outline-primary">
-                                        <i class="bi bi-pencil-square"></i> Edit
-                                    </a>
-                                    <button type="button" class="btn btn-outline-danger" 
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#deleteUserModal" 
-                                            data-user-id="{{ user.id }}"
-                                            data-user-name="{{ user.username }}">
-                                        <i class="bi bi-trash"></i> Delete
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="6" class="text-center">No users found</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+    <!-- Active Users Card -->
+    <div class="col-lg-3 col-sm-6 mb-3">
+        <div class="dashboard-card">
+            <div class="d-flex align-items-center">
+                <div class="card-icon bg-success-light me-3">
+                    <i class="bi bi-person-check"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-0">Active Users</h6>
+                    <h3 class="mb-0">{{ stats.active|default(0) }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Inactive Users Card -->
+    <div class="col-lg-3 col-sm-6 mb-3">
+        <div class="dashboard-card">
+            <div class="d-flex align-items-center">
+                <div class="card-icon bg-danger-light me-3">
+                    <i class="bi bi-person-dash"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-0">Inactive Users</h6>
+                    <h3 class="mb-0">{{ stats.inactive|default(0) }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Admin Users Card -->
+    <div class="col-lg-3 col-sm-6 mb-3">
+        <div class="dashboard-card">
+            <div class="d-flex align-items-center">
+                <div class="card-icon bg-warning-light me-3">
+                    <i class="bi bi-shield"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-0">Admin Users</h6>
+                    <h3 class="mb-0">{{ stats.admin|default(0) }}</h3>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Users Table -->
+<div class="dashboard-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Users</h5>
+        <div class="btn-group">
+            <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-sort-alpha-down me-1"></i> Sort By
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="{{ url_for('admin.users', sort='username', q=request.args.get('q'), status=request.args.get('status'), role=request.args.get('role')) }}">Username (A-Z)</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('admin.users', sort='-username', q=request.args.get('q'), status=request.args.get('status'), role=request.args.get('role')) }}">Username (Z-A)</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('admin.users', sort='joined', q=request.args.get('q'), status=request.args.get('status'), role=request.args.get('role')) }}">Date Joined (Oldest)</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('admin.users', sort='-joined', q=request.args.get('q'), status=request.args.get('status'), role=request.args.get('role')) }}">Date Joined (Newest)</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Joined</th>
+                        <th>Subscription</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if users and users|length > 0 %}
+                        {% for user in users %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="d-flex align-items-center justify-content-center bg-light rounded-circle me-2" style="width: 36px; height: 36px;">
+                                        <span class="text-secondary">{{ user.username[0]|upper }}</span>
+                                    </div>
+                                    <span>{{ user.username }}</span>
+                                </div>
+                            </td>
+                            <td>{{ user.email }}</td>
+                            <td>
+                                <span class="badge {{ 'bg-primary' if user.role == 'admin' else 'bg-secondary' }}">
+                                    {{ user.role|title }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge {{ 'bg-success' if user.status == 'active' else 'bg-danger' }}">
+                                    {{ user.status|title }}
+                                </span>
+                            </td>
+                            <td>{{ user.joined }}</td>
+                            <td>
+                                {% if user.subscription %}
+                                <span class="badge {{ 'bg-success' if user.verified else 'bg-secondary' }}">
+                                    {{ user.subscription }}
+                                </span>
+                                {% else %}
+                                <span class="badge bg-light text-dark">None</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('admin.user_edit', user_id=user.id) }}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Edit User">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteUserModal" 
+                                            data-id="{{ user.id }}" data-name="{{ user.username }}" data-bs-toggle="tooltip" title="Delete User">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4">
+                                <div class="py-5">
+                                    <i class="bi bi-search" style="font-size: 2rem;"></i>
+                                    <h6 class="mt-3">No users found</h6>
+                                    <p class="text-muted">Try adjusting your search or filter to find what you're looking for.</p>
+                                    <a href="{{ url_for('admin.users') }}" class="btn btn-outline-primary">Reset Filters</a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if users and users|length > 0 and pagination %}
+        <!-- Pagination -->
+        <nav aria-label="Users pagination" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item {% if pagination.page|default(1) == 1 %}disabled{% endif %}">
+                    <a class="page-link" href="{{ pagination.urls.prev|default('#') }}" {% if pagination.page|default(1) == 1 %}tabindex="-1" aria-disabled="true"{% endif %}>Previous</a>
+                </li>
+                
+                {% for page in range(1, (pagination.total_pages|default(1)) + 1) %}
+                    {% if page >= (pagination.page|default(1)) - 2 and page <= (pagination.page|default(1)) + 2 %}
+                        <li class="page-item {% if page == pagination.page|default(1) %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('admin.users', page=page, per_page=pagination.per_page, q=request.args.get('q'), status=request.args.get('status'), role=request.args.get('role'), sort=filters.sort) }}">{{ page }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                <li class="page-item {% if pagination.page|default(1) >= pagination.total_pages|default(1) %}disabled{% endif %}">
+                    <a class="page-link" href="{{ pagination.urls.next|default('#') }}" {% if pagination.page|default(1) >= pagination.total_pages|default(1) %}tabindex="-1" aria-disabled="true"{% endif %}>Next</a>
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
 <!-- Delete User Modal -->
 <div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="deleteUserModalLabel">Confirm User Deletion</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
+                <div class="text-center mb-4">
+                    <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 3rem;"></i>
+                </div>
                 <p>Are you sure you want to delete the user <strong id="deleteUserName"></strong>?</p>
                 <p class="text-danger">This action cannot be undone. All user data will be permanently deleted.</p>
             </div>
@@ -139,23 +264,29 @@
 
 {% block scripts %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Handle delete user modal
-        const deleteUserModal = document.getElementById('deleteUserModal');
-        if (deleteUserModal) {
-            deleteUserModal.addEventListener('show.bs.modal', function(event) {
-                // Button that triggered the modal
-                const button = event.relatedTarget;
-                
-                // Extract data from button
-                const userId = button.getAttribute('data-user-id');
-                const userName = button.getAttribute('data-user-name');
-                
-                // Update the modal
-                document.getElementById('deleteUserName').textContent = userName;
-                document.getElementById('deleteUserForm').action = "{{ url_for('admin.user_delete', user_id='') }}" + userId;
-            });
-        }
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle delete user modal
+    const deleteUserModal = document.getElementById('deleteUserModal');
+    if (deleteUserModal) {
+        deleteUserModal.addEventListener('show.bs.modal', function(event) {
+            // Button that triggered the modal
+            const button = event.relatedTarget;
+            
+            // Extract data from button
+            const userId = button.getAttribute('data-id');
+            const userName = button.getAttribute('data-name');
+            
+            // Update the modal
+            document.getElementById('deleteUserName').textContent = userName;
+            document.getElementById('deleteUserForm').action = "{{ url_for('admin.user_delete', user_id='') }}" + userId;
+        });
+    }
+    
+    // Initialize tooltips
+    var tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    var tooltipList = Array.from(tooltipTriggerList).map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
     });
+});
 </script>
 {% endblock %}

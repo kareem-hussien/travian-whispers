@@ -1,149 +1,362 @@
-{% extends "admin/base.html" %}
+{% extends 'admin/components/admin-layout.html' %}
+
+{% block title %}Edit User: {{ user.username }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin.users') }}">User Management</a></li>
+<li class="breadcrumb-item active" aria-current="page">Edit User</li>
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-  <div class="row">
-    <div class="col-12">
-      <div class="card mb-4">
-        <div class="card-header pb-0 d-flex justify-content-between align-items-center">
-          <h6>Edit User: {{ user.username }}</h6>
-          <a href="{{ url_for('admin.users') }}" class="btn btn-sm btn-primary">Back to Users</a>
+<!-- Page Header -->
+{% with 
+    title="Edit User: " + user.username,
+    subtitle="Modify user account details and permissions",
+    show_buttons=true,
+    primary_button_text="Back to Users",
+    primary_button_icon="arrow-left",
+    primary_button_url=url_for('admin.users')
+%}
+    {% include 'admin/components/admin-page-header.html' %}
+{% endwith %}
+
+<div class="row">
+    <!-- User Edit Form -->
+    <div class="col-lg-8">
+        <div class="dashboard-card mb-4">
+            <form action="{{ url_for('admin.user_edit', user_id=user.id) }}" method="post" id="editUserForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <!-- Basic Information Section -->
+                <div class="border-bottom pb-3 mb-4">
+                    <h6 class="text-uppercase text-muted">Basic Information</h6>
+                </div>
+                
+                <!-- Username Field (Read-only) -->
+                {% with 
+                    field_type="text",
+                    field_id="username",
+                    field_name="username",
+                    field_label="Username",
+                    field_value=user.username,
+                    field_readonly=true,
+                    field_help="Username cannot be changed once created."
+                %}
+                    {% include 'admin/components/admin-form-field.html' %}
+                {% endwith %}
+                
+                <!-- Email Field -->
+                {% with 
+                    field_type="email",
+                    field_id="email",
+                    field_name="email",
+                    field_label="Email Address",
+                    field_value=user.email,
+                    field_required=true
+                %}
+                    {% include 'admin/components/admin-form-field.html' %}
+                {% endwith %}
+                
+                <!-- Role Selection -->
+                {% with 
+                    select_id="role",
+                    select_name="role",
+                    select_label="User Role",
+                    select_options=[
+                        {'value': 'user', 'text': 'User'},
+                        {'value': 'admin', 'text': 'Administrator'}
+                    ],
+                    select_selected=user.role,
+                    select_required=true,
+                    select_help="Admin users have access to the admin panel and all functionality."
+                %}
+                    {% include 'admin/components/admin-form-select.html' %}
+                {% endwith %}
+                
+                <!-- Status Selection -->
+                {% with 
+                    select_id="status",
+                    select_name="status",
+                    select_label="Account Status",
+                    select_options=[
+                        {'value': 'active', 'text': 'Active'},
+                        {'value': 'inactive', 'text': 'Inactive'}
+                    ],
+                    select_selected=user.status,
+                    select_required=true,
+                    select_help="Inactive users cannot log in to the system."
+                %}
+                    {% include 'admin/components/admin-form-select.html' %}
+                {% endwith %}
+                
+                <!-- Password Section -->
+                <div class="border-bottom pb-3 mb-4 mt-5">
+                    <h6 class="text-uppercase text-muted">Change Password</h6>
+                </div>
+                
+                <!-- New Password Field -->
+                {% with 
+                    field_type="password",
+                    field_id="new_password",
+                    field_name="new_password",
+                    field_label="New Password",
+                    field_placeholder="Leave blank to keep current password",
+                    field_help="Password must be at least 8 characters with uppercase, lowercase, and numbers."
+                %}
+                    {% include 'admin/components/admin-form-field.html' %}
+                {% endwith %}
+                
+                <!-- Form Buttons -->
+                <div class="mt-4 d-flex justify-content-between">
+                    <a href="{{ url_for('admin.users') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-lg me-1"></i> Cancel
+                    </a>
+                    <div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save me-1"></i> Save Changes
+                        </button>
+                    </div>
+                </div>
+            </form>
         </div>
-        <div class="card-body px-4 pt-0 pb-4">
-          <form method="POST" action="{{ url_for('admin.users.user_edit', user_id=user.id) }}">
-            <div class="row mt-3">
-              <div class="col-md-6">
-                <div class="form-group">
-                  <label for="username" class="form-control-label">Username</label>
-                  <input class="form-control" type="text" id="username" value="{{ user.username }}" disabled>
+    </div>
+    
+    <!-- User Information Sidebar -->
+    <div class="col-lg-4">
+        <!-- User Overview Card -->
+        <div class="dashboard-card mb-4">
+            <div class="text-center mb-4">
+                <div class="d-inline-flex align-items-center justify-content-center bg-light rounded-circle mb-3" style="width: 80px; height: 80px;">
+                    <span class="fs-2 text-secondary">{{ user.username[0]|upper }}</span>
                 </div>
-              </div>
-              <div class="col-md-6">
-                <div class="form-group">
-                  <label for="email" class="form-control-label">Email</label>
-                  <input class="form-control" type="email" id="email" name="email" value="{{ user.email }}" required>
-                </div>
-              </div>
+                <h5 class="mb-0">{{ user.username }}</h5>
+                <p class="text-muted mb-0">{{ user.email }}</p>
+                <span class="badge {{ 'bg-success' if user.status == 'active' else 'bg-danger' }} mt-2">
+                    {{ user.status|title }}
+                </span>
             </div>
             
-            <div class="row">
-              <div class="col-md-6">
-                <div class="form-group">
-                  <label for="role" class="form-control-label">Role</label>
-                  <select class="form-control" id="role" name="role">
-                    <option value="user" {% if user.role == 'user' %}selected{% endif %}>User</option>
-                    <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
-                  </select>
+            <div class="border-top pt-3">
+                <div class="mb-2 d-flex justify-content-between">
+                    <span class="text-muted">User ID:</span>
+                    <span>{{ user.id }}</span>
                 </div>
-              </div>
-              <div class="col-md-6">
-                <div class="form-group">
-                  <label for="status" class="form-control-label">Status</label>
-                  <select class="form-control" id="status" name="status">
-                    <option value="active" {% if user.status == 'active' %}selected{% endif %}>Active</option>
-                    <option value="inactive" {% if user.status == 'inactive' %}selected{% endif %}>Inactive</option>
-                  </select>
+                <div class="mb-2 d-flex justify-content-between">
+                    <span class="text-muted">Joined:</span>
+                    <span>{{ user.joined }}</span>
                 </div>
-              </div>
+                <div class="mb-2 d-flex justify-content-between">
+                    <span class="text-muted">Last Login:</span>
+                    <span>{{ user.last_login }}</span>
+                </div>
+                <div class="mb-2 d-flex justify-content-between">
+                    <span class="text-muted">Subscription:</span>
+                    <span>{{ user.subscription.plan if user.subscription.plan else 'None' }}</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="text-muted">Status:</span>
+                    <span class="badge {{ 'bg-success' if user.subscription.status == 'active' else 'bg-secondary' }}">
+                        {{ user.subscription.status|title }}
+                    </span>
+                </div>
             </div>
+        </div>
+        
+        <!-- Quick Actions Card -->
+        <div class="dashboard-card mb-4">
+            <h6 class="mb-3">Quick Actions</h6>
             
-            <div class="row">
-              <div class="col-md-6">
-                <div class="form-group">
-                  <label for="new_password" class="form-control-label">New Password</label>
-                  <input class="form-control" type="password" id="new_password" name="new_password" placeholder="Leave blank to keep current password">
-                </div>
-              </div>
+            <div class="d-grid gap-2">
+                <a href="{{ url_for('admin.users') }}?view=logs&user_id={{ user.id }}" class="btn btn-outline-primary">
+                    <i class="bi bi-journal-text me-1"></i> View Activity Logs
+                </a>
+                <button type="button" class="btn btn-outline-warning" onclick="resetPasswordConfirm()">
+                    <i class="bi bi-key me-1"></i> Reset Password & Notify
+                </button>
+                <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteUserModal">
+                    <i class="bi bi-trash me-1"></i> Delete User
+                </button>
             </div>
-            
-            <hr class="horizontal dark my-4">
+        </div>
+        
+        <!-- Subscription Info Card -->
+        {% if user.subscription.status == 'active' %}
+        <div class="dashboard-card">
             <h6 class="mb-3">Subscription Details</h6>
             
-            <div class="row">
-              <div class="col-md-6">
-                <div class="form-group">
-                  <label for="subscription_plan" class="form-control-label">Subscription Plan</label>
-                  <select class="form-control" id="subscription_plan" name="subscription_plan">
-                    <option value="none" {% if not user.subscription.plan_id %}selected{% endif %}>No Subscription</option>
-                    {% for plan in plans %}
-                    <option value="{{ plan._id }}" {% if user.subscription.plan_id == plan._id|string %}selected{% endif %}>
-                      {{ plan.name }} - ${{ plan.price.monthly }}/month
-                    </option>
-                    {% endfor %}
-                  </select>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="form-group">
-                  <label for="billing_period" class="form-control-label">Billing Period</label>
-                  <select class="form-control" id="billing_period" name="billing_period">
-                    <option value="monthly">Monthly</option>
-                    <option value="yearly">Yearly</option>
-                  </select>
-                </div>
-              </div>
+            <div class="mb-2 d-flex justify-content-between">
+                <span class="text-muted">Plan:</span>
+                <span>{{ user.subscription.plan }}</span>
             </div>
-            
-            <div class="row">
-              <div class="col-md-6">
-                <div class="form-group">
-                  <label class="form-control-label">Current Status</label>
-                  <div class="input-group">
-                    <span class="input-group-text">
-                      <i class="ni ni-calendar-grid-58"></i>
-                    </span>
-                    <input class="form-control" type="text" value="{{ user.subscription.status|capitalize }}" disabled>
-                  </div>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="form-group">
-                  <label class="form-control-label">Current Plan</label>
-                  <div class="input-group">
-                    <span class="input-group-text">
-                      <i class="ni ni-tag"></i>
-                    </span>
-                    <input class="form-control" type="text" value="{{ user.subscription.plan.name if user.subscription.plan else 'None' }}" disabled>
-                  </div>
-                </div>
-              </div>
+            <div class="mb-2 d-flex justify-content-between">
+                <span class="text-muted">Start Date:</span>
+                <span>{{ user.subscription.start_date }}</span>
             </div>
-            
-            <div class="row">
-              <div class="col-md-6">
-                <div class="form-group">
-                  <label class="form-control-label">Start Date</label>
-                  <div class="input-group">
-                    <span class="input-group-text">
-                      <i class="ni ni-calendar-grid-58"></i>
-                    </span>
-                    <input class="form-control" type="text" value="{{ user.subscription.start_date|default('N/A', true) }}" disabled>
-                  </div>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="form-group">
-                  <label class="form-control-label">End Date</label>
-                  <div class="input-group">
-                    <span class="input-group-text">
-                      <i class="ni ni-calendar-grid-58"></i>
-                    </span>
-                    <input class="form-control" type="text" value="{{ user.subscription.end_date|default('N/A', true) }}" disabled>
-                  </div>
-                </div>
-              </div>
+            <div class="mb-2 d-flex justify-content-between">
+                <span class="text-muted">End Date:</span>
+                <span>{{ user.subscription.end_date }}</span>
             </div>
-            
-            <div class="row mt-4">
-              <div class="col-12 text-end">
-                <a href="{{ url_for('admin.users') }}" class="btn btn-secondary">Cancel</a>
-                <button type="submit" class="btn btn-primary">Update User</button>
-              </div>
+            <div class="mt-3">
+                <a href="{{ url_for('admin.subscriptions') }}?user_id={{ user.id }}" class="btn btn-sm btn-outline-primary w-100">
+                    View Complete Details
+                </a>
             </div>
-          </form>
         </div>
-      </div>
+        {% endif %}
     </div>
-  </div>
 </div>
+{% endblock %}
+
+{% block modals %}
+<!-- Delete User Confirmation Modal -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteUserModalLabel">Confirm User Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-4">
+                    <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 4rem;"></i>
+                </div>
+                <p>Are you sure you want to delete this user? This action <strong>cannot be undone</strong>.</p>
+                <p>User: <strong>{{ user.username }}</strong></p>
+                <p>All user data, including profile information, subscription details, and activity history will be permanently deleted.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="{{ url_for('admin.user_delete', user_id=user.id) }}" method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger">Delete User</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reset Password Confirmation Modal -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resetPasswordModalLabel">Reset User Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>This will generate a new random password for <strong>{{ user.username }}</strong> and send it to their email address.</p>
+                <p>Email: <strong>{{ user.email }}</strong></p>
+                <div class="form-check mt-3">
+                    <input class="form-check-input" type="checkbox" id="forcePasswordChange">
+                    <label class="form-check-label" for="forcePasswordChange">
+                        Force user to change password on next login
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="{{ url_for('auth.forgot_password') }}" method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="email" value="{{ user.email }}">
+                    <input type="hidden" name="admin_initiated" value="1">
+                    <input type="hidden" name="force_change" id="forceChangeInput" value="0">
+                    <button type="submit" class="btn btn-warning">Reset Password</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const form = document.getElementById('editUserForm');
+    const email = document.getElementById('email');
+    const role = document.getElementById('role');
+    const status = document.getElementById('status');
+    const newPassword = document.getElementById('new_password');
+    
+    if (form) {
+        form.addEventListener('submit', function(event) {
+            let isValid = true;
+            
+            // Email validation
+            if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) {
+                showError(email, 'Please enter a valid email address');
+                isValid = false;
+            } else {
+                clearError(email);
+            }
+            
+            // Password validation (only if provided)
+            if (newPassword.value.length > 0) {
+                if (newPassword.value.length < 8) {
+                    showError(newPassword, 'Password must be at least 8 characters long');
+                    isValid = false;
+                } else if (!/[A-Z]/.test(newPassword.value)) {
+                    showError(newPassword, 'Password must contain at least one uppercase letter');
+                    isValid = false;
+                } else if (!/[a-z]/.test(newPassword.value)) {
+                    showError(newPassword, 'Password must contain at least one lowercase letter');
+                    isValid = false;
+                } else if (!/[0-9]/.test(newPassword.value)) {
+                    showError(newPassword, 'Password must contain at least one number');
+                    isValid = false;
+                } else {
+                    clearError(newPassword);
+                }
+            }
+            
+            // Prevent form submission if validation fails
+            if (!isValid) {
+                event.preventDefault();
+            }
+        });
+    }
+    
+    // Set up reset password modal
+    const forcePasswordChange = document.getElementById('forcePasswordChange');
+    const forceChangeInput = document.getElementById('forceChangeInput');
+    
+    if (forcePasswordChange && forceChangeInput) {
+        forcePasswordChange.addEventListener('change', function() {
+            forceChangeInput.value = this.checked ? '1' : '0';
+        });
+    }
+    
+    // Reset password confirmation function
+    window.resetPasswordConfirm = function() {
+        const resetModal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
+        resetModal.show();
+    };
+    
+    // Helper functions for form validation
+    function showError(input, message) {
+        const formGroup = input.closest('.mb-3');
+        let errorDiv = formGroup.querySelector('.invalid-feedback');
+        
+        if (!errorDiv) {
+            errorDiv = document.createElement('div');
+            errorDiv.className = 'invalid-feedback d-block';
+            input.parentNode.appendChild(errorDiv);
+        }
+        
+        errorDiv.textContent = message;
+        input.classList.add('is-invalid');
+    }
+    
+    function clearError(input) {
+        const formGroup = input.closest('.mb-3');
+        const errorDiv = formGroup.querySelector('.invalid-feedback');
+        
+        if (errorDiv) {
+            errorDiv.remove();
+        }
+        
+        input.classList.remove('is-invalid');
+    }
+});
+</script>
 {% endblock %}
