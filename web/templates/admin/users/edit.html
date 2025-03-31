@@ -202,10 +202,21 @@
                     <span class="text-muted">Last Login:</span>
                     <span>{{ user.last_login }}</span>
                 </div>
+            <!-- Subscription Info Card -->
+            {% if user.subscription.status == 'active' %}
                 <div class="mb-2 d-flex justify-content-between">
-                    <span class="text-muted">Subscription:</span>
+                    <span class="text-muted">Plan:</span>
                     <span>{{ user.subscription.plan.name if user.subscription.plan else 'None' }}</span>
                 </div>
+                <div class="mb-2 d-flex justify-content-between">
+                    <span class="text-muted">Start Date:</span>
+                    <span>{{ user.subscription.start_date }}</span>
+                </div>
+                <div class="mb-2 d-flex justify-content-between">
+                    <span class="text-muted">End Date:</span>
+                    <span>{{ user.subscription.end_date }}</span>
+                </div>
+            {% endif %}
                 <div class="d-flex justify-content-between mb-3">
                     <span class="text-muted">Status:</span>
                     <span class="badge {{ 'bg-success' if user.subscription.status == 'active' else 'bg-secondary' }}">
@@ -226,26 +237,6 @@
                 </button>
             </div>
         </div>
-        
-        <!-- Subscription Info Card -->
-        {% if user.subscription.status == 'active' %}
-        <div class="dashboard-card">
-            <h6 class="mb-3">Subscription Details</h6>
-            
-            <div class="mb-2 d-flex justify-content-between">
-                <span class="text-muted">Plan:</span>
-                <span>{{ user.subscription.plan.name if user.subscription.plan else 'None' }}</span>
-            </div>
-            <div class="mb-2 d-flex justify-content-between">
-                <span class="text-muted">Start Date:</span>
-                <span>{{ user.subscription.start_date }}</span>
-            </div>
-            <div class="mb-2 d-flex justify-content-between">
-                <span class="text-muted">End Date:</span>
-                <span>{{ user.subscription.end_date }}</span>
-            </div>
-        </div>
-        {% endif %}
     </div>
 </div>
 {% endblock %}

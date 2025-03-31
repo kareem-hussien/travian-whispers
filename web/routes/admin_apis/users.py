@@ -185,6 +185,14 @@ def user_create():
     subscription_model = SubscriptionPlan()
     all_plans = subscription_model.list_plans()
     
+    # Format plans for select dropdown
+    plan_choices = [{'value': 'none', 'text': 'No Subscription'}]
+    for plan in all_plans:
+        plan_choices.append({
+            'value': str(plan['_id']), 
+            'text': plan['name']
+        })
+    
     if request.method == 'POST':
         # Process form data
         username = request.form.get('username')
@@ -192,8 +200,11 @@ def user_create():
         password = request.form.get('password')
         role = request.form.get('role', 'user')
         is_verified = request.form.get('isVerified') == 'on'
-        subscription_status = request.form.get('subscriptionStatus', 'inactive')
-        subscription_plan = request.form.get('subscriptionPlan', '')
+        
+        # Get subscription data from form
+        subscription_status = request.form.get('subscription_status', 'inactive')
+        subscription_plan = request.form.get('subscription_plan', 'none')
+        billing_period = request.form.get('billing_period', 'monthly')
         
         # Validate inputs
         if not username or not email or not password:
@@ -201,6 +212,7 @@ def user_create():
             return render_template(
                 'admin/users/create.html', 
                 current_user=current_user,
+                plans=plan_choices,
                 title='Create User'
             )
         
@@ -220,20 +232,14 @@ def user_create():
             if is_verified and verification_token:
                 user_model.verify_user(verification_token)
                 
-            # Set subscription if active
-            if subscription_status == 'active' and subscription_plan:
+            # Set subscription if selected
+            if subscription_status == 'active' and subscription_plan != 'none':
                 try:
                     # Set subscription start and end dates
                     start_date = datetime.utcnow()
                     
-                    # Get the plan to determine duration
-                    plan = subscription_model.get_plan_by_id(subscription_plan)
-                    
-                    # Default to 30 days if plan not found
-                    duration_days = 30
-                    if plan:
-                        # For simplicity, use monthly duration here
-                        duration_days = 30
+                    # Determine duration based on billing period
+                    duration_days = 365 if billing_period == 'yearly' else 30
                     
                     end_date = start_date + timedelta(days=duration_days)
                     
@@ -265,6 +271,7 @@ def user_create():
     return render_template(
         'admin/users/create.html', 
         current_user=current_user,
+        plans=plan_choices,
         title='Create User'
     )
 

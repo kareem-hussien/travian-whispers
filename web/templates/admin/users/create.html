@@ -111,56 +111,58 @@
                     {% include 'admin/components/admin-form-checkbox.html' %}
                 {% endwith %}
                 
-                <!-- Subscription Section -->
-                <div class="border-bottom pb-3 mb-4 mt-5">
-                    <h6 class="text-uppercase text-muted">Subscription Details</h6>
-                </div>
-                
-                <!-- Subscription Status -->
-                {% with 
-                    select_id="subscriptionStatus",
-                    select_name="subscriptionStatus",
-                    select_label="Subscription Status",
-                    select_options=[
-                        {'value': 'inactive', 'text': 'Inactive'},
-                        {'value': 'active', 'text': 'Active'}
-                    ],
-                    select_selected='inactive',
-                    select_required=true,
-                    select_help="Set to active to assign a subscription plan to this user."
-                %}
-                    {% include 'admin/components/admin-form-select.html' %}
-                {% endwith %}
-                
-                <!-- Subscription Plan -->
-                <div id="planSelectionContainer">
-                    {% with 
-                        select_id="subscriptionPlan",
-                        select_name="subscriptionPlan",
-                        select_label="Subscription Plan",
-                        select_options=plans,
-                        select_required=false,
-                        select_help="Only applicable if subscription status is set to Active."
-                    %}
-                        {% include 'admin/components/admin-form-select.html' %}
-                    {% endwith %}
-                    
-                    <!-- Billing Period -->
-                    {% with 
-                        select_id="billingPeriod",
-                        select_name="billingPeriod",
-                        select_label="Billing Period",
-                        select_options=[
-                            {'value': 'monthly', 'text': 'Monthly'},
-                            {'value': 'yearly', 'text': 'Yearly (Save 16%)'}
-                        ],
-                        select_selected='monthly',
-                        select_required=true,
-                        select_help="Determines subscription duration and pricing."
-                    %}
-                        {% include 'admin/components/admin-form-select.html' %}
-                    {% endwith %}
-                </div>
+                <!-- Add this section to the user creation form after other fields -->
+<!-- Subscription Section -->
+<div class="border-bottom pb-3 mb-4 mt-5">
+    <h6 class="text-uppercase text-muted">Subscription Details</h6>
+</div>
+
+<!-- Subscription Status -->
+{% with 
+    select_id="subscription_status",
+    select_name="subscription_status",
+    select_label="Subscription Status",
+    select_options=[
+        {'value': 'inactive', 'text': 'Inactive'},
+        {'value': 'active', 'text': 'Active'}
+    ],
+    select_selected='inactive',
+    select_required=true,
+    select_help="Set whether this user has an active subscription."
+%}
+    {% include 'admin/components/admin-form-select.html' %}
+{% endwith %}
+
+<!-- Subscription Plan and Billing Period Container - Toggled by JavaScript -->
+<div id="planSelectionContainer">
+    <!-- Subscription Plan -->
+    {% with 
+        select_id="subscription_plan",
+        select_name="subscription_plan",
+        select_label="Subscription Plan",
+        select_options=plans,
+        select_required=false,
+        select_help="Select the subscription plan for this user."
+    %}
+        {% include 'admin/components/admin-form-select.html' %}
+    {% endwith %}
+    
+    <!-- Billing Period -->
+    {% with 
+        select_id="billing_period",
+        select_name="billing_period",
+        select_label="Billing Period",
+        select_options=[
+            {'value': 'monthly', 'text': 'Monthly'},
+            {'value': 'yearly', 'text': 'Yearly'}
+        ],
+        select_selected='monthly',
+        select_required=true,
+        select_help="Determines subscription duration and pricing."
+    %}
+        {% include 'admin/components/admin-form-select.html' %}
+    {% endwith %}
+</div>
                 
                 <!-- Form Buttons -->
                 <div class="mt-4 d-flex justify-content-between">
@@ -295,5 +297,27 @@ document.addEventListener('DOMContentLoaded', function() {
         input.classList.remove('is-invalid');
     }
 });
+// Add this to the existing JavaScript in the create user page
+// Toggle subscription plan field based on status
+const subscriptionStatus = document.getElementById('subscription_status');
+const planSelectionContainer = document.getElementById('planSelectionContainer');
+
+function togglePlanVisibility() {
+    if (subscriptionStatus && planSelectionContainer) {
+        if (subscriptionStatus.value === 'active') {
+            planSelectionContainer.style.display = 'block';
+        } else {
+            planSelectionContainer.style.display = 'none';
+        }
+    }
+}
+
+// Initialize visibility
+togglePlanVisibility();
+
+// Listen for changes
+if (subscriptionStatus) {
+    subscriptionStatus.addEventListener('change', togglePlanVisibility);
+}
 </script>
 {% endblock %}
