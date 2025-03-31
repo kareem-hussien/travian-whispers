@@ -61,6 +61,16 @@ class UserEditForm(FlaskForm):
         Optional(),
         validate_password_strength
     ])
+    # Add subscription fields
+    subscription_status = SelectField('Subscription Status', choices=[
+        ('inactive', 'Inactive'),
+        ('active', 'Active')
+    ])
+    subscription_plan = SelectField('Subscription Plan', choices=[], validators=[Optional()])
+    billing_period = SelectField('Billing Period', choices=[
+        ('monthly', 'Monthly'),
+        ('yearly', 'Yearly')
+    ], default='monthly')
 
 
 class PlanCreateForm(FlaskForm):
@@ -233,3 +243,5 @@ class SystemSettingsForm(FlaskForm):
     maintenance_message = TextAreaField('Maintenance Message', validators=[
         Length(min=10, max=500, message='Message must be 10-500 characters long')
     ], default='We are currently performing scheduled maintenance. Please check back later.')
+    
+    

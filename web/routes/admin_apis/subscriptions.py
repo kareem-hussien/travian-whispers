@@ -163,7 +163,7 @@ def edit_plan(plan_id):
     
     # Render plan edit template
     return render_template(
-        'admin/plan_edit.html', 
+        'admin/subscriptions/edit.html', 
         plan=plan, 
         current_user=current_user,
         title='Edit Subscription Plan'

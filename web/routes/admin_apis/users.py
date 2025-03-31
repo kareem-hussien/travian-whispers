@@ -285,28 +285,26 @@ def user_edit(user_id):
     subscription_model = SubscriptionPlan()
     all_plans = subscription_model.list_plans()
     
-    # Format plans for select
-    formatted_plans = []
+    # Format plans for select dropdown
+    plan_choices = [{'value': 'none', 'text': 'No Subscription'}]
     for plan in all_plans:
-        formatted_plans.append({
-            '_id': str(plan['_id']),
-            'name': plan['name'],
-            'price': plan['price']
+        plan_choices.append({
+            'value': str(plan['_id']), 
+            'text': plan['name']
         })
     
+    # Handle POST request (form submission)
     if request.method == 'POST':
         # Process form data
         email = request.form.get('email')
         role = request.form.get('role')
         status = request.form.get('status')
         new_password = request.form.get('new_password')
-        subscription_plan = request.form.get('subscription_plan')
-        billing_period = request.form.get('billing_period', 'monthly')
         
-        # Check if user is trying to downgrade themselves from admin
-        if str(user["_id"]) == session['user_id'] and role != 'admin' and user['role'] == 'admin':
-            flash('You cannot remove admin privileges from your own account', 'danger')
-            return redirect(url_for('admin.user_edit', user_id=user_id))
+        # Get subscription data from form
+        subscription_status = request.form.get('subscription_status', 'inactive')
+        subscription_plan = request.form.get('subscription_plan', 'none')
+        billing_period = request.form.get('billing_period', 'monthly')
         
         # Prepare update data
         update_data = {
@@ -319,30 +317,25 @@ def user_edit(user_id):
         success = user_model.update_user(user_id, update_data)
 
         if success:
-            # Handle password change separately if needed
+            # Handle password change if needed
             if new_password and new_password.strip():
                 # Hash the password before storing
                 hashed_password = user_model.hash_password(new_password)
                 
-                # Check if update_password method exists, otherwise update directly
-                if hasattr(user_model, 'update_password'):
-                    password_updated = user_model.update_password(user_id, hashed_password)
-                else:
-                    try:
-                        result = user_model.collection.update_one(
-                            {"_id": ObjectId(user_id)},
-                            {"$set": {"password": hashed_password}}
-                        )
-                        password_updated = result.modified_count > 0
-                    except Exception as e:
-                        logger.error(f"Error updating password: {e}")
-                        password_updated = False
-                
-                if not password_updated:
+                # Update password (directly since we might not have update_password method)
+                try:
+                    result = user_model.collection.update_one(
+                        {"_id": ObjectId(user_id)},
+                        {"$set": {"password": hashed_password}}
+                    )
+                    if not result.modified_count > 0:
+                        flash('User updated but failed to update password', 'warning')
+                except Exception as e:
+                    logger.error(f"Error updating password: {e}")
                     flash('User updated but failed to update password', 'warning')
             
             # Update subscription if needed
-            if subscription_plan and subscription_plan != 'none':
+            if subscription_status == 'active' and subscription_plan != 'none':
                 try:
                     # Set subscription start and end dates
                     start_date = datetime.utcnow()
@@ -369,7 +362,7 @@ def user_edit(user_id):
                 except Exception as e:
                     logger.error(f"Error updating subscription: {e}")
                     flash('User updated but failed to update subscription plan', 'warning')
-            elif subscription_plan == 'none':
+            elif subscription_status == 'inactive' or subscription_plan == 'none':
                 # Remove subscription
                 subscription_data = {
                     'subscription': {
@@ -391,7 +384,7 @@ def user_edit(user_id):
             flash('Failed to update user', 'danger')
             logger.warning(f"Admin '{current_user['username']}' failed to update user '{user['username']}'")
     
-    # Get current subscription data
+    # Get current subscription data for display
     current_plan = None
     current_plan_id = None
     
@@ -404,7 +397,7 @@ def user_edit(user_id):
                 'price': plan['price']
             }
     
-    # Format for template
+    # Format user for template
     formatted_user = {
         'id': user["_id"],
         'username': user["username"],
@@ -425,7 +418,7 @@ def user_edit(user_id):
         'admin/users/edit.html', 
         user=formatted_user, 
         current_user=current_user,
-        plans=formatted_plans,
+        plans=plan_choices,
         title='Edit User'
     )
 

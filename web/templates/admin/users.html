@@ -181,11 +181,11 @@
                             </td>
                             <td class="text-end">
                                 <div class="btn-group btn-group-sm">
-                                    <a href="{{ url_for('admin.user_edit', user_id=user.id) }}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Edit User">
+                                    <a href="{{ url_for('admin.user_edit', user_id=user.id) }}" class="btn btn-outline-primary" title="Edit User">
                                         <i class="bi bi-pencil"></i>
                                     </a>
-                                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteUserModal" 
-                                            data-id="{{ user.id }}" data-name="{{ user.username }}" data-bs-toggle="tooltip" title="Delete User">
+                                    <button type="button" class="btn btn-outline-danger delete-user-btn" data-bs-toggle="modal" data-bs-target="#deleteUserModal" 
+                                            data-id="{{ user.id }}" data-name="{{ user.username }}" title="Delete User">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </div>
@@ -283,8 +283,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Initialize tooltips
-    var tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-    var tooltipList = Array.from(tooltipTriggerList).map(function (tooltipTriggerEl) {
+    const tooltipTriggerList = document.querySelectorAll('[title]');
+    const tooltipList = Array.from(tooltipTriggerList).map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
 });
