@@ -59,10 +59,11 @@ class MongoDB:
                 serverSelectionTimeoutMS=5000,
                 connectTimeoutMS=10000,
                 socketTimeoutMS=45000,
-                maxPoolSize=50,  # Connection pool size
+                maxPoolSize=50,  # Make sure there's a comma here
                 waitQueueTimeoutMS=2500,
                 retryWrites=True,
-                retryReads=True
+                retryReads=True,  # Make sure there's no comma after the last parameter
+                tz_aware=True
             )
             # Ping the server to test connection
             self.client.admin.command('ping')

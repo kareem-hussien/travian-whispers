@@ -8,12 +8,41 @@ from flask import (
     url_for, flash, session, current_app, jsonify
 )
 from bson import ObjectId
-
 from web.utils.decorators import admin_required
 from database.models.user import User
 from database.models.subscription import SubscriptionPlan
 from database.models.transaction import Transaction
-
+def format_mongodb_date(date_field, format='%Y-%m-%d'):
+    """
+    Format a date field that could be either a datetime object or a MongoDB date dictionary.
+    
+    Args:
+        date_field: A datetime object or MongoDB date dictionary
+        format: The desired date format string
+        
+    Returns:
+        str: Formatted date string
+    """
+    if isinstance(date_field, dict) and "$date" in date_field:
+        # Handle MongoDB date dictionary
+        date_str = date_field["$date"]
+        # If it's an ISO format string, we can parse it
+        if 'T' in date_str:
+            try:
+                from datetime import datetime
+                dt = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+                return dt.strftime(format)
+            except:
+                # If parsing fails, just return the date part
+                return date_str.split('T')[0]
+        return date_str
+    elif hasattr(date_field, 'strftime'):
+        # Handle datetime object
+        return date_field.strftime(format)
+    else:
+        # Default fallback
+        return str(date_field)
+    
 # Initialize logger
 logger = logging.getLogger(__name__)
 
@@ -128,7 +157,7 @@ def transactions():
             'user': username,
             'plan': plan_name,
             'amount': f"${tx['amount']:.2f}",
-            'date': tx["createdAt"].strftime('%Y-%m-%d'),
+            'date': tx["createdAt"]["$date"].split('T')[0] if isinstance(tx["createdAt"], dict) and "$date" in tx["createdAt"] else tx["createdAt"].strftime('%Y-%m-%d'),
             'status': tx["status"]
         })
     
@@ -203,19 +232,19 @@ def transaction_details(transaction_id):
         'user_email': email,
         'plan': plan_name,
         'amount': f"${tx['amount']:.2f}",
-        'date': tx["createdAt"].strftime('%Y-%m-%d %H:%M:%S'),
+        'date': tx["createdAt"]["$date"].split('T')[0] if isinstance(tx["createdAt"], dict) and "$date" in tx["createdAt"] else tx["createdAt"].strftime('%Y-%m-%d'),
         'status': tx["status"],
         'payment_method': tx.get("paymentMethod", "PayPal"),
         'payment_id': tx.get("paymentId", ""),
         'billing_period': tx.get("billingPeriod", "monthly"),
-        'subscription_start': start_date_str,
-        'subscription_end': end_date_str,
+        'subscription_start': format_mongodb_date(user["subscription"].get("startDate")) if user["subscription"].get("startDate") else "N/A",
+        'subscription_end': format_mongodb_date(user["subscription"].get("endDate")) if user["subscription"].get("endDate") else "N/A",
         'gateway_response': {
             'transaction_id': tx.get("paymentId", ""),
             'payer_id': 'PAYER123456',  # Mock data
             'payer_email': email,
             'payment_status': tx["status"].upper(),
-            'payment_time': tx["createdAt"].strftime('%Y-%m-%dT%H:%M:%SZ'),
+            'payment_time': format_mongodb_date(tx["createdAt"], '%Y-%m-%dT%H:%M:%SZ'),
             'currency': 'USD',
             'fee': '1.17'  # Mock data
         }
@@ -223,11 +252,11 @@ def transaction_details(transaction_id):
     
     # Render transaction details template
     return render_template(
-        'admin/transaction_details.html',
-        transaction=transaction,
-        current_user=current_user,
-        title='Transaction Details'
-    )
+    'admin/transaction_details.html',
+    transaction=transaction,
+    current_user=current_user,
+    title='Transaction Details'
+)
 
 def update_transaction_status(transaction_id):
     """Update transaction status."""

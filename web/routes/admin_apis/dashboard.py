@@ -197,7 +197,7 @@ def dashboard():
             "username": username,
             "plan": plan_name,
             "amount": tx["amount"],
-            "date": tx["createdAt"].strftime('%Y-%m-%d'),
+            "date": tx["createdAt"]["$date"].split('T')[0] if isinstance(tx["createdAt"], dict) and "$date" in tx["createdAt"] else tx["createdAt"].strftime('%Y-%m-%d'),
             "status": tx["status"].capitalize(),
             "status_class": status_class
         })
