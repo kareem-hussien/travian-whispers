@@ -28,23 +28,23 @@
                 <label for="level" class="form-label">Log Level</label>
                 <select class="form-select" id="level" name="level">
                     <option value="">All Levels</option>
-                    <option value="info" {% if request.args.get('level') == 'info' %}selected{% endif %}>INFO</option>
-                    <option value="warning" {% if request.args.get('level') == 'warning' %}selected{% endif %}>WARNING</option>
-                    <option value="error" {% if request.args.get('level') == 'error' %}selected{% endif %}>ERROR</option>
-                    <option value="debug" {% if request.args.get('level') == 'debug' %}selected{% endif %}>DEBUG</option>
+                    <option value="info" {% if filters.level == 'info' %}selected{% endif %}>INFO</option>
+                    <option value="warning" {% if filters.level == 'warning' %}selected{% endif %}>WARNING</option>
+                    <option value="error" {% if filters.level == 'error' %}selected{% endif %}>ERROR</option>
+                    <option value="debug" {% if filters.level == 'debug' %}selected{% endif %}>DEBUG</option>
                 </select>
             </div>
             <div class="col-md-2">
                 <label for="user" class="form-label">User</label>
-                <input type="text" class="form-control" id="user" name="user" placeholder="Filter by user" value="{{ request.args.get('user', '') }}">
+                <input type="text" class="form-control" id="user" name="user" placeholder="Filter by user" value="{{ filters.user|default('') }}">
             </div>
             <div class="col-md-3">
-                <label for="dateFrom" class="form-label">Date From</label>
-                <input type="date" class="form-control" id="dateFrom" name="date_from" value="{{ request.args.get('date_from', '') }}">
+                <label for="date_from" class="form-label">Date From</label>
+                <input type="date" class="form-control" id="date_from" name="date_from" value="{{ filters.date_from|default('') }}">
             </div>
             <div class="col-md-3">
-                <label for="dateTo" class="form-label">Date To</label>
-                <input type="date" class="form-control" id="dateTo" name="date_to" value="{{ request.args.get('date_to', '') }}">
+                <label for="date_to" class="form-label">Date To</label>
+                <input type="date" class="form-control" id="date_to" name="date_to" value="{{ filters.date_to|default('') }}">
             </div>
             <div class="col-md-2 d-flex align-items-end">
                 <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
@@ -61,7 +61,7 @@
             icon="journal-text",
             icon_bg="bg-primary-light",
             title="Total Logs",
-            value=(log_stats.total if log_stats is defined else 0)
+            value=log_stats.total|default(0)
         %}
             {% include 'admin/components/admin-stat-card.html' %}
         {% endwith %}
@@ -116,21 +116,17 @@
                         <th>User</th>
                         <th>Action</th>
                         <th>IP Address</th>
-                        <th>Details</th>
+                        <th class="text-truncate" style="max-width: 250px;">Details</th>
                         <th class="text-end">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
+                    {% if logs and logs|length > 0 %}
                     {% for log in logs %}
                     <tr>
-                        <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') if log.timestamp else 'N/A' }}</td>
+                        <td>{{ log.timestamp }}</td>
                         <td>
-                            <span class="badge 
-                                {% if log.level == 'INFO' %}bg-info
-                                {% elif log.level == 'WARNING' %}bg-warning
-                                {% elif log.level == 'ERROR' %}bg-danger
-                                {% elif log.level == 'DEBUG' %}bg-secondary
-                                {% else %}bg-primary{% endif %}">
+                            <span class="badge {{ log.status_class }}">
                                 {{ log.level }}
                             </span>
                         </td>
@@ -140,16 +136,17 @@
                         <td class="text-truncate" style="max-width: 250px;">{{ log.details }}</td>
                         <td class="text-end">
                             <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#logDetailModal" 
-                                    data-log-id="{{ log.id }}" data-log-details="{{ log.details }}">
+                                    data-log-id="{{ log.id }}">
                                 <i class="bi bi-eye"></i>
                             </button>
                         </td>
                     </tr>
+                    {% endfor %}
                     {% else %}
                     <tr>
                         <td colspan="7" class="text-center py-4">No logs found matching your criteria.</td>
                     </tr>
-                    {% endfor %}
+                    {% endif %}
                 </tbody>
             </table>
         </div>
@@ -158,20 +155,20 @@
         {% if logs and logs|length > 0 %}
         <nav aria-label="Logs pagination" class="mt-4">
             <ul class="pagination justify-content-center">
-                <li class="page-item {% if current_page|default(1) == 1 %}disabled{% endif %}">
-                    <a class="page-link" href="?page={{ current_page|default(1) - 1 }}{% if request.args.get('level') %}&level={{ request.args.get('level') }}{% endif %}{% if request.args.get('user') %}&user={{ request.args.get('user') }}{% endif %}" tabindex="-1">Previous</a>
+                <li class="page-item {% if pagination.page == 1 %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.logs', page=pagination.page-1, level=filters.level, user=filters.user, date_from=filters.date_from, date_to=filters.date_to) }}" tabindex="-1" {% if pagination.page == 1 %}aria-disabled="true"{% endif %}>Previous</a>
                 </li>
                 
-                {% for page in range(1, (total_pages|default(1)) + 1) %}
-                    {% if page >= (current_page|default(1)) - 2 and page <= (current_page|default(1)) + 2 %}
-                        <li class="page-item {% if page == current_page|default(1) %}active{% endif %}">
-                            <a class="page-link" href="?page={{ page }}{% if request.args.get('level') %}&level={{ request.args.get('level') }}{% endif %}{% if request.args.get('user') %}&user={{ request.args.get('user') }}{% endif %}">{{ page }}</a>
+                {% for page in range(1, pagination.total_pages + 1) %}
+                    {% if page >= pagination.page - 2 and page <= pagination.page + 2 %}
+                        <li class="page-item {% if page == pagination.page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('admin.logs', page=page, level=filters.level, user=filters.user, date_from=filters.date_from, date_to=filters.date_to) }}">{{ page }}</a>
                         </li>
                     {% endif %}
                 {% endfor %}
                 
-                <li class="page-item {% if current_page|default(1) == total_pages|default(1) %}disabled{% endif %}">
-                    <a class="page-link" href="?page={{ current_page|default(1) + 1 }}{% if request.args.get('level') %}&level={{ request.args.get('level') }}{% endif %}{% if request.args.get('user') %}&user={{ request.args.get('user') }}{% endif %}">Next</a>
+                <li class="page-item {% if pagination.page == pagination.total_pages %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.logs', page=pagination.page+1, level=filters.level, user=filters.user, date_from=filters.date_from, date_to=filters.date_to) }}" {% if pagination.page == pagination.total_pages %}aria-disabled="true"{% endif %}>Next</a>
                 </li>
             </ul>
         </nav>
@@ -187,6 +184,56 @@
     <div class="card-body">
         <div class="chart-container" style="position: relative; height: 300px;">
             <canvas id="logTimelineChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Log Maintenance Card -->
+<div class="dashboard-card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0">Log Maintenance</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card bg-light mb-3">
+                    <div class="card-body">
+                        <h6 class="card-title">Clear Old Logs</h6>
+                        <p class="card-text">Remove logs older than the specified retention period to save database space.</p>
+                        <form action="{{ url_for('admin.clear_logs') }}" method="post" class="d-flex align-items-center">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <div class="input-group me-2">
+                                <input type="number" class="form-control" id="retention_days" name="retention_days" value="30" min="1" max="365">
+                                <span class="input-group-text">days</span>
+                            </div>
+                            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete old logs? This action cannot be undone.')">
+                                <i class="bi bi-trash me-1"></i> Clear
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h6 class="card-title">Log Storage</h6>
+                        <p class="mb-2">Managing log storage helps maintain application performance.</p>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span>Database Log Collection Size:</span>
+                            <span class="badge bg-primary">{{ log_stats.total|default(0) }} entries</span>
+                        </div>
+                        <div class="progress mb-3" style="height: 10px;">
+                            <div class="progress-bar {{ 'bg-success' if log_stats.total < 10000 else 'bg-warning' if log_stats.total < 50000 else 'bg-danger' }}" 
+                                 role="progressbar" 
+                                 style="width: {{ (log_stats.total / 100000 * 100)|default(0)|round|int }}%;" 
+                                 aria-valuenow="{{ log_stats.total|default(0) }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100000"></div>
+                        </div>
+                        <small class="text-muted">Recommended: Keep under 50,000 entries for optimal performance</small>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -301,39 +348,45 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Handle log detail modal
-    // Handle log detail modal
-const logDetailModal = document.getElementById('logDetailModal');
-if (logDetailModal) {
-    logDetailModal.addEventListener('show.bs.modal', function(event) {
-        const button = event.relatedTarget;
-        const logId = button.getAttribute('data-log-id');
-        
-        // Fetch log details from API
-        fetch(`/admin/api/logs/${logId}`, {
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token() }}'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                const log = data.log;
-                document.getElementById('modalLogId').textContent = log.id;
-                document.getElementById('modalLogTimestamp').textContent = log.timestamp;
-                document.getElementById('modalLogUser').textContent = log.user;
-                document.getElementById('modalLogDetails').textContent = log.details;
-                document.getElementById('modalLogStackTrace').textContent = log.stack_trace || 'No stack trace available';
-            } else {
+    const logDetailModal = document.getElementById('logDetailModal');
+    if (logDetailModal) {
+        logDetailModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const logId = button.getAttribute('data-log-id');
+            
+            // Show loading state
+            document.getElementById('modalLogId').textContent = 'Loading...';
+            document.getElementById('modalLogTimestamp').textContent = 'Loading...';
+            document.getElementById('modalLogUser').textContent = 'Loading...';
+            document.getElementById('modalLogDetails').textContent = 'Loading...';
+            document.getElementById('modalLogStackTrace').textContent = 'Loading...';
+            
+            // Fetch log details from API
+            fetch(`/admin/api/logs/${logId}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const log = data.log;
+                    document.getElementById('modalLogId').textContent = log.id;
+                    document.getElementById('modalLogTimestamp').textContent = log.timestamp;
+                    document.getElementById('modalLogUser').textContent = log.user;
+                    document.getElementById('modalLogDetails').textContent = log.details || log.message;
+                    document.getElementById('modalLogStackTrace').textContent = log.stack_trace || 'No stack trace available';
+                } else {
+                    document.getElementById('modalLogDetails').textContent = 'Error loading log details';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
                 document.getElementById('modalLogDetails').textContent = 'Error loading log details';
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            document.getElementById('modalLogDetails').textContent = 'Error loading log details';
+            });
         });
-    });
-}
+    }
     
     // Handle download logs button
     const downloadLogsBtn = document.getElementById('downloadLogsBtn');
@@ -361,20 +414,14 @@ if (logDetailModal) {
     // Initialize log timeline chart
     const logTimelineCtx = document.getElementById('logTimelineChart');
     if (logTimelineCtx) {
-        // Sample data - in a real app, this would come from the backend
-        const labels = ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00'];
-        const infoData = [5, 8, 4, 12, 20, 15, 10, 7];
-        const warningData = [2, 1, 0, 3, 5, 2, 1, 0];
-        const errorData = [0, 0, 1, 0, 2, 1, 0, 0];
-        
         new Chart(logTimelineCtx, {
             type: 'line',
             data: {
-                labels: labels,
+                labels: {{ chart_data.labels|tojson }},
                 datasets: [
                     {
                         label: 'INFO',
-                        data: infoData,
+                        data: {{ chart_data.info_data|tojson }},
                         borderColor: 'rgba(13, 110, 253, 1)',
                         backgroundColor: 'rgba(13, 110, 253, 0.1)',
                         pointBackgroundColor: 'rgba(13, 110, 253, 1)',
@@ -383,7 +430,7 @@ if (logDetailModal) {
                     },
                     {
                         label: 'WARNING',
-                        data: warningData,
+                        data: {{ chart_data.warning_data|tojson }},
                         borderColor: 'rgba(255, 193, 7, 1)',
                         backgroundColor: 'rgba(255, 193, 7, 0.1)',
                         pointBackgroundColor: 'rgba(255, 193, 7, 1)',
@@ -392,7 +439,7 @@ if (logDetailModal) {
                     },
                     {
                         label: 'ERROR',
-                        data: errorData,
+                        data: {{ chart_data.error_data|tojson }},
                         borderColor: 'rgba(220, 53, 69, 1)',
                         backgroundColor: 'rgba(220, 53, 69, 0.1)',
                         pointBackgroundColor: 'rgba(220, 53, 69, 1)',

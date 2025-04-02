@@ -1,328 +1,209 @@
 {% extends 'admin/components/admin-layout.html' %}
 
-{% block title %}Transaction Management{% endblock %}
+{% block title %}Transaction History{% endblock %}
 
 {% block breadcrumb %}
-<li class="breadcrumb-item active" aria-current="page">Transactions</li>
+<li class="breadcrumb-item active" aria-current="page">Transaction History</li>
 {% endblock %}
 
 {% block content %}
 <!-- Page Header -->
 {% with 
-    title="Transaction Management",
-    subtitle="View and manage payment transactions",
+    title="Transaction History",
+    subtitle="View and manage all payment transactions",
     show_buttons=false
 %}
     {% include 'admin/components/admin-page-header.html' %}
 {% endwith %}
 
-<!-- Summary Cards Row -->
+<!-- Search and Filters -->
+<div class="dashboard-card mb-4">
+    <form method="get" action="{{ url_for('admin.transactions') }}" class="row g-3">
+        <div class="col-md-2">
+            <label for="status" class="form-label">Status</label>
+            <select class="form-select" id="status" name="status">
+                <option value="">All Statuses</option>
+                <option value="completed" {% if request.args.get('status') == 'completed' %}selected{% endif %}>Completed</option>
+                <option value="pending" {% if request.args.get('status') == 'pending' %}selected{% endif %}>Pending</option>
+                <option value="failed" {% if request.args.get('status') == 'failed' %}selected{% endif %}>Failed</option>
+                <option value="refunded" {% if request.args.get('status') == 'refunded' %}selected{% endif %}>Refunded</option>
+            </select>
+        </div>
+        
+        <div class="col-md-2">
+            <label for="plan" class="form-label">Plan</label>
+            <select class="form-select" id="plan" name="plan">
+                <option value="">All Plans</option>
+                {% for plan in plans %}
+                <option value="{{ plan.name }}" {% if request.args.get('plan') == plan.name %}selected{% endif %}>{{ plan.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="col-md-3">
+            <label for="date_from" class="form-label">Date From</label>
+            <input type="date" class="form-control" id="date_from" name="date_from" value="{{ request.args.get('date_from', '') }}">
+        </div>
+        
+        <div class="col-md-3">
+            <label for="date_to" class="form-label">Date To</label>
+            <input type="date" class="form-control" id="date_to" name="date_to" value="{{ request.args.get('date_to', '') }}">
+        </div>
+        
+        <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-filter me-2"></i> Apply Filters
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Transactions Stats Cards -->
 <div class="row mb-4">
-    <!-- Total Transactions Card -->
-    <div class="col-xl-3 col-md-6 mb-3">
+    <!-- Total Revenue Card -->
+    <div class="col-lg-3 col-md-6 mb-3">
         {% with 
             icon="cash-stack",
-            icon_bg="bg-primary-light",
-            title="Total Transactions",
-            value=transactions_stats.total|default(0),
-            subtitle="All time"
-        %}
-            {% include 'admin/components/admin-stat-card.html' %}
-        {% endwith %}
-    </div>
-
-    <!-- Total Revenue Card -->
-    <div class="col-xl-3 col-md-6 mb-3">
-        {% with 
-            icon="currency-dollar",
             icon_bg="bg-success-light",
             title="Total Revenue",
-            value="$" + transactions_stats.revenue|string|default('0.00'),
-            subtitle="All time"
+            value=stats.total_revenue|default('$0.00')
         %}
             {% include 'admin/components/admin-stat-card.html' %}
-        {% endwith %}
-    </div>
-
-    <!-- Recent Transactions Card -->
-    <div class="col-xl-3 col-md-6 mb-3">
-        {% with 
-            icon="clock-history",
-            icon_bg="bg-info-light",
-            title="Recent Transactions",
-            value=transactions_stats.recent|default(0),
-            subtitle="Past 7 days"
-        %}
-            {% include 'admin/components/admin-stat-card.html' %}
-        {% endwith %}
-    </div>
-
-    <!-- Pending Transactions Card -->
-    <div class="col-xl-3 col-md-6 mb-3">
-        {% with 
-            icon="hourglass-split",
-            icon_bg="bg-warning-light",
-            title="Pending Transactions",
-            value=transactions_stats.pending|default(0),
-            subtitle="Awaiting processing"
-        %}
-            {% include 'admin/components/admin-stat-card.html' %}
-        {% endwith %}
-    </div>
-</div>
-
-<!-- Search and Filters -->
-{% with 
-    search_placeholder="Search by ID, username or email...",
-    show_search=true,
-    filters=[
-        {
-            'name': 'status',
-            'label': 'Status',
-            'options': [
-                {'value': 'completed', 'text': 'Completed'},
-                {'value': 'pending', 'text': 'Pending'},
-                {'value': 'failed', 'text': 'Failed'},
-                {'value': 'refunded', 'text': 'Refunded'}
-            ]
-        },
-        {
-            'name': 'payment_method',
-            'label': 'Payment Method',
-            'options': [
-                {'value': 'paypal', 'text': 'PayPal'},
-                {'value': 'credit_card', 'text': 'Credit Card'},
-                {'value': 'manual', 'text': 'Manual'}
-            ]
-        },
-        {
-            'name': 'plan',
-            'label': 'Subscription Plan',
-            'options': [
-                {'value': 'basic', 'text': 'Basic Plan'},
-                {'value': 'standard', 'text': 'Standard Plan'},
-                {'value': 'premium', 'text': 'Premium Plan'}
-            ]
-        }
-    ],
-    date_filter=true,
-    date_filter_label="Transaction Date",
-    search_value=request.args.get('q', ''),
-    filter_values={
-        'status': request.args.get('status', ''),
-        'payment_method': request.args.get('payment_method', ''),
-        'plan': request.args.get('plan', '')
-    },
-    date_from=request.args.get('date_from', ''),
-    date_to=request.args.get('date_to', '')
-%}
-    {% include 'admin/components/admin-search-filter.html' %}
-{% endwith %}
-
-<!-- Transactions Table -->
-<div class="dashboard-card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Transactions</h5>
-        <div class="btn-group">
-            <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="bi bi-download me-1"></i> Export
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end">
-                <li><a class="dropdown-item" href="{{ url_for('admin.export_transactions', format='csv') }}">CSV</a></li>
-                <li><a class="dropdown-item" href="{{ url_for('admin.export_transactions', format='excel') }}">Excel</a></li>
-                <li><a class="dropdown-item" href="{{ url_for('admin.export_transactions', format='pdf') }}">PDF</a></li>
-            </ul>
-        </div>
-    </div>
-    <div class="card-body">
-        {% if transactions and transactions|length > 0 %}
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>User</th>
-                            <th>Plan</th>
-                            <th>Amount</th>
-                            <th>Payment Method</th>
-                            <th>Date</th>
-                            <th>Status</th>
-                            <th class="text-end">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for tx in transactions %}
-                            <tr>
-                                <td><a href="{{ url_for('admin.transaction_details', transaction_id=tx.id) }}" class="text-decoration-none">#{{ tx.id }}</a></td>
-                                <td>{{ tx.user }}</td>
-                                <td>{{ tx.plan }}</td>
-                                <td>{{ tx.amount }}</td>
-                                <td>
-                                    {% if tx.payment_method == 'paypal' %}
-                                        <span class="badge bg-info">PayPal</span>
-                                    {% elif tx.payment_method == 'credit_card' %}
-                                        <span class="badge bg-secondary">Credit Card</span>
-                                    {% elif tx.payment_method == 'manual' %}
-                                        <span class="badge bg-dark">Manual</span>
-                                    {% else %}
-                                        <span class="badge bg-light text-dark">{{ tx.payment_method }}</span>
-                                    {% endif %}
-                                </td>
-                                <td>{{ tx.date }}</td>
-                                <td>
-                                    {% if tx.status == 'completed' %}
-                                        <span class="badge bg-success">Completed</span>
-                                    {% elif tx.status == 'pending' %}
-                                        <span class="badge bg-warning">Pending</span>
-                                    {% elif tx.status == 'failed' %}
-                                        <span class="badge bg-danger">Failed</span>
-                                    {% elif tx.status == 'refunded' %}
-                                        <span class="badge bg-info">Refunded</span>
-                                    {% else %}
-                                        <span class="badge bg-secondary">{{ tx.status }}</span>
-                                    {% endif %}
-                                </td>
-                                <td class="text-end">
-                                    <div class="btn-group btn-group-sm">
-                                        <a href="{{ url_for('admin.transaction_details', transaction_id=tx.id) }}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="View Details">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="Send Receipt" 
-                                                onclick="sendReceipt('{{ tx.id }}')">
-                                            <i class="bi bi-envelope"></i>
-                                        </button>
-                                        {% if tx.status == 'pending' %}
-                                            <button type="button" class="btn btn-outline-success" data-bs-toggle="tooltip" title="Mark as Completed"
-                                                    data-bs-toggle="modal" data-bs-target="#updateStatusModal" 
-                                                    data-id="{{ tx.id }}" data-status="completed">
-                                                <i class="bi bi-check-circle"></i>
-                                            </button>
-                                        {% endif %}
-                                    </div>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            
-            <!-- Pagination -->
-            <nav aria-label="Transaction pagination" class="mt-4">
-                <ul class="pagination justify-content-center">
-                    <li class="page-item {% if current_page|default(1) == 1 %}disabled{% endif %}">
-                        <a class="page-link" href="?page={{ current_page|default(1) - 1 }}{% if request.args.get('q') %}&q={{ request.args.get('q') }}{% endif %}{% if request.args.get('status') %}&status={{ request.args.get('status') }}{% endif %}" tabindex="-1" aria-disabled="true">Previous</a>
-                    </li>
-                    
-                    {% for page in range(1, (total_pages|default(1)) + 1) %}
-                        {% if page >= (current_page|default(1)) - 2 and page <= (current_page|default(1)) + 2 %}
-                            <li class="page-item {% if page == current_page|default(1) %}active{% endif %}">
-                                <a class="page-link" href="?page={{ page }}{% if request.args.get('q') %}&q={{ request.args.get('q') }}{% endif %}{% if request.args.get('status') %}&status={{ request.args.get('status') }}{% endif %}">{{ page }}</a>
-                            </li>
-                        {% endif %}
-                    {% endfor %}
-                    
-                    <li class="page-item {% if current_page|default(1) == total_pages|default(1) %}disabled{% endif %}">
-                        <a class="page-link" href="?page={{ current_page|default(1) + 1 }}{% if request.args.get('q') %}&q={{ request.args.get('q') }}{% endif %}{% if request.args.get('status') %}&status={{ request.args.get('status') }}{% endif %}">Next</a>
-                    </li>
-                </ul>
-            </nav>
-        {% else %}
-            <div class="alert alert-info">
-                <i class="bi bi-info-circle-fill me-2"></i>
-                No transactions found matching your criteria.
-            </div>
-        {% endif %}
-    </div>
-</div>
-
-<!-- Revenue Chart Card -->
-<div class="row mt-4">
-    <div class="col-lg-8 mb-4">
-        {% with 
-            chart_id="revenueChart",
-            chart_title="Monthly Revenue",
-            chart_subtitle="Past 6 months",
-            chart_height="300px"
-        %}
-            <div class="dashboard-card">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div>
-                        <h5 class="mb-0">{{ chart_title }}</h5>
-                        {% if chart_subtitle %}
-                        <p class="text-muted mb-0 small">{{ chart_subtitle }}</p>
-                        {% endif %}
-                    </div>
-                    <div class="chart-legend" id="{{ chart_id }}Legend"></div>
-                </div>
-                
-                <div class="chart-container" style="position: relative; height: {{ chart_height }};">
-                    <canvas id="{{ chart_id }}"></canvas>
-                </div>
-            </div>
         {% endwith %}
     </div>
     
-    <div class="col-lg-4 mb-4">
+    <!-- Transactions Card -->
+    <div class="col-lg-3 col-md-6 mb-3">
         {% with 
-            chart_id="paymentMethodChart",
-            chart_title="Payment Methods",
-            chart_subtitle="Transaction distribution",
-            chart_height="300px"
+            icon="credit-card",
+            icon_bg="bg-primary-light",
+            title="Transactions",
+            value=stats.total_transactions|default(0)
         %}
-            <div class="dashboard-card">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div>
-                        <h5 class="mb-0">{{ chart_title }}</h5>
-                        {% if chart_subtitle %}
-                        <p class="text-muted mb-0 small">{{ chart_subtitle }}</p>
-                        {% endif %}
-                    </div>
-                </div>
-                
-                <div class="chart-container" style="position: relative; height: {{ chart_height }};">
-                    <canvas id="{{ chart_id }}"></canvas>
-                </div>
-            </div>
+            {% include 'admin/components/admin-stat-card.html' %}
+        {% endwith %}
+    </div>
+    
+    <!-- Completed Card -->
+    <div class="col-lg-3 col-md-6 mb-3">
+        {% with 
+            icon="check-circle",
+            icon_bg="bg-success-light",
+            title="Completed",
+            value=stats.completed|default(0)
+        %}
+            {% include 'admin/components/admin-stat-card.html' %}
+        {% endwith %}
+    </div>
+    
+    <!-- Pending Card -->
+    <div class="col-lg-3 col-md-6 mb-3">
+        {% with 
+            icon="hourglass-split",
+            icon_bg="bg-warning-light",
+            title="Pending",
+            value=stats.pending|default(0)
+        %}
+            {% include 'admin/components/admin-stat-card.html' %}
         {% endwith %}
     </div>
 </div>
 
-<!-- Subscription Revenue Breakdown -->
-<div class="dashboard-card mt-2">
-    <div class="card-header">
-        <h5 class="mb-0">Revenue by Subscription Plan</h5>
-    </div>
+<!-- Transaction Table -->
+<div class="dashboard-card">
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table">
+            <table class="table table-hover">
                 <thead>
                     <tr>
+                        <th>ID</th>
+                        <th>User</th>
                         <th>Plan</th>
-                        <th>Active Subscribers</th>
-                        <th>Monthly Revenue</th>
-                        <th>Average Subscription Duration</th>
-                        <th>Conversion Rate</th>
+                        <th>Amount</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for plan in subscription_stats %}
-                    <tr>
-                        <td>{{ plan.name }}</td>
-                        <td>{{ plan.subscribers }}</td>
-                        <td>${{ plan.monthly_revenue }}</td>
-                        <td>{{ plan.avg_duration }} days</td>
-                        <td>{{ plan.conversion_rate }}%</td>
-                    </tr>
-                    {% endfor %}
+                    {% if transactions and transactions|length > 0 %}
+                        {% for tx in transactions %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('admin.transaction_details', transaction_id=tx.id) }}" class="text-decoration-none">
+                                    #{{ tx.id }}
+                                </a>
+                            </td>
+                            <td>{{ tx.user }}</td>
+                            <td>{{ tx.plan }}</td>
+                            <td>{{ tx.amount }}</td>
+                            <td>{{ tx.date }}</td>
+                            <td>
+                                <span class="badge 
+                                    {% if tx.status == 'completed' %}bg-success
+                                    {% elif tx.status == 'pending' %}bg-warning
+                                    {% elif tx.status == 'failed' %}bg-danger
+                                    {% elif tx.status == 'refunded' %}bg-secondary
+                                    {% else %}bg-info{% endif %}">
+                                    {{ tx.status|title }}
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('admin.transaction_details', transaction_id=tx.id) }}" class="btn btn-outline-primary" title="View Details">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    {% if tx.status == 'pending' %}
+                                    <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#updateStatusModal" 
+                                            data-id="{{ tx.id }}" data-status="completed" title="Mark as Completed">
+                                        <i class="bi bi-check-circle"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4">
+                                <i class="bi bi-search mb-3" style="font-size: 2rem;"></i>
+                                <p>No transactions found matching your criteria.</p>
+                                <a href="{{ url_for('admin.transactions') }}" class="btn btn-sm btn-outline-primary">Reset Filters</a>
+                            </td>
+                        </tr>
+                    {% endif %}
                 </tbody>
             </table>
         </div>
+        
+        {% if transactions and transactions|length > 0 and pagination %}
+        <!-- Pagination -->
+        <nav aria-label="Transaction pagination" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item {% if pagination.page|default(1) == 1 %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.transactions', page=pagination.page-1, status=request.args.get('status'), plan=request.args.get('plan'), date_from=request.args.get('date_from'), date_to=request.args.get('date_to')) }}" tabindex="-1" {% if pagination.page|default(1) == 1 %}aria-disabled="true"{% endif %}>Previous</a>
+                </li>
+                
+                {% for page in range(1, (pagination.total_pages|default(1)) + 1) %}
+                    {% if page >= (pagination.page|default(1)) - 2 and page <= (pagination.page|default(1)) + 2 %}
+                        <li class="page-item {% if page == pagination.page|default(1) %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('admin.transactions', page=page, status=request.args.get('status'), plan=request.args.get('plan'), date_from=request.args.get('date_from'), date_to=request.args.get('date_to')) }}">{{ page }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                <li class="page-item {% if pagination.page|default(1) >= pagination.total_pages|default(1) %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.transactions', page=pagination.page+1, status=request.args.get('status'), plan=request.args.get('plan'), date_from=request.args.get('date_from'), date_to=request.args.get('date_to')) }}" {% if pagination.page|default(1) >= pagination.total_pages|default(1) %}aria-disabled="true"{% endif %}>Next</a>
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
 
 {% block modals %}
-<!-- Update Transaction Status Modal -->
+<!-- Update Status Modal -->
 <div class="modal fade" id="updateStatusModal" tabindex="-1" aria-labelledby="updateStatusModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -330,29 +211,22 @@
                 <h5 class="modal-title" id="updateStatusModalLabel">Update Transaction Status</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="updateStatusForm" action="{{ url_for('admin.update_transaction_status', transaction_id='') }}" method="post">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <form id="updateStatusForm" method="POST" action="">
                 <div class="modal-body">
-                    <p>You are about to change the status of transaction <strong id="transactionId"></strong>.</p>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="status" id="newStatus" value="">
                     
-                    <div class="mb-3">
-                        <label for="newStatus" class="form-label">New Status</label>
-                        <select class="form-select" id="newStatus" name="status" required>
-                            <option value="completed">Completed</option>
-                            <option value="pending">Pending</option>
-                            <option value="failed">Failed</option>
-                            <option value="refunded">Refunded</option>
-                        </select>
+                    <div class="text-center mb-4">
+                        <i class="bi bi-question-circle-fill text-warning" style="font-size: 3rem;"></i>
                     </div>
                     
-                    <div class="mb-3">
-                        <label for="statusNotes" class="form-label">Admin Notes (Optional)</label>
-                        <textarea class="form-control" id="statusNotes" name="notes" rows="3" placeholder="Enter notes about this status change"></textarea>
-                    </div>
+                    <p>Are you sure you want to update this transaction's status?</p>
+                    <p class="mb-0">Transaction ID: <strong id="txIdDisplay"></strong></p>
+                    <p>New Status: <span class="badge bg-success" id="statusDisplay">Completed</span></p>
                     
-                    <div class="alert alert-warning">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                        <strong>Note:</strong> Changing transaction status may affect user subscriptions.
+                    <div class="alert alert-info mt-3">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <span id="statusInfoText">Marking a transaction as completed will also activate the user's subscription.</span>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -368,113 +242,49 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize update status modal
+    // Handle update status modal
     const updateStatusModal = document.getElementById('updateStatusModal');
     if (updateStatusModal) {
         updateStatusModal.addEventListener('show.bs.modal', function(event) {
+            // Button that triggered the modal
             const button = event.relatedTarget;
-            const transactionId = button.getAttribute('data-id');
-            const status = button.getAttribute('data-status');
             
-            document.getElementById('transactionId').textContent = transactionId;
-            document.getElementById('newStatus').value = status;
+            // Extract data from button
+            const txId = button.getAttribute('data-id');
+            const newStatus = button.getAttribute('data-status');
             
-            // Update form action
-            const form = document.getElementById('updateStatusForm');
-            form.action = "{{ url_for('admin.update_transaction_status', transaction_id='') }}" + transactionId;
+            // Update the form
+            document.getElementById('txIdDisplay').textContent = txId;
+            document.getElementById('newStatus').value = newStatus;
+            
+            // Update status badge and info text
+            const statusDisplay = document.getElementById('statusDisplay');
+            const statusInfoText = document.getElementById('statusInfoText');
+            
+            statusDisplay.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+            statusDisplay.className = 'badge';
+            
+            if (newStatus === 'completed') {
+                statusDisplay.classList.add('bg-success');
+                statusInfoText.textContent = 'Marking a transaction as completed will also activate the user\'s subscription.';
+            } else if (newStatus === 'failed') {
+                statusDisplay.classList.add('bg-danger');
+                statusInfoText.textContent = 'Marking a transaction as failed will prevent the user from accessing subscription features.';
+            } else if (newStatus === 'refunded') {
+                statusDisplay.classList.add('bg-secondary');
+                statusInfoText.textContent = 'Marking a transaction as refunded will cancel the user\'s subscription.';
+            }
+            
+            // Set the form action
+            document.getElementById('updateStatusForm').action = "{{ url_for('admin.update_transaction_status', transaction_id='') }}" + txId;
         });
     }
     
-    // Initialize charts
-    const revenueChart = document.getElementById('revenueChart');
-    if (revenueChart) {
-        const ctx = revenueChart.getContext('2d');
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                datasets: [{
-                    label: 'Monthly Revenue',
-                    data: [
-                        {{ monthly_revenue|default([1200, 1450, 1800, 1950, 2300, 2650])|join(', ') }}
-                    ],
-                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return '$' + value;
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
-    
-    // Payment methods chart
-    const paymentMethodChart = document.getElementById('paymentMethodChart');
-    if (paymentMethodChart) {
-        const ctx = paymentMethodChart.getContext('2d');
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['PayPal', 'Credit Card', 'Manual'],
-                datasets: [{
-                    data: [
-                        {{ payment_methods_data|default([65, 25, 10])|join(', ') }}
-                    ],
-                    backgroundColor: [
-                        'rgba(54, 162, 235, 0.7)',
-                        'rgba(255, 99, 132, 0.7)',
-                        'rgba(255, 159, 64, 0.7)'
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    }
-                }
-            }
-        });
-    }
-    
-    // Function to send receipt email
-    window.sendReceipt = function(transactionId) {
-        // In a real implementation, this would make an AJAX call to send a receipt
-        fetch(`{{ url_for('admin.send_receipt') }}?transaction_id=${transactionId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token() }}'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Receipt sent successfully!');
-            } else {
-                alert('Failed to send receipt: ' + data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while sending the receipt.');
-        });
-    };
+    // Initialize tooltips
+    const tooltipTriggerList = document.querySelectorAll('[title]');
+    const tooltipList = Array.from(tooltipTriggerList).map(tooltipTriggerEl => {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
 });
 </script>
 {% endblock %}

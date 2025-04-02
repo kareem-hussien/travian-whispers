@@ -29,11 +29,11 @@
         <div class="dashboard-card plan-card h-100">
             <div class="position-absolute top-0 end-0 p-3">
                 <div class="btn-group btn-group-sm">
-                    <a href="{{ url_for('admin.edit_plan', plan_id=plan.id) }}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Edit Plan">
+                    <a href="{{ url_for('admin.edit_plan', plan_id=plan._id) }}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Edit Plan">
                         <i class="bi bi-pencil"></i>
                     </a>
                     <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deletePlanModal" 
-                            data-id="{{ plan.id }}" data-name="{{ plan.name }}">
+                            data-id="{{ plan._id }}" data-plan-name="{{ plan.name }}">
                         <i class="bi bi-trash"></i>
                     </button>
                 </div>
@@ -79,7 +79,7 @@
             </ul>
             
             <div class="mt-auto">
-                <a href="{{ url_for('admin.edit_plan', plan_id=plan.id) }}" class="btn btn-outline-primary w-100">Edit Plan</a>
+                <a href="{{ url_for('admin.edit_plan', plan_id=plan._id) }}" class="btn btn-outline-primary w-100">Edit Plan</a>
             </div>
         </div>
     </div>

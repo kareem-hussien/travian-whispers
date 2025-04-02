@@ -252,7 +252,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form id="deleteUserForm" method="post" action="">
+                <form id="deleteUserForm" method="POST" action="">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-danger">Delete User</button>
                 </form>
@@ -278,7 +278,12 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Update the modal
             document.getElementById('deleteUserName').textContent = userName;
-            document.getElementById('deleteUserForm').action = "{{ url_for('admin.user_delete', user_id='') }}" + userId;
+            
+            // Set the form action with the user ID
+            const deleteForm = document.getElementById('deleteUserForm');
+            deleteForm.action = "{{ url_for('admin.user_delete', user_id='') }}" + userId;
+            
+            console.log("Delete form action set to:", deleteForm.action);
         });
     }
     
