@@ -397,65 +397,10 @@ def admin_refresh_stats():
         'message': 'Stats refreshed successfully'
     })
 
-
-@api_bp.route('/admin/create-backup', methods=['POST'])
-@api_error_handler
-@admin_required
-def admin_create_backup():
-    """API endpoint to create database backup."""
-    # Get current user for logging
-    user_model = User()
-    current_user = user_model.get_user_by_id(session['user_id'])
-    
-    # Get request data
-    data = request.get_json()
-    backup_type = data.get('backup_type', 'full')
-    compress_backup = data.get('compress_backup', True)
-    
-    # Import database backup function
-    from database.backup import create_backup
-    
-    # Create backup
-    success, backup_path = create_backup()
-    
-    if success and backup_path:
-        filename = backup_path.name
-        logger.info(f"Admin '{current_user['username']}' created backup: {filename}")
-        return jsonify({
-            'success': True,
-            'filename': filename,
-            'message': 'Backup created successfully'
-        })
-    else:
-        logger.warning(f"Admin '{current_user['username']}' failed to create backup")
-        return jsonify({
-            'success': False,
-            'message': 'Failed to create backup'
-        }), 500
-
-
-@api_bp.route('/admin/update-maintenance', methods=['POST'])
-@api_error_handler
-@admin_required
-def admin_update_maintenance():
-    """API endpoint to update maintenance mode settings."""
-    # Get current user for logging
-    user_model = User()
-    current_user = user_model.get_user_by_id(session['user_id'])
-    
-    # Get request data
-    data = request.get_json()
-    enabled = data.get('enabled', False)
-    message = data.get('message', '')
-    duration = data.get('duration', 'indefinite')
-    
-    # In a real implementation, this would save the settings to the database
-    logger.info(f"Admin '{current_user['username']}' updated maintenance mode: enabled={enabled}")
-    
-    return jsonify({
-        'success': True,
-        'message': 'Maintenance settings updated successfully'
-    })
+# NOTE: The following duplicate endpoints have been removed:
+# - /api/admin/create-backup (duplicates /admin/create-backup)
+# - /api/admin/update-maintenance (duplicates /admin/update-maintenance)
+# These functions are now handled in web/routes/admin_apis/maintenance.py
 
 
 @api_bp.route('/admin/user/<user_id>', methods=['GET'])
@@ -476,6 +421,22 @@ def admin_get_user(user_id):
             'message': 'User not found'
         }), 404
     
+    # Get subscription data
+    subscription_model = SubscriptionPlan()
+    plan_name = "None"
+    if user['subscription']['planId']:
+        plan = subscription_model.get_plan_by_id(user['subscription']['planId'])
+        if plan:
+            plan_name = plan['name']
+    
+    # Format dates for JSON serialization
+    start_date = None
+    end_date = None
+    if user['subscription'].get('startDate'):
+        start_date = user['subscription']['startDate'].strftime('%Y-%m-%d') if isinstance(user['subscription']['startDate'], datetime) else None
+    if user['subscription'].get('endDate'):
+        end_date = user['subscription']['endDate'].strftime('%Y-%m-%d') if isinstance(user['subscription']['endDate'], datetime) else None
+    
     # Prepare user data
     user_data = {
         'id': str(user['_id']),
@@ -483,12 +444,13 @@ def admin_get_user(user_id):
         'email': user['email'],
         'role': user['role'],
         'status': 'active' if user.get('isVerified', False) else 'inactive',
-        'createdAt': user['createdAt'],
+        'createdAt': user['createdAt'].strftime('%Y-%m-%d %H:%M:%S') if isinstance(user['createdAt'], datetime) else str(user['createdAt']),
         'subscription': {
             'status': user['subscription']['status'],
             'planId': str(user['subscription']['planId']) if user['subscription'].get('planId') else None,
-            'startDate': user['subscription'].get('startDate'),
-            'endDate': user['subscription'].get('endDate')
+            'planName': plan_name,
+            'startDate': start_date,
+            'endDate': end_date
         },
         'villages': user['villages'],
         'settings': user['settings']

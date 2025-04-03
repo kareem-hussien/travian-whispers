@@ -2,6 +2,7 @@
 Admin settings routes for Travian Whispers web application.
 """
 import logging
+import platform
 from datetime import datetime, timedelta
 from flask import (
     render_template, request, redirect, 
@@ -197,6 +198,19 @@ def settings():
         # Redirect to maintain the active tab
         return redirect(url_for('admin.settings', tab=active_tab))
     
+    # Get app version from configuration or default to 1.0.0
+    app_version = current_app.config.get('APP_VERSION', '1.0.0')
+    
+    # Create system_info for the template
+    system_info = {
+        'version': app_version,
+        'environment': current_app.config.get('ENV', 'Production'),
+        'debug_mode': current_app.config.get('DEBUG', False),
+        'python_version': platform.python_version(),
+        'server_software': request.environ.get('SERVER_SOFTWARE', 'Gunicorn/Flask'),
+        'database': 'MongoDB 5.0.5'
+    }
+
     # Mock settings data for the template
     # In a real application, this would be retrieved from the database
     settings = {
@@ -237,16 +251,6 @@ def settings():
             'auto_backup': settings_model.get_setting('backup.auto_backup', True),
             'backup_frequency': settings_model.get_setting('backup.backup_frequency', 'weekly'),
             'retention_period': settings_model.get_setting('backup.retention_period', 30)
-        },
-        'system': {
-            'version': '1.0.0',
-            'environment': 'Production',
-            'debug_mode': False,
-            'uptime': '23 days, 4 hours',
-            'php_version': '8.1.0',
-            'python_version': '3.10.0',
-            'server_software': 'nginx/1.21.4',
-            'database': 'MongoDB 5.0.5'
         }
     }
     
@@ -277,7 +281,8 @@ def settings():
         'cpu_usage': 35,
         'memory_usage': 62,
         'disk_usage': 48,
-        'active_connections': 18
+        'active_connections': 18,
+        'uptime': '23 days, 4 hours'
     }
     
     # Mock dependencies data
@@ -295,9 +300,11 @@ def settings():
         settings=settings,
         backups=backups,
         system_stats=system_stats,
+        system_info=system_info,  # Adding the missing system_info variable
         dependencies=dependencies,
         current_user=current_user,
-        title='System Settings'
+        title='System Settings',
+        os_info=platform.platform()  # Adding platform info for the OS
     )
 
 def test_email():

@@ -94,12 +94,96 @@ def backup_using_mongodump(connection_string, output_path, db_name="whispers"):
         logger.error(f"Error during mongodump: {e}")
         return False
 
-def backup_using_pymongo(output_path):
+def create_backup(backup_type='full', compress=True, connection_string=None, db_name=None):
     """
-    Create a backup using PyMongo (alternative method).
+    Create a database backup.
+    
+    Args:
+        backup_type (str, optional): Type of backup (full, users, transactions, etc.)
+        compress (bool, optional): Whether to compress the backup
+        connection_string (str, optional): MongoDB connection string
+        db_name (str, optional): Database name
+        
+    Returns:
+        tuple: (success, backup_path)
+    """
+    try:
+        # Create backup directory
+        backup_path = create_backup_directory()
+        
+        # Try mongodump first (preferred method)
+        if connection_string is None:
+            connection_string = config.MONGODB_URI
+        
+        if db_name is None:
+            db_name = config.MONGODB_DB_NAME
+        
+        # Use the backup type to determine what to backup
+        if backup_type == 'full':
+            # Full database backup
+            if backup_using_mongodump(connection_string, backup_path, db_name):
+                logger.info("Backup created successfully using mongodump")
+            else:
+                # Fall back to PyMongo method
+                logger.info("Falling back to PyMongo backup method")
+                if not backup_using_pymongo(backup_path):
+                    logger.error("Both backup methods failed")
+                    return False, None
+        elif backup_type == 'users':
+            # Users-only backup
+            if not backup_collection_using_pymongo(backup_path, 'users'):
+                logger.error("Failed to backup users collection")
+                return False, None
+        elif backup_type == 'transactions':
+            # Transactions-only backup
+            if not backup_collection_using_pymongo(backup_path, 'transactions'):
+                logger.error("Failed to backup transactions collection")
+                return False, None
+        elif backup_type == 'subscriptions':
+            # Subscriptions-only backup
+            if not backup_collection_using_pymongo(backup_path, 'subscriptionPlans'):
+                logger.error("Failed to backup subscription plans collection")
+                return False, None
+        else:
+            # Default to full backup
+            if backup_using_mongodump(connection_string, backup_path, db_name):
+                logger.info("Backup created successfully using mongodump")
+            else:
+                # Fall back to PyMongo method
+                logger.info("Falling back to PyMongo backup method")
+                if not backup_using_pymongo(backup_path):
+                    logger.error("Both backup methods failed")
+                    return False, None
+        
+        # Compress backup if requested
+        if compress:
+            tarball_path = compress_backup(backup_path)
+        else:
+            tarball_path = backup_path
+        
+        # Clean up old backups
+        num_deleted = cleanup_old_backups()
+        if num_deleted > 0:
+            logger.info(f"Cleaned up {num_deleted} old backups")
+        
+        return True, tarball_path
+    except BackupError as e:
+        logger.error(f"Backup error: {e}")
+        if e.original_error:
+            logger.error(f"Original error: {e.original_error}")
+        return False, None
+    except Exception as e:
+        logger.error(f"Unexpected error during backup: {e}")
+        return False, None
+
+# Mock implementation of backup_collection_using_pymongo for collection-specific backups
+def backup_collection_using_pymongo(output_path, collection_name):
+    """
+    Backup a specific collection using PyMongo.
     
     Args:
         output_path (Path): Directory to store the backup
+        collection_name (str): Name of the collection to backup
         
     Returns:
         bool: True if successful, False otherwise
@@ -113,40 +197,34 @@ def backup_using_pymongo(output_path):
             if not db:
                 raise BackupError("Failed to connect to MongoDB")
         
-        # Get all collections
-        collections = db.list_collection_names()
-        logger.info(f"Found {len(collections)} collections to backup")
+        # Get the collection
+        collection = db[collection_name]
+        documents = list(collection.find())
+        
+        # Convert ObjectId to string
+        for doc in documents:
+            doc["_id"] = str(doc["_id"])
+            # Convert other potential ObjectIds
+            for key, value in doc.items():
+                if hasattr(value, "__str__") and not isinstance(value, (str, int, float, bool, list, dict, type(None))):
+                    doc[key] = str(value)
         
         # Create a directory for the backup files
         json_backup_path = output_path / "json_backup"
         json_backup_path.mkdir(exist_ok=True)
         
-        # Backup each collection
-        for collection_name in collections:
-            collection = db[collection_name]
-            documents = list(collection.find())
-            
-            # Convert ObjectId to string
-            for doc in documents:
-                doc["_id"] = str(doc["_id"])
-                # Convert other potential ObjectIds
-                for key, value in doc.items():
-                    if hasattr(value, "__str__") and not isinstance(value, (str, int, float, bool, list, dict, type(None))):
-                        doc[key] = str(value)
-            
-            # Write to file
-            output_file = json_backup_path / f"{collection_name}.json"
-            with open(output_file, "w") as f:
-                json.dump(documents, f, indent=2, default=str)
-            
-            logger.info(f"Backed up collection {collection_name} with {len(documents)} documents")
+        # Write to file
+        output_file = json_backup_path / f"{collection_name}.json"
+        with open(output_file, "w") as f:
+            json.dump(documents, f, indent=2, default=str)
         
-        logger.info(f"MongoDB backup created successfully using PyMongo at {json_backup_path}")
+        logger.info(f"Backed up collection {collection_name} with {len(documents)} documents")
+        
         return True
     except Exception as e:
-        logger.error(f"Error during PyMongo backup: {e}")
-        raise BackupError(f"Failed to create backup using PyMongo: {e}", e)
-
+        logger.error(f"Error during {collection_name} backup: {e}")
+        return False
+    
 def compress_backup(backup_path, delete_original=True):
     """
     Compress backup directory into a tarball.
