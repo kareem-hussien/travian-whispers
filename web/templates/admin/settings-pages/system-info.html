@@ -58,7 +58,7 @@
                             </tr>
                             <tr>
                                 <th>Operating System</th>
-                                <td>{{ os_info|default(platform.platform()) }}</td>
+                                <td>{{ os_info|default('Unknown') }}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -175,13 +175,13 @@ function refreshSystemInfo() {
 
 function downloadSystemReport() {
     // In a real implementation, this would call an endpoint to generate a report
-    window.location.href = "{{ url_for('admin.download_system_report') }}";
+    window.location.href = "{{ url_for('admin.generate_report') }}";
 }
 
 function clearCaches() {
     if (confirm('Are you sure you want to clear all system caches? This might temporarily affect system performance.')) {
         // In a real implementation, this would call an endpoint to clear caches
-        fetch("{{ url_for('admin.clear_caches') }}", {
+        fetch("{{ url_for('admin.clear_logs') }}", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

@@ -209,53 +209,49 @@
         </div>
         
         <div class="row g-4 justify-content-center">
-            <div class="col-md-4">
-                <div class="pricing-card">
-                    <h3 class="pricing-header">Basic Plan</h3>
-                    <div class="pricing-price">$4.99<small class="text-muted">/month</small></div>
-                    <ul class="list-unstyled">
-                        <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> Auto-Farm feature</li>
-                        <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> Support for 2 villages</li>
-                        <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> 1 concurrent task</li>
-                        <li class="pricing-feature"><i class="bi bi-x-circle-fill text-muted me-2"></i> Troop training</li>
-                        <li class="pricing-feature"><i class="bi bi-x-circle-fill text-muted me-2"></i> Advanced features</li>
-                    </ul>
-                    <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary w-100 mt-4">Get Started</a>
-                </div>
-            </div>
-            
-            <div class="col-md-4">
-                <div class="pricing-card" style="border: 2px solid var(--primary-color);">
-                    <div class="position-absolute top-0 start-50 translate-middle">
-                        <span class="badge bg-primary px-3 py-2">Most Popular</span>
+            {% if plans and plans|length > 0 %}
+                {% for plan in plans %}
+                <div class="col-md-4">
+                    <div class="pricing-card {% if loop.index == 2 %}" style="border: 2px solid var(--primary-color);">
+                        <div class="position-absolute top-0 start-50 translate-middle">
+                            <span class="badge bg-primary px-3 py-2">Most Popular</span>
+                        </div>
+                    {% else %}">{% endif %}
+                        <h3 class="pricing-header">{{ plan.name }}</h3>
+                        <div class="pricing-price">${{ plan.price.monthly if plan.price.monthly is defined else plan.price }}<small class="text-muted">/month</small></div>
+                        <ul class="list-unstyled">
+                            {% if plan.features.autoFarm is defined and plan.features.autoFarm %}
+                                <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> Auto-Farm feature</li>
+                            {% else %}
+                                <li class="pricing-feature"><i class="bi bi-x-circle-fill text-muted me-2"></i> Auto-Farm feature</li>
+                            {% endif %}
+                            
+                            <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> Support for {{ plan.features.maxVillages if plan.features.maxVillages is defined else 2 }} villages</li>
+                            
+                            <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> {{ plan.features.maxTasks if plan.features.maxTasks is defined else 1 }} concurrent task{% if plan.features.maxTasks is defined and plan.features.maxTasks > 1 %}s{% endif %}</li>
+                            
+                            {% if plan.features.trainer is defined and plan.features.trainer %}
+                                <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> Troop training</li>
+                            {% else %}
+                                <li class="pricing-feature"><i class="bi bi-x-circle-fill text-muted me-2"></i> Troop training</li>
+                            {% endif %}
+                            
+                            {% if plan.features.advanced is defined and plan.features.advanced %}
+                                <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> Advanced features</li>
+                            {% else %}
+                                <li class="pricing-feature"><i class="bi bi-x-circle-fill text-muted me-2"></i> Advanced features</li>
+                            {% endif %}
+                        </ul>
+                        <a href="{{ url_for('auth.register') }}" class="btn {% if loop.index == 2 %}btn-primary{% else %}btn-outline-primary{% endif %} w-100 mt-4">Get Started</a>
                     </div>
-                    <h3 class="pricing-header">Standard Plan</h3>
-                    <div class="pricing-price">$9.99<small class="text-muted">/month</small></div>
-                    <ul class="list-unstyled">
-                        <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> Auto-Farm feature</li>
-                        <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> Troop training</li>
-                        <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> Support for 5 villages</li>
-                        <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> 2 concurrent tasks</li>
-                        <li class="pricing-feature"><i class="bi bi-x-circle-fill text-muted me-2"></i> Advanced features</li>
-                    </ul>
-                    <a href="{{ url_for('auth.register') }}" class="btn btn-primary w-100 mt-4">Get Started</a>
                 </div>
-            </div>
-            
-            <div class="col-md-4">
-                <div class="pricing-card">
-                    <h3 class="pricing-header">Premium Plan</h3>
-                    <div class="pricing-price">$19.99<small class="text-muted">/month</small></div>
-                    <ul class="list-unstyled">
-                        <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> Auto-Farm feature</li>
-                        <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> Troop training</li>
-                        <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> Support for 15 villages</li>
-                        <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> 5 concurrent tasks</li>
-                        <li class="pricing-feature"><i class="bi bi-check-circle-fill text-success me-2"></i> Advanced features</li>
-                    </ul>
-                    <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary w-100 mt-4">Get Started</a>
+                {% endfor %}
+            {% else %}
+                <!-- Fallback if no plans are available -->
+                <div class="col-md-12 text-center">
+                    <p>No subscription plans available at the moment. Please check back later.</p>
                 </div>
-            </div>
+            {% endif %}
         </div>
     </div>
 </section>

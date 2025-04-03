@@ -42,7 +42,7 @@
             <div class="text-center">
                 <h3 class="mb-3">{{ plan.name }}</h3>
                 <div class="mb-4">
-                    <span class="fs-2 fw-bold">${{ plan.price }}</span> <span class="text-muted">/month</span>
+                    <span class="fs-2 fw-bold">{{ plan.price }}</span> <span class="text-muted">/month</span>
                 </div>
             </div>
             
@@ -62,7 +62,7 @@
                     <div class="d-flex align-items-center">
                         <i class="bi bi-cash me-2 text-success"></i>
                         <div>
-                            <h6 class="mb-0">${{ plan.revenue }}</h6>
+                            <h6 class="mb-0">{{ plan.revenue }}</h6>
                             <small class="text-muted">Revenue</small>
                         </div>
                     </div>
@@ -106,7 +106,7 @@
                         <tr>
                             <td>Price</td>
                             {% for plan in plans %}
-                            <td class="text-center">${{ plan.price }}/month</td>
+                            <td class="text-center">{{ plan.price }}/month</td>
                             {% endfor %}
                         </tr>
                         <tr>
