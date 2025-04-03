@@ -11,6 +11,7 @@ import shutil
 import tarfile
 import gzip
 from database.mongodb import MongoDB
+from flask import current_app
 
 # Configure logger
 logging.basicConfig(
@@ -113,10 +114,10 @@ def create_backup(backup_type='full', compress=True, connection_string=None, db_
         
         # Try mongodump first (preferred method)
         if connection_string is None:
-            connection_string = config.MONGODB_URI
+            connection_string = current_app.config.get('MONGODB_URI')
         
         if db_name is None:
-            db_name = config.MONGODB_DB_NAME
+            db_name = current_app.config.get('MONGODB_DB_NAME')
         
         # Use the backup type to determine what to backup
         if backup_type == 'full':
@@ -257,6 +258,62 @@ def compress_backup(backup_path, delete_original=True):
         logger.error(f"Failed to compress backup: {e}")
         raise BackupError(f"Failed to compress backup: {e}", e)
 
+def backup_using_pymongo(output_path):
+    """
+    Create a database backup using PyMongo.
+    
+    Args:
+        output_path (Path): Directory to store the backup
+        
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    try:
+        # Connect to MongoDB
+        db = MongoDB().get_db()
+        if not db:
+            MongoDB().connect()
+            db = MongoDB().get_db()
+            if not db:
+                raise BackupError("Failed to connect to MongoDB")
+        
+        # Create a directory for the backup files
+        json_backup_path = output_path / "json_backup"
+        json_backup_path.mkdir(exist_ok=True)
+        
+        # Get list of all collections
+        collections = db.list_collection_names()
+        
+        # Backup each collection
+        for collection_name in collections:
+            try:
+                # Get the collection
+                collection = db[collection_name]
+                documents = list(collection.find())
+                
+                # Convert ObjectId to string for JSON serialization
+                for doc in documents:
+                    doc["_id"] = str(doc["_id"])
+                    # Convert other potential ObjectIds
+                    for key, value in doc.items():
+                        if hasattr(value, "__str__") and not isinstance(value, (str, int, float, bool, list, dict, type(None))):
+                            doc[key] = str(value)
+                
+                # Write to file
+                output_file = json_backup_path / f"{collection_name}.json"
+                with open(output_file, "w") as f:
+                    json.dump(documents, f, indent=2, default=str)
+                
+                logger.info(f"Backed up collection {collection_name} with {len(documents)} documents")
+            except Exception as e:
+                logger.error(f"Error backing up collection {collection_name}: {e}")
+                # Continue with other collections even if one fails
+        
+        return True
+    except Exception as e:
+        logger.error(f"Error during PyMongo backup: {e}")
+        return False
+    
 def cleanup_old_backups(backup_dir="backups", keep_last=5):
     """
     Remove old backups, keeping only the specified number of recent ones.
@@ -289,52 +346,3 @@ def cleanup_old_backups(backup_dir="backups", keep_last=5):
     except Exception as e:
         logger.error(f"Error cleaning up old backups: {e}")
         return 0
-
-def create_backup(connection_string=None, db_name=None):
-    """
-    Create a database backup.
-    
-    Args:
-        connection_string (str, optional): MongoDB connection string
-        db_name (str, optional): Database name
-        
-    Returns:
-        tuple: (success, backup_path)
-    """
-    try:
-        # Create backup directory
-        backup_path = create_backup_directory()
-        
-        # Try mongodump first (preferred method)
-        if connection_string is None:
-            connection_string = config.MONGODB_URI
-        
-        if db_name is None:
-            db_name = config.MONGODB_DB_NAME
-        
-        if backup_using_mongodump(connection_string, backup_path, db_name):
-            logger.info("Backup created successfully using mongodump")
-        else:
-            # Fall back to PyMongo method
-            logger.info("Falling back to PyMongo backup method")
-            if not backup_using_pymongo(backup_path):
-                logger.error("Both backup methods failed")
-                return False, None
-        
-        # Compress backup
-        tarball_path = compress_backup(backup_path)
-        
-        # Clean up old backups
-        num_deleted = cleanup_old_backups()
-        if num_deleted > 0:
-            logger.info(f"Cleaned up {num_deleted} old backups")
-        
-        return True, tarball_path
-    except BackupError as e:
-        logger.error(f"Backup error: {e}")
-        if e.original_error:
-            logger.error(f"Original error: {e.original_error}")
-        return False, None
-    except Exception as e:
-        logger.error(f"Unexpected error during backup: {e}")
-        return False, None
