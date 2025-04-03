@@ -1,0 +1,464 @@
+{% extends 'admin/components/admin-layout.html' %}
+
+{% block title %}System Maintenance{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+<li class="breadcrumb-item active" aria-current="page">System Maintenance</li>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+{% with 
+    title="System Maintenance",
+    subtitle="Manage database backups and system maintenance settings",
+    show_buttons=false
+%}
+    {% include 'admin/components/admin-page-header.html' %}
+{% endwith %}
+
+<!-- System Status Overview -->
+<div class="row mb-4">
+    <div class="col-lg-6 mb-4">
+        <!-- System Status Card -->
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h5 class="mb-0">System Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="me-3">
+                        <div class="d-flex align-items-center justify-content-center rounded-circle 
+                            {% if system_stats.status == 'Healthy' %}bg-success-light{% elif system_stats.status == 'Warning' %}bg-warning-light{% else %}bg-danger-light{% endif %}" 
+                            style="width: 64px; height: 64px;">
+                            <i class="bi bi-hdd 
+                                {% if system_stats.status == 'Healthy' %}text-success{% elif system_stats.status == 'Warning' %}text-warning{% else %}text-danger{% endif %}" 
+                                style="font-size: 32px;"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h5 class="mb-1">{{ system_stats.status }}</h5>
+                        <p class="mb-0 text-muted">Server uptime: <strong>{{ system_stats.uptime }}</strong></p>
+                    </div>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <h6 class="mb-2">Memory Usage</h6>
+                        <div class="progress mb-2" style="height: 10px;">
+                            <div class="progress-bar 
+                                {% if system_stats.memory_usage < 70 %}bg-success{% elif system_stats.memory_usage < 90 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                role="progressbar" style="width: {{ system_stats.memory_usage }}%;" 
+                                aria-valuenow="{{ system_stats.memory_usage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <p class="mb-0 small text-muted">{{ system_stats.memory_usage }}% used</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="mb-2">CPU Usage</h6>
+                        <div class="progress mb-2" style="height: 10px;">
+                            <div class="progress-bar 
+                                {% if system_stats.cpu_usage < 70 %}bg-success{% elif system_stats.cpu_usage < 90 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                role="progressbar" style="width: {{ system_stats.cpu_usage }}%;" 
+                                aria-valuenow="{{ system_stats.cpu_usage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <p class="mb-0 small text-muted">{{ system_stats.cpu_usage }}% used</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="mb-2">Disk Usage</h6>
+                        <div class="progress mb-2" style="height: 10px;">
+                            <div class="progress-bar 
+                                {% if system_stats.disk_usage < 70 %}bg-success{% elif system_stats.disk_usage < 90 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                role="progressbar" style="width: {{ system_stats.disk_usage }}%;" 
+                                aria-valuenow="{{ system_stats.disk_usage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <p class="mb-0 small text-muted">{{ system_stats.disk_usage }}% used</p>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="mb-0">Active connections: <strong>{{ system_stats.active_connections }}</strong></p>
+                    </div>
+                    <button id="refreshStatsBtn" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-arrow-clockwise me-1"></i> Refresh Stats
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+        <!-- Maintenance Mode Card -->
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h5 class="mb-0">Maintenance Mode</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <strong>Warning:</strong> Enabling maintenance mode will make the site inaccessible to all users except administrators.
+                </div>
+                
+                <form id="maintenanceForm" action="{{ url_for('admin.update_maintenance') }}" method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="mb-3">
+                        <label class="form-label d-block">Current Status</label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="maintenanceSwitch" name="enabled" {{ 'checked' if system_stats.maintenance_mode else '' }}>
+                            <label class="form-check-label" for="maintenanceSwitch">
+                                Enable Maintenance Mode
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="maintenanceMessage" class="form-label">Maintenance Message</label>
+                        <textarea class="form-control" id="maintenanceMessage" name="message" rows="3">{{ system_stats.maintenance_message }}</textarea>
+                        <div class="form-text">This message will be displayed to users during maintenance.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="maintenanceDuration" class="form-label">Expected Duration</label>
+                        <select class="form-select" id="maintenanceDuration" name="duration">
+                            <option value="30min">30 minutes</option>
+                            <option value="1hour">1 hour</option>
+                            <option value="2hours">2 hours</option>
+                            <option value="4hours">4 hours</option>
+                            <option value="indefinite" selected>Indefinite</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" id="saveMaintenanceBtn">
+                        <i class="bi bi-save me-1"></i> Save Changes
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Database Backup and Restore Section -->
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="dashboard-card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">Database Backup</h5>
+            </div>
+            <div class="card-body">
+                {% if last_backup %}
+                <p>Last backup: <strong>{{ last_backup.created_at }}</strong></p>
+                {% else %}
+                <p>No recent backups found</p>
+                {% endif %}
+                
+                <form action="{{ url_for('admin.create_backup_route') }}" method="post" class="mb-4">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="mb-3">
+                        <label for="backupType" class="form-label">Backup Type</label>
+                        <select class="form-select" id="backupType" name="backup_type">
+                            <option value="full" selected>Full Backup</option>
+                            <option value="users">Users Only</option>
+                            <option value="transactions">Transactions Only</option>
+                            <option value="subscriptions">Subscriptions Only</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="compressBackup" name="compress_backup" checked>
+                            <label class="form-check-label" for="compressBackup">
+                                Compress Backup
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" id="createBackupBtn">
+                        <i class="bi bi-download me-1"></i> Create Backup Now
+                    </button>
+                </form>
+                
+                <div class="mb-3">
+                    <label class="form-label">Automatic Backups</label>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="autoBackup" checked>
+                        <label class="form-check-label" for="autoBackup">
+                            Enable Daily Backups
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="backupFrequency" class="form-label">Backup Frequency</label>
+                    <select class="form-select" id="backupFrequency">
+                        <option value="daily">Daily</option>
+                        <option value="weekly" selected>Weekly</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="retentionPeriod" class="form-label">Retention Period (days)</label>
+                    <input type="number" class="form-control" id="retentionPeriod" value="30">
+                    <small class="form-text text-muted">Backups older than this will be automatically deleted.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="dashboard-card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">Restore Database</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger mb-3">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <strong>Warning:</strong> Restoring a backup will overwrite all current data! This action cannot be undone.
+                </div>
+                
+                <div class="mb-3">
+                    <label for="backupFile" class="form-label">Upload Backup File</label>
+                    <input class="form-control" type="file" id="backupFile">
+                </div>
+                
+                <button class="btn btn-danger mb-4" id="restoreBackupBtn" disabled>
+                    <i class="bi bi-upload me-1"></i> Restore From Upload
+                </button>
+                
+                <hr>
+                
+                <h6 class="mb-3">Recent Backups</h6>
+                {% if backups and backups|length > 0 %}
+                <div class="list-group">
+                    {% for backup in backups %}
+                    <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <div>
+                            <div>{{ backup.filename }}</div>
+                            <small class="text-muted">
+                                <span class="badge bg-secondary me-1">{{ backup.type }}</span>
+                                {{ backup.size }} • {{ backup.created_at }}
+                            </small>
+                        </div>
+                        <div class="btn-group btn-group-sm">
+                            <a href="{{ url_for('admin.download_backup', filename=backup.filename) }}" class="btn btn-outline-primary" title="Download">
+                                <i class="bi bi-download"></i>
+                            </a>
+                            <button class="btn btn-outline-danger restore-backup-btn" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#confirmRestoreModal"
+                                    data-filename="{{ backup.filename }}" title="Restore">
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-info">No backups available</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Database Statistics -->
+<div class="dashboard-card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Database Statistics</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <table class="table">
+                    <tbody>
+                        <tr>
+                            <th width="40%">Total Collections</th>
+                            <td>{{ db_stats.total_collections }}</td>
+                        </tr>
+                        <tr>
+                            <th>Total Documents</th>
+                            <td>{{ db_stats.total_documents }}</td>
+                        </tr>
+                        <tr>
+                            <th>Total Size</th>
+                            <td>{{ db_stats.total_size }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <table class="table">
+                    <tbody>
+                        <tr>
+                            <th width="40%">Average Document Size</th>
+                            <td>{{ db_stats.avg_document_size }}</td>
+                        </tr>
+                        <tr>
+                            <th>Indexes</th>
+                            <td>{{ db_stats.indexes }}</td>
+                        </tr>
+                        <tr>
+                            <th>Indexes Size</th>
+                            <td>{{ db_stats.indexes_size }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Maintenance Logs -->
+<div class="dashboard-card">
+    <div class="card-header">
+        <h5 class="mb-0">Maintenance Activity Log</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Level</th>
+                        <th>Action</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if maintenance_logs and maintenance_logs|length > 0 %}
+                        {% for log in maintenance_logs %}
+                        <tr>
+                            <td>{{ log.timestamp }}</td>
+                            <td>
+                                <span class="badge 
+                                    {% if log.level == 'INFO' %}bg-info{% elif log.level == 'WARNING' %}bg-warning{% else %}bg-danger{% endif %}">
+                                    {{ log.level }}
+                                </span>
+                            </td>
+                            <td>{{ log.action }}</td>
+                            <td>{{ log.details }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center">No maintenance logs found</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- Confirm Restore Modal -->
+<div class="modal fade" id="confirmRestoreModal" tabindex="-1" aria-labelledby="confirmRestoreModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmRestoreModalLabel">Confirm Database Restore</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-4">
+                    <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 3rem;"></i>
+                </div>
+                <p>Are you sure you want to restore from this backup? This will overwrite all current data and cannot be undone.</p>
+                <p class="mb-0"><strong>Backup file:</strong> <span id="confirmRestoreFilename"></span></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="restoreForm" action="{{ url_for('admin.restore_backup') }}" method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="filename" id="restoreFilename">
+                    <button type="submit" class="btn btn-danger">Confirm Restore</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // File input handling
+    const backupFile = document.getElementById('backupFile');
+    const restoreBackupBtn = document.getElementById('restoreBackupBtn');
+    
+    if (backupFile && restoreBackupBtn) {
+        backupFile.addEventListener('change', function() {
+            // Enable restore button if file is selected
+            restoreBackupBtn.disabled = !this.files.length;
+        });
+    }
+    
+    // Confirm restore modal
+    const confirmRestoreModal = document.getElementById('confirmRestoreModal');
+    if (confirmRestoreModal) {
+        confirmRestoreModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const filename = button.getAttribute('data-filename');
+            
+            document.getElementById('confirmRestoreFilename').textContent = filename;
+            document.getElementById('restoreFilename').value = filename;
+        });
+    }
+    
+    // Create backup button loading state
+    const createBackupBtn = document.getElementById('createBackupBtn');
+    if (createBackupBtn) {
+        document.getElementById('createBackupBtn').addEventListener('click', function() {
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Creating...';
+        });
+    }
+    
+    // Save maintenance button loading state
+    const saveMaintenanceBtn = document.getElementById('saveMaintenanceBtn');
+    if (saveMaintenanceBtn) {
+        document.getElementById('saveMaintenanceBtn').addEventListener('click', function() {
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
+        });
+    }
+    
+    // Refresh stats button
+    const refreshStatsBtn = document.getElementById('refreshStatsBtn');
+    if (refreshStatsBtn) {
+        refreshStatsBtn.addEventListener('click', function() {
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Refreshing...';
+            
+            // Make AJAX call to refresh stats
+            fetch('{{ url_for("admin.refresh_stats") }}')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Failed to refresh stats');
+                        this.disabled = false;
+                        this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Refresh Stats';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while refreshing stats');
+                    this.disabled = false;
+                    this.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Refresh Stats';
+                });
+        });
+    }
+    
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

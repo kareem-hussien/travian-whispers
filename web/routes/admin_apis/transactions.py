@@ -286,7 +286,7 @@ def update_transaction_status(transaction_id):
         tx = transaction_model.get_transaction(transaction_id)
         
         # Process the payment (success path)
-        from auth.payments import process_successful_payment
+        from payment.paypal import process_successful_payment
         process_result = process_successful_payment(tx["paymentId"], tx["userId"], tx["planId"])
         
         if process_result:
