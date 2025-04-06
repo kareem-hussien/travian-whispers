@@ -159,7 +159,7 @@ def settings():
                 'backup.auto_backup': 'autoBackup' in request.form,
                 'backup.backup_frequency': request.form.get('backupFrequency'),
                 'backup.backup_time': request.form.get('backupTime'),
-                'backup.backup_type': request.form.get('backupType'),
+                'backup.backup_type': request.form.get('backupType', 'full'),
                 'backup.compress_backups': 'compressBackups' in request.form,
                 'backup.retention_period': int(request.form.get('retentionPeriod', 30)),
                 'backup.max_backups': int(request.form.get('maxBackups', 10)),
@@ -178,23 +178,6 @@ def settings():
                 flash('Failed to update backup settings', 'danger')
                 logger.warning(f"Admin '{current_user['username']}' failed to update backup settings")
         
-        elif form_type == 'test_email':
-            # Process test email form
-            test_email = request.form.get('testEmailAddress')
-            
-            # In a real application, this would send an actual test email
-            # from auth.mail import send_mail
-            # success = send_mail(test_email, 'Test Email', 'This is a test email from Travian Whispers.')
-            
-            success = True  # For demonstration purposes
-            
-            if success:
-                flash(f'Test email sent to {test_email}', 'success')
-                logger.info(f"Admin '{current_user['username']}' sent a test email to {test_email}")
-            else:
-                flash(f'Failed to send test email to {test_email}', 'danger')
-                logger.warning(f"Admin '{current_user['username']}' failed to send a test email to {test_email}")
-        
         # Redirect to maintain the active tab
         return redirect(url_for('admin.settings', tab=active_tab))
     
@@ -211,8 +194,7 @@ def settings():
         'database': 'MongoDB 5.0.5'
     }
 
-    # Mock settings data for the template
-    # In a real application, this would be retrieved from the database
+    # Get settings from the database
     settings = {
         'general': {
             'site_name': settings_model.get_setting('general.site_name', 'Travian Whispers'),
@@ -250,31 +232,41 @@ def settings():
         'backup': {
             'auto_backup': settings_model.get_setting('backup.auto_backup', True),
             'backup_frequency': settings_model.get_setting('backup.backup_frequency', 'weekly'),
-            'retention_period': settings_model.get_setting('backup.retention_period', 30)
+            'backup_time': settings_model.get_setting('backup.backup_time', '02:00'),
+            'backup_type': settings_model.get_setting('backup.backup_type', 'full'),
+            'compress_backups': settings_model.get_setting('backup.compress_backups', True),
+            'retention_period': settings_model.get_setting('backup.retention_period', 30),
+            'max_backups': settings_model.get_setting('backup.max_backups', 10),
+            'backup_location': settings_model.get_setting('backup.backup_location', 'backups'),
+            'external_storage': settings_model.get_setting('backup.external_storage', False),
+            'external_storage_type': settings_model.get_setting('backup.external_storage_type', 's3')
         }
     }
     
-    # Mock backups data for the template
-    backups = [
-        {
-            'filename': 'backup_full_20250312_020000.tar.gz',
-            'type': 'Full',
-            'size': '24.5 MB',
-            'created_at': datetime.now() - timedelta(days=1),
-        },
-        {
-            'filename': 'backup_full_20250305_020000.tar.gz',
-            'type': 'Full',
-            'size': '23.8 MB',
-            'created_at': datetime.now() - timedelta(days=8),
-        },
-        {
-            'filename': 'backup_users_20250310_150000.tar.gz',
-            'type': 'Users Only',
-            'size': '8.2 MB',
-            'created_at': datetime.now() - timedelta(days=3),
-        }
-    ]
+    # Get real backup data from the database
+    try:
+        # Get backup records from database
+        from database.models.backup import BackupRecord
+        backup_record = BackupRecord()
+        backups = backup_record.list_backups(limit=10)
+        
+        # Format backups for template
+        formatted_backups = []
+        for backup in backups:
+            formatted_backup = {
+                'id': str(backup.get('_id')),
+                'filename': backup.get('filename'),
+                'type': backup.get('type'),
+                'size': backup.get('size'),
+                'created_at': backup.get('created_at'),
+                'success': backup.get('success', True),
+                'details': backup.get('details')
+            }
+            formatted_backups.append(formatted_backup)
+    except Exception as e:
+        logger.error(f"Error getting backup records: {e}")
+        # Fall back to empty list if there's an error
+        formatted_backups = []
     
     # Get system stats
     system_stats = {
@@ -298,13 +290,13 @@ def settings():
     return render_template(
         'admin/settings.html', 
         settings=settings,
-        backups=backups,
+        backups=formatted_backups,
         system_stats=system_stats,
-        system_info=system_info,  # Adding the missing system_info variable
+        system_info=system_info,
         dependencies=dependencies,
         current_user=current_user,
         title='System Settings',
-        os_info=platform.platform()  # Adding platform info for the OS
+        os_info=platform.platform()
     )
 
 def test_email():

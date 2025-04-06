@@ -18,6 +18,7 @@ def register_admin_routes(admin_bp):
     from . import maintenance
     from . import settings
     from . import logs
+    from . import backup  # Added backup module
     
     # Each module will attach its routes to the admin_bp
     dashboard.register_routes(admin_bp)
@@ -27,3 +28,4 @@ def register_admin_routes(admin_bp):
     maintenance.register_routes(admin_bp)
     settings.register_routes(admin_bp)
     logs.register_routes(admin_bp)
+    backup.register_routes(admin_bp)  # Register backup routes

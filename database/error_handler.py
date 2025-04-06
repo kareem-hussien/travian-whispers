@@ -2,6 +2,7 @@
 MongoDB error handling module for Travian Whispers.
 """
 import logging
+from bson import ObjectId
 from pymongo.errors import (
     ConnectionFailure, 
     ServerSelectionTimeoutError, 

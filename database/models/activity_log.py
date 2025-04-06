@@ -20,13 +20,13 @@ class ActivityLog:
         """Initialize activity log model."""
         self.collection = get_collection('activity_logs')
     
-    def log_activity(self, user_id, activity_type, details, status='success', village=None, data=None):
+    def log_activity(self, user_id, activity_type, details=None, status='success', village=None, data=None):
         """
         Log a user activity.
         
         Args:
             user_id (str): User ID
-            activity_type (str): Type of activity (e.g., 'auto-farm', 'troop-training', 'system')
+            activity_type (str): Type of activity (e.g., 'auto-farm', 'troop-training', 'login', 'profile-update')
             details (str): Details of the activity
             status (str): Status of the activity (success, warning, error, info)
             village (str): Village name or ID (optional)
@@ -40,7 +40,7 @@ class ActivityLog:
             log_entry = {
                 'userId': user_id,
                 'activityType': activity_type,
-                'details': details,
+                'details': details or f"{activity_type.replace('-', ' ').title()} activity",
                 'status': status,
                 'timestamp': datetime.utcnow()
             }

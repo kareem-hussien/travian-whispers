@@ -14,11 +14,14 @@
     
     <div class="user-dropdown dropdown">
         <button class="btn dropdown-toggle" type="button" id="userMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="bi bi-person-circle"></i> {{ current_user.username }}
+            <i class="bi bi-person-circle"></i> {{ current_user.username if current_user else 'User' }}
         </button>
         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenuButton">
             <li><a class="dropdown-item" href="{{ url_for('user.profile') }}"><i class="bi bi-person"></i> Profile</a></li>
             <li><a class="dropdown-item" href="{{ url_for('user.travian_settings') }}"><i class="bi bi-gear"></i> Settings</a></li>
+            {% if current_user and current_user.role == 'admin' %}
+            <li><a class="dropdown-item" href="{{ url_for('admin.dashboard') }}"><i class="bi bi-speedometer2"></i> Admin Panel</a></li>
+            {% endif %}
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
         </ul>

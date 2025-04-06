@@ -4,6 +4,7 @@ Password reset module for Travian Whispers.
 import logging
 import uuid
 import re
+from bson import ObjectId
 from datetime import datetime, timedelta
 from database.models.user import User
 from email_module.sender import send_password_reset_email
@@ -190,13 +191,34 @@ def change_password(user_id, current_password, new_password, confirm_password):
     if not is_strong:
         return False, message
     
-    # Change password
+    # Get user model
     user_model = User()
-    if user_model.change_password(user_id, current_password, new_password):
-        return True, "Your password has been changed successfully."
+    user = user_model.get_user_by_id(user_id)
     
-    return False, "Current password is incorrect or password change failed"
-
+    if not user:
+        return False, "User not found"
+        
+    # Verify current password
+    if not user_model.verify_password(current_password, user["password"]):
+        return False, "Current password is incorrect"
+    
+    # Hash new password
+    hashed_password = user_model.hash_password(new_password)
+    
+    # Update password
+    result = user_model.collection.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {
+            "password": hashed_password,
+            "updatedAt": datetime.utcnow()
+        }}
+    )
+    
+    if result.modified_count > 0:
+        return True, "Your password has been changed successfully."
+    else:
+        return False, "Failed to update password"
+    
 @handle_operation_error
 @log_database_activity("reset token cleanup")
 def cleanup_expired_tokens():

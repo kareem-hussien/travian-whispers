@@ -457,7 +457,102 @@ def admin_get_user(user_id):
         'data': user_data
     })
 
+"""
+API route for user account deletion.
+Add this to your web/routes/api.py file.
+"""
 
+@api_bp.route('/user/delete-account', methods=['POST'])
+@api_error_handler
+@login_required
+def delete_user_account():
+    """API endpoint to delete user account."""
+    # Get user ID
+    user_id = session['user_id']
+    
+    # Get user model
+    user_model = User()
+    user = user_model.get_user_by_id(user_id)
+    
+    if not user:
+        return jsonify({
+            'success': False,
+            'message': 'User not found'
+        }), 404
+    
+    # First, log the deletion request
+    try:
+        activity_model = ActivityLog()
+        activity_model.log_activity(
+            user_id=user_id,
+            activity_type='account-deletion',
+            details=f"Account deletion requested by user {user['username']}",
+            status='info'
+        )
+    except Exception as e:
+        logger.error(f"Error logging deletion activity: {e}")
+    
+    # Add delete_user method to User model if it doesn't exist
+    if not hasattr(user_model, 'delete_user'):
+        def delete_user(self, user_id):
+            """
+            Delete a user and all associated data.
+            
+            Args:
+                user_id (str): User ID
+                
+            Returns:
+                bool: True if user was deleted, False otherwise
+            """
+            if self.collection is None:
+                logger.error("Database not connected")
+                return False
+            
+            try:
+                # Delete user
+                result = self.collection.delete_one({"_id": ObjectId(user_id)})
+                
+                if result.deleted_count > 0:
+                    # Delete associated data (activities, etc.)
+                    try:
+                        from database.models.activity_log import ActivityLog
+                        activity_model = ActivityLog()
+                        activity_model.delete_user_logs(user_id)
+                    except Exception as e:
+                        logger.error(f"Error deleting user activities: {e}")
+                    
+                    return True
+                else:
+                    return False
+            except Exception as e:
+                logger.error(f"Error deleting user: {e}")
+                return False
+        
+        # Add method to User class
+        User.delete_user = delete_user
+    
+    # Delete user and all associated data
+    try:
+        success = user_model.delete_user(user_id)
+        
+        if success:
+            # Log successful deletion (in system logs since user is now deleted)
+            logger.info(f"User account deleted: {user['username']} (ID: {user_id})")
+            
+            # Clear session
+            session.clear()
+            
+            # Redirect to homepage with flash message
+            flash('Your account has been successfully deleted.', 'success')
+            return redirect(url_for('public.index'))
+        else:
+            flash('Failed to delete account. Please try again later.', 'danger')
+            return redirect(url_for('user.profile'))
+    except Exception as e:
+        logger.error(f"Error during account deletion: {e}")
+        flash('An error occurred while deleting your account. Please try again later.', 'danger')
+        return redirect(url_for('user.profile'))
+    
 @api_bp.route('/webhooks/paypal', methods=['POST'])
 @api_error_handler
 def paypal_webhook():
