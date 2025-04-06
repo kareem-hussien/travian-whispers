@@ -11,7 +11,7 @@
 <!-- Page Header -->
 {% with 
     title="System Maintenance",
-    subtitle="Manage database backups and system maintenance settings",
+    subtitle="Manage system maintenance settings",
     show_buttons=false
 %}
     {% include 'admin/components/admin-page-header.html' %}
@@ -138,131 +138,6 @@
     </div>
 </div>
 
-<!-- Database Backup and Restore Section -->
-<div class="row">
-    <div class="col-md-6 mb-4">
-        <div class="dashboard-card h-100">
-            <div class="card-header">
-                <h5 class="mb-0">Database Backup</h5>
-            </div>
-            <div class="card-body">
-                {% if last_backup %}
-                <p>Last backup: <strong>{{ last_backup.created_at }}</strong></p>
-                {% else %}
-                <p>No recent backups found</p>
-                {% endif %}
-                
-                <form action="{{ url_for('admin.create_backup_route') }}" method="post" class="mb-4">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    
-                    <div class="mb-3">
-                        <label for="backupType" class="form-label">Backup Type</label>
-                        <select class="form-select" id="backupType" name="backup_type">
-                            <option value="full" selected>Full Backup</option>
-                            <option value="users">Users Only</option>
-                            <option value="transactions">Transactions Only</option>
-                            <option value="subscriptions">Subscriptions Only</option>
-                        </select>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="compressBackup" name="compress_backup" checked>
-                            <label class="form-check-label" for="compressBackup">
-                                Compress Backup
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <button type="submit" class="btn btn-primary" id="createBackupBtn">
-                        <i class="bi bi-download me-1"></i> Create Backup Now
-                    </button>
-                </form>
-                
-                <div class="mb-3">
-                    <label class="form-label">Automatic Backups</label>
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="autoBackup" checked>
-                        <label class="form-check-label" for="autoBackup">
-                            Enable Daily Backups
-                        </label>
-                    </div>
-                </div>
-                
-                <div class="mb-3">
-                    <label for="backupFrequency" class="form-label">Backup Frequency</label>
-                    <select class="form-select" id="backupFrequency">
-                        <option value="daily">Daily</option>
-                        <option value="weekly" selected>Weekly</option>
-                        <option value="monthly">Monthly</option>
-                    </select>
-                </div>
-                
-                <div class="mb-3">
-                    <label for="retentionPeriod" class="form-label">Retention Period (days)</label>
-                    <input type="number" class="form-control" id="retentionPeriod" value="30">
-                    <small class="form-text text-muted">Backups older than this will be automatically deleted.</small>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-6 mb-4">
-        <div class="dashboard-card h-100">
-            <div class="card-header">
-                <h5 class="mb-0">Restore Database</h5>
-            </div>
-            <div class="card-body">
-                <div class="alert alert-danger mb-3">
-                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                    <strong>Warning:</strong> Restoring a backup will overwrite all current data! This action cannot be undone.
-                </div>
-                
-                <div class="mb-3">
-                    <label for="backupFile" class="form-label">Upload Backup File</label>
-                    <input class="form-control" type="file" id="backupFile">
-                </div>
-                
-                <button class="btn btn-danger mb-4" id="restoreBackupBtn" disabled>
-                    <i class="bi bi-upload me-1"></i> Restore From Upload
-                </button>
-                
-                <hr>
-                
-                <h6 class="mb-3">Recent Backups</h6>
-                {% if backups and backups|length > 0 %}
-                <div class="list-group">
-                    {% for backup in backups %}
-                    <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                        <div>
-                            <div>{{ backup.filename }}</div>
-                            <small class="text-muted">
-                                <span class="badge bg-secondary me-1">{{ backup.type }}</span>
-                                {{ backup.size }} • {{ backup.created_at }}
-                            </small>
-                        </div>
-                        <div class="btn-group btn-group-sm">
-                            <a href="{{ url_for('admin.download_backup', filename=backup.filename) }}" class="btn btn-outline-primary" title="Download">
-                                <i class="bi bi-download"></i>
-                            </a>
-                            <button class="btn btn-outline-danger restore-backup-btn" 
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#confirmRestoreModal"
-                                    data-filename="{{ backup.filename }}" title="Restore">
-                                <i class="bi bi-arrow-counterclockwise"></i>
-                            </button>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <div class="alert alert-info">No backups available</div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- Database Statistics -->
 <div class="dashboard-card mb-4">
     <div class="card-header">
@@ -354,73 +229,16 @@
 {% endblock %}
 
 {% block modals %}
-<!-- Confirm Restore Modal -->
-<div class="modal fade" id="confirmRestoreModal" tabindex="-1" aria-labelledby="confirmRestoreModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="confirmRestoreModalLabel">Confirm Database Restore</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="text-center mb-4">
-                    <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 3rem;"></i>
-                </div>
-                <p>Are you sure you want to restore from this backup? This will overwrite all current data and cannot be undone.</p>
-                <p class="mb-0"><strong>Backup file:</strong> <span id="confirmRestoreFilename"></span></p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form id="restoreForm" action="{{ url_for('admin.restore_backup') }}" method="post">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <input type="hidden" name="filename" id="restoreFilename">
-                    <button type="submit" class="btn btn-danger">Confirm Restore</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
+<!-- Removed backup related modals -->
 {% endblock %}
 
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // File input handling
-    const backupFile = document.getElementById('backupFile');
-    const restoreBackupBtn = document.getElementById('restoreBackupBtn');
-    
-    if (backupFile && restoreBackupBtn) {
-        backupFile.addEventListener('change', function() {
-            // Enable restore button if file is selected
-            restoreBackupBtn.disabled = !this.files.length;
-        });
-    }
-    
-    // Confirm restore modal
-    const confirmRestoreModal = document.getElementById('confirmRestoreModal');
-    if (confirmRestoreModal) {
-        confirmRestoreModal.addEventListener('show.bs.modal', function(event) {
-            const button = event.relatedTarget;
-            const filename = button.getAttribute('data-filename');
-            
-            document.getElementById('confirmRestoreFilename').textContent = filename;
-            document.getElementById('restoreFilename').value = filename;
-        });
-    }
-    
-    // Create backup button loading state
-    const createBackupBtn = document.getElementById('createBackupBtn');
-    if (createBackupBtn) {
-        document.getElementById('createBackupBtn').addEventListener('click', function() {
-            this.disabled = true;
-            this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Creating...';
-        });
-    }
-    
     // Save maintenance button loading state
     const saveMaintenanceBtn = document.getElementById('saveMaintenanceBtn');
     if (saveMaintenanceBtn) {
-        document.getElementById('saveMaintenanceBtn').addEventListener('click', function() {
+        saveMaintenanceBtn.addEventListener('click', function() {
             this.disabled = true;
             this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
         });

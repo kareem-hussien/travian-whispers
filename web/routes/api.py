@@ -397,12 +397,6 @@ def admin_refresh_stats():
         'message': 'Stats refreshed successfully'
     })
 
-# NOTE: The following duplicate endpoints have been removed:
-# - /api/admin/create-backup (duplicates /admin/create-backup)
-# - /api/admin/update-maintenance (duplicates /admin/update-maintenance)
-# These functions are now handled in web/routes/admin_apis/maintenance.py
-
-
 @api_bp.route('/admin/user/<user_id>', methods=['GET'])
 @api_error_handler
 @admin_required
