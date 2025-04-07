@@ -3,7 +3,7 @@ API routes for Travian Whispers web application.
 This module defines the blueprint for API endpoints.
 """
 import logging
-from flask import Blueprint, request, jsonify, session, current_app
+from flask import Blueprint, flash, redirect, request, jsonify, session, current_app, url_for
 from bson import ObjectId
 
 from web.utils.decorators import login_required, admin_required, api_error_handler
@@ -462,55 +462,51 @@ API route for user account deletion.
 Add this to your web/routes/api.py file.
 """
 
+"""
+Fixed API route for user account deletion.
+"""
 @api_bp.route('/user/delete-account', methods=['POST'])
 @api_error_handler
 @login_required
 def delete_user_account():
     """API endpoint to delete user account."""
-    # Get user ID
-    user_id = session['user_id']
-    
-    # Get user model
-    user_model = User()
-    user = user_model.get_user_by_id(user_id)
-    
-    if not user:
-        return jsonify({
-            'success': False,
-            'message': 'User not found'
-        }), 404
-    
-    # First, log the deletion request
     try:
-        activity_model = ActivityLog()
-        activity_model.log_activity(
-            user_id=user_id,
-            activity_type='account-deletion',
-            details=f"Account deletion requested by user {user['username']}",
-            status='info'
-        )
-    except Exception as e:
-        logger.error(f"Error logging deletion activity: {e}")
-    
-    # Add delete_user method to User model if it doesn't exist
-    if not hasattr(user_model, 'delete_user'):
-        def delete_user(self, user_id):
-            """
-            Delete a user and all associated data.
-            
-            Args:
-                user_id (str): User ID
-                
-            Returns:
-                bool: True if user was deleted, False otherwise
-            """
-            if self.collection is None:
-                logger.error("Database not connected")
-                return False
-            
+        # Get user ID
+        user_id = session['user_id']
+        
+        # Get user model
+        user_model = User()
+        user = user_model.get_user_by_id(user_id)
+        
+        if not user:
+            # Handle case when user isn't found
+            flash('User not found', 'danger')
+            return redirect(url_for('user.profile'))
+        
+        # First, log the deletion request
+        try:
+            from database.models.activity_log import ActivityLog
+            activity_model = ActivityLog()
+            activity_model.log_activity(
+                user_id=user_id,
+                activity_type='account-deletion',
+                details=f"Account deletion requested by user {user['username']}",
+                status='info'
+            )
+        except Exception as e:
+            logger.error(f"Error logging deletion activity: {e}")
+        
+        # Delete user and all associated data
+        success = False
+        
+        # Check if delete_user method exists
+        if hasattr(user_model, 'delete_user'):
+            success = user_model.delete_user(user_id)
+        else:
+            # Implement delete functionality if method doesn't exist
             try:
                 # Delete user
-                result = self.collection.delete_one({"_id": ObjectId(user_id)})
+                result = user_model.collection.delete_one({"_id": ObjectId(user_id)})
                 
                 if result.deleted_count > 0:
                     # Delete associated data (activities, etc.)
@@ -521,37 +517,35 @@ def delete_user_account():
                     except Exception as e:
                         logger.error(f"Error deleting user activities: {e}")
                     
-                    return True
-                else:
-                    return False
+                    success = True
             except Exception as e:
                 logger.error(f"Error deleting user: {e}")
-                return False
+                success = False
         
-        # Add method to User class
-        User.delete_user = delete_user
-    
-    # Delete user and all associated data
-    try:
-        success = user_model.delete_user(user_id)
+        # Clear session regardless of success
+        session.clear()
         
         if success:
             # Log successful deletion (in system logs since user is now deleted)
             logger.info(f"User account deleted: {user['username']} (ID: {user_id})")
             
-            # Clear session
-            session.clear()
-            
-            # Redirect to homepage with flash message
-            flash('Your account has been successfully deleted.', 'success')
-            return redirect(url_for('public.index'))
+            # Redirect to goodbye page
+            return redirect(url_for('public.goodbye'))
         else:
-            flash('Failed to delete account. Please try again later.', 'danger')
-            return redirect(url_for('user.profile'))
+            # Flash error and redirect to home page
+            flash('An error occurred while deleting your account. Please try again later.', 'danger')
+            return redirect(url_for('public.index'))
+            
     except Exception as e:
+        # Log the error
         logger.error(f"Error during account deletion: {e}")
-        flash('An error occurred while deleting your account. Please try again later.', 'danger')
-        return redirect(url_for('user.profile'))
+        
+        # Clear session in case of error too
+        session.clear()
+        
+        # Flash error and redirect to home page
+        flash('An unexpected error occurred. Please try again later.', 'danger')
+        return redirect(url_for('public.index'))
     
 @api_bp.route('/webhooks/paypal', methods=['POST'])
 @api_error_handler

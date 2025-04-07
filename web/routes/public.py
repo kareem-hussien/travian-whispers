@@ -119,3 +119,8 @@ def terms():
 def privacy():
     """Privacy Policy page route."""
     return render_template('privacy.html', title='Privacy Policy')
+
+@public_bp.route('/goodbye')
+def goodbye():
+    """Goodbye page after account deletion."""
+    return render_template('goodbye.html', title='Account Deleted')

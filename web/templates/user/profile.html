@@ -185,20 +185,65 @@
                 <h5 class="modal-title" id="deleteAccountModalLabel">Confirm Account Deletion</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <div class="alert alert-danger">
-                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                    <strong>Warning:</strong> This action cannot be undone. All your data will be permanently deleted.
+            
+            <!-- Use an actual form instead of JavaScript DOM manipulation -->
+            <form id="deleteAccountForm" action="/api/user/delete-account" method="POST">
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <strong>Warning:</strong> This action cannot be undone. All your data will be permanently deleted.
+                    </div>
+                    
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="mb-3">
+                        <label for="confirmUsername" class="form-label">
+                            To confirm deletion, please type your username: <strong>{{ user_profile.username }}</strong>
+                        </label>
+                        <input type="text" class="form-control" id="confirmUsername" 
+                               name="confirm_username" placeholder="Enter your username">
+                        <div class="invalid-feedback">
+                            Username does not match.
+                        </div>
+                    </div>
                 </div>
-                <p>To confirm deletion, please type your username: <strong>{{ user_profile.username }}</strong></p>
-                <input type="text" class="form-control" id="confirmUsername" placeholder="Enter your username">
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" id="confirmDeleteBtn" disabled>Delete Account</button>
-            </div>
-        </div>
-    </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Delete Account</button>
+                </div>
+            </form>
+            <script>
+            // Execute this script immediately when included
+            (function() {
+                // Get the form element
+                var form = document.getElementById('deleteAccountForm');
+                var usernameInput = document.getElementById('confirmUsername');
+                var expectedUsername = "{{ user_profile.username }}";
+                
+                // Add submit handler to validate the username before submission
+                form.addEventListener('submit', function(event) {
+                    // Prevent the default form submission
+                    event.preventDefault();
+                    
+                    // Check if the username matches
+                    if (usernameInput.value === expectedUsername) {
+                        // If it matches, submit the form
+                        form.submit();
+                    } else {
+                        // If it doesn't match, show error
+                        usernameInput.classList.add('is-invalid');
+                    }
+                });
+                
+                // Remove invalid class when input changes
+                usernameInput.addEventListener('input', function() {
+                    usernameInput.classList.remove('is-invalid');
+                });
+            })();
+        </script>
+</div>
+</div>
 </div>
 {% endblock %}
 
@@ -269,19 +314,59 @@
         }
     });
     
-    // Delete account confirmation
+    // Delete account confirmation - completely rewritten
+document.addEventListener('DOMContentLoaded', function() {
+    // Get references to the needed elements
     const confirmInput = document.getElementById('confirmUsername');
     const confirmBtn = document.getElementById('confirmDeleteBtn');
-    const username = "{{ user_profile.username }}";
+    const usernameElement = document.getElementById('usernameToMatch');
     
-    confirmInput.addEventListener('input', function() {
-        // Enable delete button only if username matches exactly
-        confirmBtn.disabled = this.value !== username;
+    // Make sure elements exist before proceeding
+    if (!confirmInput || !confirmBtn || !usernameElement) {
+        console.error('Required elements for account deletion not found!');
+        return;
+    }
+    
+    // Get the actual username from the displayed element
+    const username = usernameElement.textContent.trim();
+    console.log('Username that needs to be matched:', username);
+    
+    // Function to check if username matches and update button
+    function checkUsername() {
+        const inputVal = confirmInput.value;
+        const matches = inputVal === username;
+        
+        console.log(`Input: "${inputVal}" | Username: "${username}" | Matches: ${matches}`);
+        
+        // Force the button disabled property regardless of CSS
+        confirmBtn.disabled = !matches;
+        
+        // Also add/remove a class for visibility feedback
+        if (matches) {
+            confirmBtn.classList.remove('disabled');
+            confirmBtn.setAttribute('aria-disabled', 'false');
+        } else {
+            confirmBtn.classList.add('disabled');
+            confirmBtn.setAttribute('aria-disabled', 'true');
+        }
+    }
+    
+    // Check on input changes
+    confirmInput.addEventListener('input', checkUsername);
+    confirmInput.addEventListener('keyup', checkUsername);
+    confirmInput.addEventListener('paste', function() {
+        // Short delay to allow paste to complete
+        setTimeout(checkUsername, 10);
     });
     
-    confirmBtn.addEventListener('click', function() {
+    // Handle the delete account action
+    confirmBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        
         if (confirmInput.value === username) {
-            // Submit form for account deletion
+            console.log('Submitting deletion form...');
+            
+            // Create and submit the form
             const form = document.createElement('form');
             form.method = 'POST';
             form.action = "/api/user/delete-account";
@@ -295,7 +380,28 @@
             
             document.body.appendChild(form);
             form.submit();
+        } else {
+            console.warn('Delete button clicked but username does not match!');
+            // Highlight the input to indicate error
+            confirmInput.classList.add('is-invalid');
+            setTimeout(() => confirmInput.classList.remove('is-invalid'), 2000);
         }
     });
+    
+    // Run initial check (though input should be empty on load)
+    checkUsername();
+    
+    // Add special handling for the modal
+    const deleteModal = document.getElementById('deleteAccountModal');
+    if (deleteModal) {
+        deleteModal.addEventListener('shown.bs.modal', function() {
+            // Clear and focus the input when modal is shown
+            confirmInput.value = '';
+            confirmInput.focus();
+            // Re-check username match status
+            checkUsername();
+        });
+    }
+});
 </script>
 {% endblock %}
