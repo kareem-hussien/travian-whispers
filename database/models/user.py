@@ -307,3 +307,91 @@ class User:
         except Exception as e:
             logger.error(f"Error verifying user: {e}")
             return False
+
+def update_villages(self, user_id, villages):
+    """
+    Update the villages list for a user.
+    
+    Args:
+        user_id (str): User ID
+        villages (list): List of village dictionaries
+        
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    if self.collection is None:
+        logger.error("Database not connected")
+        return False
+        
+    try:
+        user_oid = ObjectId(user_id)
+        
+        result = self.collection.update_one(
+            {"_id": user_oid},
+            {"$set": {
+                "villages": villages,
+                "updatedAt": datetime.utcnow()
+            }}
+        )
+        
+        return result.modified_count > 0
+    except Exception as e:
+        logger.error(f"Error updating villages: {e}")
+        return False
+    
+def merge_villages(self, user_id, new_villages):
+    """
+    Merge new villages with existing ones, preserving settings.
+    
+    Args:
+        user_id (str): User ID
+        new_villages (list): List of newly extracted village dictionaries
+        
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    if self.collection is None:
+        logger.error("Database not connected")
+        return False
+        
+    try:
+        # Get user's current villages
+        user = self.get_user_by_id(user_id)
+        if not user:
+            logger.error(f"User not found: {user_id}")
+            return False
+            
+        current_villages = user.get('villages', [])
+        
+        # Create a map of existing village settings by newdid
+        village_settings = {}
+        for village in current_villages:
+            newdid = village.get('newdid')
+            if newdid:
+                village_settings[newdid] = {
+                    'auto_farm_enabled': village.get('auto_farm_enabled', False),
+                    'training_enabled': village.get('training_enabled', False),
+                    'status': village.get('status', 'active')
+                }
+        
+        # Apply existing settings to new villages
+        for village in new_villages:
+            newdid = village.get('newdid')
+            if newdid and newdid in village_settings:
+                village['auto_farm_enabled'] = village_settings[newdid]['auto_farm_enabled']
+                village['training_enabled'] = village_settings[newdid]['training_enabled']
+                village['status'] = village_settings[newdid]['status']
+        
+        # Update user in database
+        result = self.collection.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": {
+                "villages": new_villages,
+                "updatedAt": datetime.utcnow()
+            }}
+        )
+        
+        return result.modified_count > 0
+    except Exception as e:
+        logger.error(f"Error merging villages: {e}")
+        return False

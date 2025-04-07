@@ -1,0 +1,67 @@
+<div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-labelledby="deleteAccountModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteAccountModalLabel">Confirm Account Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <!-- Use an actual form instead of JavaScript DOM manipulation -->
+            <form id="deleteAccountForm" action="/api/user/delete-account" method="POST">
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <strong>Warning:</strong> This action cannot be undone. All your data will be permanently deleted.
+                    </div>
+                    
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="mb-3">
+                        <label for="confirmUsername" class="form-label">
+                            To confirm deletion, please type your username: <strong>{{ user_profile.username }}</strong>
+                        </label>
+                        <input type="text" class="form-control" id="confirmUsername" 
+                               name="confirm_username" placeholder="Enter your username">
+                        <div class="invalid-feedback">
+                            Username does not match.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Delete Account</button>
+                </div>
+            </form>
+            <script>
+            // Execute this script immediately when included
+            (function() {
+                // Get the form element
+                var form = document.getElementById('deleteAccountForm');
+                var usernameInput = document.getElementById('confirmUsername');
+                var expectedUsername = "{{ user_profile.username }}";
+                
+                // Add submit handler to validate the username before submission
+                form.addEventListener('submit', function(event) {
+                    // Prevent the default form submission
+                    event.preventDefault();
+                    
+                    // Check if the username matches
+                    if (usernameInput.value === expectedUsername) {
+                        // If it matches, submit the form
+                        form.submit();
+                    } else {
+                        // If it doesn't match, show error
+                        usernameInput.classList.add('is-invalid');
+                    }
+                });
+                
+                // Remove invalid class when input changes
+                usernameInput.addEventListener('input', function() {
+                    usernameInput.classList.remove('is-invalid');
+                });
+            })();
+        </script>
+</div>
+</div>
+</div>

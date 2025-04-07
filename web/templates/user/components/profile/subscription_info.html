@@ -1,0 +1,34 @@
+    <div class="dashboard-card">
+        <div class="subscription-badge {{ 'bg-success' if user_profile.subscription.status == 'active' else 'bg-secondary' }} text-white">
+            {{ user_profile.subscription.status|capitalize }}
+        </div>
+        
+        <h4 class="mb-4">Subscription Information</h4>
+        
+        <div class="mb-3">
+            <label class="form-label">Current Plan</label>
+            <input type="text" class="form-control" value="{{ user_profile.subscription.plan }}" readonly>
+        </div>
+        
+        <div class="mb-3">
+            <label class="form-label">Start Date</label>
+            <input type="text" class="form-control" value="{{ user_profile.subscription.start_date|default('N/A', true) }}" readonly>
+        </div>
+        
+        <div class="mb-3">
+            <label class="form-label">Expiry Date</label>
+            <input type="text" class="form-control" value="{{ user_profile.subscription.end_date|default('N/A', true) }}" readonly>
+        </div>
+        
+        <div class="mb-3">
+            <label class="form-label">Villages</label>
+            <div class="d-flex align-items-center">
+                <i class="bi bi-buildings me-2 text-muted"></i>
+                <span>{{ user_profile.stats.villages_count }} villages managed</span>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <a href="{{ url_for('user.subscription') }}" class="btn btn-primary">Manage Subscription</a>
+        </div>
+    </div>

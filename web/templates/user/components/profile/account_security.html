@@ -1,0 +1,41 @@
+    <div class="dashboard-card">
+        <h4 class="mb-4">Account Security</h4>
+        
+        <div class="mb-3">
+            <label class="form-label">Account Status</label>
+            <div class="d-flex align-items-center">
+                <span class="badge bg-success me-2">Active</span>
+                <span class="text-muted">Your account is in good standing</span>
+            </div>
+        </div>
+        
+        <div class="mb-3">
+            <label class="form-label">Last Login</label>
+            <div class="d-flex align-items-center">
+                <i class="bi bi-clock me-2 text-muted"></i>
+                <span>{{ user_profile.stats.last_login }}</span>
+            </div>
+        </div>
+        
+        <div class="mb-3">
+            <label class="form-label">Account Age</label>
+            <div class="d-flex align-items-center">
+                <i class="bi bi-calendar-check me-2 text-muted"></i>
+                <span>{{ user_profile.stats.account_age }} days</span>
+            </div>
+        </div>
+        
+        <div class="mb-3">
+            <label class="form-label">Activity Count</label>
+            <div class="d-flex align-items-center">
+                <i class="bi bi-activity me-2 text-muted"></i>
+                <span>{{ user_profile.stats.activities }} activities logged</span>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
+                Delete Account
+            </button>
+        </div>
+    </div>

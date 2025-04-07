@@ -1,0 +1,182 @@
+/* Activity Logs Page Styles */
+
+/* Activity Row Styling */
+.activity-row {
+    transition: background-color 0.2s;
+}
+
+.activity-row:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+/* Status Badge Styling */
+.badge {
+    font-weight: 500;
+    padding: 0.35em 0.65em;
+    border-radius: 0.25rem;
+}
+
+/* Activity Type Icons */
+.activity-type-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    margin-right: 10px;
+    background-color: #f8f9fa;
+}
+
+/* Charts Styling */
+.activity-chart {
+    position: relative;
+    width: 100%;
+    height: 250px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Filters Section */
+.filters-section {
+    transition: max-height 0.3s ease-in-out;
+    overflow: hidden;
+}
+
+.filters-section.collapsed {
+    max-height: 0;
+}
+
+.filters-section.expanded {
+    max-height: 500px;
+}
+
+.filter-toggle {
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Export Modal */
+#customDateRange {
+    transition: max-height 0.3s ease-in-out;
+    overflow: hidden;
+}
+
+#customDateRange.d-none {
+    max-height: 0;
+}
+
+#customDateRange:not(.d-none) {
+    max-height: 200px;
+}
+
+/* Pagination Styling */
+.pagination {
+    display: flex;
+    padding-left: 0;
+    list-style: none;
+    border-radius: 0.25rem;
+}
+
+.page-item:first-child .page-link {
+    margin-left: 0;
+    border-top-left-radius: 0.25rem;
+    border-bottom-left-radius: 0.25rem;
+}
+
+.page-item:last-child .page-link {
+    border-top-right-radius: 0.25rem;
+    border-bottom-right-radius: 0.25rem;
+}
+
+.page-item.active .page-link {
+    z-index: 3;
+    color: #fff;
+    background-color: #3a6ea5;
+    border-color: #3a6ea5;
+}
+
+.page-item.disabled .page-link {
+    color: #6c757d;
+    pointer-events: none;
+    cursor: auto;
+    background-color: #fff;
+    border-color: #dee2e6;
+}
+
+.page-link {
+    position: relative;
+    display: block;
+    padding: 0.5rem 0.75rem;
+    margin-left: -1px;
+    line-height: 1.25;
+    color: #3a6ea5;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    text-decoration: none;
+}
+
+.page-link:hover {
+    z-index: 2;
+    color: #275685;
+    text-decoration: none;
+    background-color: #e9ecef;
+    border-color: #dee2e6;
+}
+
+/* Stat Card Custom Styling */
+.stat-card {
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 1.25rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    height: 100%;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.stat-card .stat-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    margin-bottom: 1rem;
+}
+
+.stat-card .stat-icon i {
+    font-size: 1.5rem;
+}
+
+.stat-card .stat-title {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+}
+
+.stat-card .stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.stat-card .stat-subtitle {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+/* Step Animation for Chart Loading */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.chart-container {
+    animation: fadeIn 0.5s ease-in-out;
+}

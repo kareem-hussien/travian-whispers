@@ -18,8 +18,7 @@ LOGIN_URL = "https://ts1.x1.international.travian.com"
 
 def setup_browser(user_id=None):
     """
-    Sets up and returns a new Chrome WebDriver instance with the appropriate configuration.
-    If a user_id is provided, it will use a dedicated IP and isolated session for that user.
+    Set up a Chrome browser with proper configuration for Travian.
     
     Args:
         user_id (str, optional): User ID for session isolation
@@ -27,56 +26,49 @@ def setup_browser(user_id=None):
     Returns:
         webdriver.Chrome: Configured Chrome WebDriver instance
     """
-    logger.info(f"Launching browser for user: {user_id if user_id else 'Anonymous'}")
-    
-    chrome_options = Options()
-    chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--window-size=1920x1080")
-    
-    # If user_id is provided, set up isolated browser session
-    if user_id:
-        # Get browser isolation configuration
-        isolation_manager = BrowserIsolationManager()
-        config = isolation_manager.get_isolated_browser_config(user_id)
+    try:
+        # Configure Chrome options
+        chrome_options = Options()
         
-        if config:
-            # Use isolated user data directory
-            if config['session_path']:
-                chrome_options.add_argument(f"--user-data-dir={config['session_path']}")
-            
-            # Set proxy if available
-            if config['proxy']:
-                chrome_options.add_argument(f"--proxy-server={config['proxy']}")
-            
-            # Set user agent
-            if config['user_agent']:
-                chrome_options.add_argument(f"--user-agent={config['user_agent']}")
-            
-            # Add custom headers using CDP
-            # Note: This requires Chrome DevTools Protocol which will be applied after browser launch
-            
-            # Store IP data for reference
-            ip_data = config.get('ip_data')
-            logger.info(f"Using IP: {ip_data['ip'] if ip_data else 'Default'}")
-    
-    # Uncomment to run headless:
-    # chrome_options.add_argument("--headless")
-    
-    # Setup ChromeDriver service
-    service = Service(ChromeDriverManager().install())
-    
-    # Initialize driver
-    driver = webdriver.Chrome(service=service, options=chrome_options)
-    
-    # Apply custom headers using CDP if user_id is provided
-    if user_id and config and config.get('headers'):
-        # This will be executed after the browser is launched
-        driver.execute_cdp_cmd('Network.setExtraHTTPHeaders', {
-            'headers': config['headers']
-        })
-    
-    return driver
+        # Essential settings for stability
+        chrome_options.add_argument("--window-size=1920,1080")
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--no-sandbox")
+        
+        # Important for Travian - enable JavaScript and cookies
+        chrome_options.add_argument("--enable-javascript")
+        chrome_options.add_experimental_option("excludeSwitches", ["disable-popup-blocking"])
+        
+        # Add user agent to appear as a regular browser
+        chrome_options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+        
+        # If running in headless mode (no UI)
+        # chrome_options.add_argument("--headless")
+        
+        # Enable logging
+        chrome_options.add_argument("--enable-logging")
+        chrome_options.add_argument("--log-level=0")  # INFO level
+        
+        # Session isolation if user_id is provided
+        if user_id:
+            # Create user data directory if session isolation is needed
+            user_data_dir = f"selenium_profiles/{user_id}"
+            os.makedirs(user_data_dir, exist_ok=True)
+            chrome_options.add_argument(f"--user-data-dir={user_data_dir}")
+        
+        # Create and return the driver
+        driver = webdriver.Chrome(options=chrome_options)
+        
+        # Set page load timeout (30 seconds)
+        driver.set_page_load_timeout(30)
+        
+        # Add certain cookies that might be needed for Travian
+        return driver
+        
+    except Exception as e:
+        logger.error(f"Error setting up browser: {str(e)}")
+        return None
 
 def login(driver, username, password, server_url=None):
     """

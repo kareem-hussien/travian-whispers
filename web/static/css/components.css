@@ -1,189 +1,174 @@
-/* 
- * components.css
- * Reusable UI components for Travian Whispers
- */
-
-/* Cards */
-.dashboard-card {
-    background-color: white;
-    border-radius: var(--border-radius);
-    box-shadow: var(--card-shadow);
-    padding: 1.5rem;
-    height: 100%;
-    transition: transform var(--transition-speed) ease, 
-                box-shadow var(--transition-speed) ease;
-    position: relative;
-}
-
-.dashboard-card:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--card-shadow-hover);
-}
-
-/* Icons */
-.card-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: var(--border-radius-lg);
+/* Village Management Components */
+.village-item {
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
+    padding: 12px;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    transition: background-color 0.3s;
 }
 
-/* Status indicators */
-.task-status {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    display: inline-block;
-    margin-right: 0.5rem;
+.village-item:hover {
+    background-color: rgba(0,0,0,0.02);
 }
 
-.status-active {
-    background-color: var(--success-color);
+.village-icon {
+    margin-right: 15px;
 }
 
-.status-paused {
-    background-color: var(--warning-color);
+.village-info {
+    flex-grow: 1;
 }
 
-.status-stopped {
-    background-color: var(--danger-color);
-}
-
-/* Subscription badge */
-.subscription-badge {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    padding: 0.35rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
+.village-name {
     font-weight: 600;
+    margin-bottom: 2px;
 }
 
-/* Buttons */
-.task-controls button {
-    margin-right: 0.5rem;
+.village-coords {
+    font-size: 0.85rem;
+    color: #777;
 }
 
-.task-controls button:last-child {
-    margin-right: 0;
+.resource-indicator {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 10px;
+    font-size: 0.85rem;
 }
 
-/* Tables */
-.table-responsive {
-    overflow-x: auto;
+.resource-wood {
+    color: #8BC34A;
 }
 
-.villages-table img {
-    width: 24px;
-    height: 24px;
-    margin-right: 0.5rem;
+.resource-clay {
+    color: #FF9800;
 }
 
-/* Background colors */
-.bg-primary-light {
-    background-color: var(--primary-light);
-    color: var(--primary-color);
+.resource-iron {
+    color: #607D8B;
 }
 
-.bg-success-light {
-    background-color: var(--success-light);
-    color: var(--success-color);
+.resource-crop {
+    color: #FFEB3B;
 }
 
-.bg-warning-light {
-    background-color: var(--warning-light);
-    color: var(--secondary-color);
+.stat-card {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    transition: transform 0.3s, box-shadow 0.3s;
 }
 
-.bg-danger-light {
-    background-color: var(--danger-light);
-    color: var(--danger-color);
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
 
-.bg-info-light {
-    background-color: var(--info-light);
-    color: var(--info-color);
-}
-
-/* Statistics */
 .stat-title {
-    font-size: 0.875rem;
+    font-size: 0.85rem;
     color: #6c757d;
-    margin-bottom: 0.5rem;
+    margin-bottom: 6px;
 }
 
 .stat-value {
-    font-size: 1.75rem;
-    font-weight: 700;
-    margin-bottom: 0.25rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #3a6ea5;
 }
 
-.stat-change {
-    font-size: 0.8125rem;
-}
-
-/* Password strength meter */
-.password-strength {
-    margin-top: 0.5rem;
-    font-size: 0.8rem;
-}
-
-.strength-meter {
-    height: 4px;
-    border-radius: 2px;
-    margin-top: 0.25rem;
-    background-color: #e9ecef;
+/* Dashboard Card */
+.dashboard-card {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    padding: 1.5rem;
+    height: 100%;
     position: relative;
     overflow: hidden;
 }
 
-.strength-meter-fill {
+.subscription-badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 5px 10px;
+    border-radius: 0 8px 0 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* General Components Styling */
+.feature-card {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    padding: 1.5rem;
     height: 100%;
-    border-radius: 2px;
-    width: 0%;
-    transition: width 0.3s, background-color 0.3s;
+    transition: transform 0.3s, box-shadow 0.3s;
 }
 
-/* Progress bars */
-.progress {
-    height: 10px;
-    margin-bottom: 0.5rem;
-    border-radius: var(--border-radius-sm);
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
 }
 
-/* Flash messages */
-.alert {
+.feature-icon {
+    width: 60px;
+    height: 60px;
+    background-color: #f1f8ff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     margin-bottom: 1.5rem;
-    border-radius: var(--border-radius);
 }
 
-/* Form elements */
-.form-control:focus {
-    box-shadow: 0 0 0 0.25rem rgba(58, 110, 165, 0.25);
-    border-color: var(--primary-color);
+.feature-icon i {
+    font-size: 2rem;
+    color: #3a6ea5;
 }
 
-.btn-primary {
-    background-color: var(--primary-color);
-    border-color: var(--primary-color);
+.task-card {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+    padding: 1.2rem;
+    margin-bottom: 1rem;
 }
 
-.btn-primary:hover, .btn-primary:focus {
-    background-color: #31598a;
-    border-color: #31598a;
+.task-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.8rem;
 }
 
-.btn-secondary {
-    background-color: var(--secondary-color);
-    border-color: var(--secondary-color);
+.task-title {
+    margin-bottom: 0;
 }
 
-.btn-secondary:hover, .btn-secondary:focus {
-    background-color: #e58c35;
-    border-color: #e58c35;
+.task-status {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.status-active {
+    background-color: #28a745;
+}
+
+.status-paused {
+    background-color: #ffc107;
+}
+
+.status-stopped {
+    background-color: #dc3545;
+}
+
+.task-controls {
+    display: flex;
+    gap: 10px;
 }

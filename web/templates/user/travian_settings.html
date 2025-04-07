@@ -1,0 +1,145 @@
+{% extends 'user/layout.html' %}
+{% block title %}Travian Settings{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">Travian Settings</li>
+{% endblock %}
+{% block content %}
+<div class="content">
+    <!-- Page Header -->
+    {% with 
+        title="Travian Settings",
+        subtitle="Manage your Travian game account credentials and preferences"
+    %}
+        {% include 'user/components/page_header.html' %}
+    {% endwith %}
+Copy<div class="row">
+    <!-- Travian Account Settings -->
+    <div class="col-lg-8 mb-4">
+        <div class="dashboard-card">
+            <h4 class="mb-4">Travian Account Settings</h4>
+            
+            <form action="{{ url_for('user.travian_settings') }}" method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="mb-3">
+                    <label for="travian_username" class="form-label">Travian Username</label>
+                    <input type="text" class="form-control" id="travian_username" name="travian_username" 
+                           value="{{ user_profile.travian_credentials.username }}" required>
+                    <small class="form-text text-muted">Your Travian game account username</small>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="travian_password" class="form-label">Travian Password</label>
+                    <input type="password" class="form-control" id="travian_password" name="travian_password" 
+                           value="{{ user_profile.travian_credentials.password }}" required>
+                    <small class="form-text text-muted">Your password is securely encrypted in our database</small>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="travian_server" class="form-label">Travian Server</label>
+                    <input type="text" class="form-control" id="travian_server" name="travian_server" 
+                           value="{{ user_profile.travian_credentials.server }}" 
+                           placeholder="https://ts1.x1.international.travian.com">
+                    <small class="form-text text-muted">The URL of your Travian game server</small>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="travian_tribe" class="form-label">Tribe</label>
+                    <select class="form-select" id="travian_tribe" name="travian_tribe">
+                        <option value="">Select your tribe</option>
+                        <option value="romans" {% if user_profile.travian_credentials.tribe == 'romans' %}selected{% endif %}>Romans</option>
+                        <option value="gauls" {% if user_profile.travian_credentials.tribe == 'gauls' %}selected{% endif %}>Gauls</option>
+                        <option value="teutons" {% if user_profile.travian_credentials.tribe == 'teutons' %}selected{% endif %}>Teutons</option>
+                        <option value="egyptians" {% if user_profile.travian_credentials.tribe == 'egyptians' %}selected{% endif %}>Egyptians</option>
+                        <option value="huns" {% if user_profile.travian_credentials.tribe == 'huns' %}selected{% endif %}>Huns</option>
+                    </select>
+                    <small class="form-text text-muted">Select your tribe for proper troop training configuration</small>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Save Settings</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Connection Status -->
+    <div class="col-lg-4 mb-4">
+        <div class="dashboard-card">
+            <h4 class="mb-4">Connection Status</h4>
+            
+            <div class="mb-3">
+                <label class="form-label">Last Connection</label>
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-clock me-2 text-muted"></i>
+                    <span>{{ user_profile.last_connection }}</span>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Status</label>
+                <div class="d-flex align-items-center">
+                    {% if user_profile.travian_credentials.username and user_profile.travian_credentials.password %}
+                        <span class="badge bg-success me-2">Ready</span>
+                        <span>Your credentials are set up</span>
+                    {% else %}
+                        <span class="badge bg-warning me-2">Not Configured</span>
+                        <span>Please set up your Travian credentials</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="alert alert-info mt-4">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                <span>These settings are required for automation features like Auto Farm and Troop Training to work.</span>
+            </div>
+            
+            <div class="mt-4">
+                <a href="{{ url_for('user.villages') }}" class="btn btn-outline-primary">
+                    <i class="bi bi-buildings me-2"></i>Manage Villages
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Security Note -->
+    <div class="col-12 mb-4">
+        <div class="dashboard-card">
+            <h4 class="mb-3">Security Information</h4>
+            
+            <div class="alert alert-primary mb-0">
+                <i class="bi bi-shield-lock-fill me-2"></i>
+                <strong>Your data security is important to us.</strong> All credentials are encrypted and securely stored. 
+                We only use your credentials to automate tasks on your behalf and never share them with third parties.
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    // Check if password field is empty on load
+    document.addEventListener('DOMContentLoaded', function() {
+        const passwordField = document.getElementById('travian_password');
+        
+        // If there's a stored password, it will show as masked characters
+        // We replace it with ******** for display purposes
+        if (passwordField.value === "********" || passwordField.value === "") {
+            passwordField.setAttribute('placeholder', '********');
+        }
+        
+        // When focusing on the password field, clear the placeholder to allow typing
+        passwordField.addEventListener('focus', function() {
+            if (this.value === "********") {
+                this.value = '';
+            }
+        });
+        
+        // When leaving the field empty, restore the placeholder
+        passwordField.addEventListener('blur', function() {
+            if (this.value === '') {
+                this.setAttribute('placeholder', '********');
+            }
+        });
+    });
+</script>
+{% endblock %}
