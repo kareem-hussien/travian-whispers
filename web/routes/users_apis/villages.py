@@ -44,11 +44,19 @@ def villages():
         session.clear()
         return redirect(url_for('auth.login'))
     
-    # Get activity log for villages
-    activity_model = ActivityLog()
+    # Check if villages array exists and has expected format
+    if 'villages' not in user or not isinstance(user['villages'], list):
+        # Initialize empty villages array if needed
+        user['villages'] = []
+        user_model.update_user(session['user_id'], {'villages': []})
+        logger.warning(f"Initialized empty villages array for user {user['username']}")
     
-    # For each village, check the last farm time
+    # Format each village to ensure it has all required properties
+    formatted_villages = []
     for village in user.get('villages', []):
+        # Get activity logs for this village
+        activity_model = ActivityLog()
+        
         # Get the last farm activity for this village
         farm_activity = activity_model.get_latest_user_activity(
             user_id=session['user_id'],
@@ -63,18 +71,32 @@ def villages():
             filter_query={'village': village.get('name')}
         )
         
-        # Add last farm time to village data
-        if farm_activity and 'timestamp' in farm_activity:
-            village['last_farmed'] = farm_activity['timestamp'].strftime('%Y-%m-%d %H:%M')
+        # Format village with consistent data structure
+        formatted_village = {
+            'name': village.get('name', 'Unknown Village'),
+            'x': village.get('x', 0),
+            'y': village.get('y', 0),
+            'newdid': village.get('newdid', '0'),
+            'population': village.get('population', 0),
+            'status': village.get('status', 'active'),
+            'auto_farm_enabled': village.get('auto_farm_enabled', False),
+            'training_enabled': village.get('training_enabled', False),
+            'resources': village.get('resources', {
+                'wood': 0,
+                'clay': 0,
+                'iron': 0,
+                'crop': 0
+            }),
+            'last_farmed': farm_activity['timestamp'].strftime('%Y-%m-%d %H:%M') if farm_activity and farm_activity.get('timestamp') else 'Never',
+            'last_trained': training_activity['timestamp'].strftime('%Y-%m-%d %H:%M') if training_activity and training_activity.get('timestamp') else 'Never'
+        }
         
-        # Add last training time to village data
-        if training_activity and 'timestamp' in training_activity:
-            village['last_trained'] = training_activity['timestamp'].strftime('%Y-%m-%d %H:%M')
+        formatted_villages.append(formatted_village)
     
-    # Render villages template
+    # Render villages template with formatted data
     return render_template(
         'user/villages.html', 
-        villages=user.get('villages', []),
+        villages=formatted_villages,
         current_user=user, 
         title='Villages Management'
     )
@@ -114,13 +136,19 @@ def add_village():
     # Create village data structure
     village = {
         'name': data['village_name'],
-        'x': data['village_x'],
-        'y': data['village_y'],
+        'x': int(data['village_x']),
+        'y': int(data['village_y']),
         'newdid': data['village_newdid'],
-        'population': data.get('village_population', 0),
+        'population': int(data.get('village_population', 0)),
         'auto_farm_enabled': data.get('auto_farm_enabled', False),
         'training_enabled': data.get('training_enabled', False),
-        'status': 'active'
+        'status': 'active',
+        'resources': {
+            'wood': 0,
+            'clay': 0,
+            'iron': 0, 
+            'crop': 0
+        }
     }
     
     # Check if village with this newdid already exists
@@ -136,7 +164,7 @@ def add_village():
     current_villages.append(village)
     
     # Update user in database
-    if user_model.update_villages(session['user_id'], current_villages):
+    if user_model.update_user(session['user_id'], {'villages': current_villages}):
         # Log the activity
         activity_model = ActivityLog()
         activity_model.log_activity(
@@ -199,29 +227,29 @@ def update_village():
         }), 404
     
     # Get the original village data before update (for logging)
-    original_village = current_villages[village_idx]
+    original_village = current_villages[village_idx].copy()
     
     # Update village data
     if 'village_name' in data:
         current_villages[village_idx]['name'] = data['village_name']
     
     if 'village_x' in data:
-        current_villages[village_idx]['x'] = data['village_x']
+        current_villages[village_idx]['x'] = int(data['village_x'])
     
     if 'village_y' in data:
-        current_villages[village_idx]['y'] = data['village_y']
+        current_villages[village_idx]['y'] = int(data['village_y'])
     
     if 'village_population' in data:
-        current_villages[village_idx]['population'] = data['village_population']
+        current_villages[village_idx]['population'] = int(data['village_population'])
     
     if 'auto_farm_enabled' in data:
-        current_villages[village_idx]['auto_farm_enabled'] = data['auto_farm_enabled']
+        current_villages[village_idx]['auto_farm_enabled'] = bool(data['auto_farm_enabled'])
     
     if 'training_enabled' in data:
-        current_villages[village_idx]['training_enabled'] = data['training_enabled']
+        current_villages[village_idx]['training_enabled'] = bool(data['training_enabled'])
     
     # Update user in database
-    if user_model.update_villages(session['user_id'], current_villages):
+    if user_model.update_user(session['user_id'], {'villages': current_villages}):
         # Log the activity
         activity_model = ActivityLog()
         activity_model.log_activity(
@@ -287,7 +315,7 @@ def remove_village():
     current_villages = [v for v in current_villages if str(v.get('newdid')) != str(data['village_id'])]
     
     # Update user in database
-    if user_model.update_villages(session['user_id'], current_villages):
+    if user_model.update_user(session['user_id'], {'villages': current_villages}):
         # Log the activity
         activity_model = ActivityLog()
         activity_model.log_activity(
@@ -351,7 +379,7 @@ def update_village_settings():
         village['training_enabled'] = village_id in training_villages
     
     # Update user in database
-    if user_model.update_villages(session['user_id'], current_villages):
+    if user_model.update_user(session['user_id'], {'villages': current_villages}):
         # Log the activity
         activity_model = ActivityLog()
         activity_model.log_activity(
@@ -520,10 +548,14 @@ def extract_villages():
             if newdid and newdid in village_settings:
                 village['auto_farm_enabled'] = village_settings[newdid]['auto_farm_enabled']
                 village['training_enabled'] = village_settings[newdid]['training_enabled']
+            else:
+                # Default settings for new villages
+                village['auto_farm_enabled'] = False
+                village['training_enabled'] = False
         
         # Update user's villages in database
         logger.info("Updating user's villages in database")
-        if user_model.update_villages(session['user_id'], extracted_villages):
+        if user_model.update_user(session['user_id'], {'villages': extracted_villages}):
             # Log the activity
             activity_model = ActivityLog()
             activity_model.log_activity(
@@ -557,3 +589,64 @@ def extract_villages():
             'success': False,
             'message': f'Error extracting villages: {str(e)}'
         }), 500
+
+@api_error_handler
+@login_required
+def get_user_villages():
+    """API endpoint to get user villages data."""
+    # Get user data
+    user_model = User()
+    user = user_model.get_user_by_id(session['user_id'])
+    
+    if not user:
+        return jsonify({
+            'success': False,
+            'message': 'User not found'
+        }), 404
+    
+    # Format villages with activity data
+    formatted_villages = []
+    for village in user.get('villages', []):
+        # Get activity logs for this village
+        activity_model = ActivityLog()
+        
+        # Get the last farm activity for this village
+        farm_activity = activity_model.get_latest_user_activity(
+            user_id=session['user_id'],
+            activity_type='auto-farm',
+            filter_query={'village': village.get('name')}
+        )
+        
+        # Get the last training activity for this village
+        training_activity = activity_model.get_latest_user_activity(
+            user_id=session['user_id'],
+            activity_type='troop-training',
+            filter_query={'village': village.get('name')}
+        )
+        
+        # Format village with consistent data structure
+        formatted_village = {
+            'name': village.get('name', 'Unknown Village'),
+            'x': village.get('x', 0),
+            'y': village.get('y', 0),
+            'newdid': village.get('newdid', '0'),
+            'population': village.get('population', 0),
+            'status': village.get('status', 'active'),
+            'auto_farm_enabled': village.get('auto_farm_enabled', False),
+            'training_enabled': village.get('training_enabled', False),
+            'resources': village.get('resources', {
+                'wood': 0,
+                'clay': 0,
+                'iron': 0,
+                'crop': 0
+            }),
+            'last_farmed': farm_activity['timestamp'].strftime('%Y-%m-%d %H:%M') if farm_activity and farm_activity.get('timestamp') else 'Never',
+            'last_trained': training_activity['timestamp'].strftime('%Y-%m-%d %H:%M') if training_activity and training_activity.get('timestamp') else 'Never'
+        }
+        
+        formatted_villages.append(formatted_village)
+    
+    return jsonify({
+        'success': True,
+        'data': formatted_villages
+    })

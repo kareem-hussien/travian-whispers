@@ -1,0 +1,157 @@
+/* Subscription Page Specific Styles */
+
+/* Current subscription section */
+.current-subscription {
+    padding: 1rem;
+    border-radius: 0.5rem;
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+/* Feature list styling */
+.feature-list li {
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.feature-available i {
+    color: var(--bs-success);
+}
+
+.feature-unavailable {
+    opacity: 0.7;
+}
+
+.feature-unavailable i {
+    color: var(--bs-danger);
+}
+
+/* Subscription details */
+.subscription-detail-item {
+    display: flex;
+    margin-bottom: 0.5rem;
+}
+
+.detail-label {
+    width: auto;
+    margin-bottom: 0.25rem;
+}
+
+.detail-value {
+    font-weight: 500;
+}
+
+/* Responsive tables */
+@media (max-width: 576px) {
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .transaction-id {
+        max-width: 80px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: inline-block;
+    }
+} {
+    font-weight: 500;
+    width: 100px;
+}
+
+.detail-value {
+    flex: 1;
+}
+
+/* Subscription statistics */
+.subscription-stat-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+}
+
+.stat-icon i {
+    font-size: 1.5rem;
+}
+
+.bg-primary-light {
+    background-color: rgba(0, 123, 255, 0.15);
+    color: var(--bs-primary);
+}
+
+.bg-success-light {
+    background-color: rgba(40, 167, 69, 0.15);
+    color: var(--bs-success);
+}
+
+.bg-info-light {
+    background-color: rgba(23, 162, 184, 0.15);
+    color: var(--bs-info);
+}
+
+.bg-warning-light {
+    background-color: rgba(255, 193, 7, 0.15);
+    color: var(--bs-warning);
+}
+
+.bg-danger-light {
+    background-color: rgba(220, 53, 69, 0.15);
+    color: var(--bs-danger);
+}
+
+/* Pricing card */
+.pricing-card {
+    transition: transform 0.3s, box-shadow 0.3s;
+    height: 100%;
+    border-radius: 0.5rem;
+}
+
+.pricing-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.pricing-header {
+    color: var(--bs-primary);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.pricing-price {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+/* Transaction ID */
+.transaction-id {
+    font-family: monospace;
+}
+
+.copy-btn {
+    padding: 0;
+    margin-left: 0.5rem;
+}
+
+/* Modal adjustments */
+.modal-body .pricing-card {
+    margin-bottom: 1rem;
+}
+
+/* Media queries for better mobile display */
+@media (max-width: 768px) {
+    .subscription-detail-item {
+        flex-direction: column;
+    }
+    
+    .detail-label

@@ -8,6 +8,8 @@ from bson import ObjectId
 from flask import request, session, render_template, current_app
 from datetime import datetime
 
+from database.models import user
+
 # Initialize logger
 logger = logging.getLogger(__name__)
 

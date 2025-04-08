@@ -1,0 +1,62 @@
+<div class="row g-4 mb-4">
+    {% for plan in plans %}
+    <div class="col-lg-4 col-md-6">
+        <div class="dashboard-card plan-card h-100">
+            <div class="position-absolute top-0 end-0 p-3">
+                <div class="btn-group btn-group-sm">
+                    <a href="{{ url_for('admin.edit_plan', plan_id=plan._id) }}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="Edit Plan">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deletePlanModal" 
+                            data-id="{{ plan._id }}" data-plan-name="{{ plan.name }}">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <h3 class="mb-3">{{ plan.name }}</h3>
+                <div class="mb-4">
+                    <span class="fs-2 fw-bold">{{ plan.price }}</span> <span class="text-muted">/month</span>
+                </div>
+            </div>
+            
+            <hr class="my-4">
+            
+            <div class="row mb-3">
+                <div class="col-6">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-people me-2 text-primary"></i>
+                        <div>
+                            <h6 class="mb-0">{{ plan.users }}</h6>
+                            <small class="text-muted">Subscribers</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-cash me-2 text-success"></i>
+                        <div>
+                            <h6 class="mb-0">{{ plan.revenue }}</h6>
+                            <small class="text-muted">Revenue</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <ul class="list-group list-group-flush mb-4">
+                {% for feature in plan.features %}
+                <li class="list-group-item bg-transparent border-0 px-0 py-2 d-flex align-items-center">
+                    <i class="bi bi-check-circle-fill text-success me-2"></i>
+                    {{ feature }}
+                </li>
+                {% endfor %}
+            </ul>
+            
+            <div class="mt-auto">
+                <a href="{{ url_for('admin.edit_plan', plan_id=plan._id) }}" class="btn btn-outline-primary w-100">Edit Plan</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>

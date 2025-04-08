@@ -1,0 +1,53 @@
+<!-- Edit Village Modal -->
+<div class="modal fade" id="editVillageModal" tabindex="-1" aria-labelledby="editVillageModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editVillageModalLabel">Edit Village</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editVillageForm">
+                    <input type="hidden" id="editVillageId" name="village_id">
+                    
+                    <div class="mb-3">
+                        <label for="editVillageName" class="form-label">Village Name</label>
+                        <input type="text" class="form-control" id="editVillageName" name="village_name" required>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label for="editVillageX" class="form-label">X Coordinate</label>
+                            <input type="number" class="form-control" id="editVillageX" name="village_x" required>
+                        </div>
+                        <div class="col-6">
+                            <label for="editVillageY" class="form-label">Y Coordinate</label>
+                            <input type="number" class="form-control" id="editVillageY" name="village_y" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editVillagePopulation" class="form-label">Population</label>
+                        <input type="number" class="form-control" id="editVillagePopulation" name="village_population">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Automation Settings</label>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="editAutoFarm" name="auto_farm">
+                            <label class="form-check-label" for="editAutoFarm">Enable Auto-Farm for this village</label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="editTraining" name="training">
+                            <label class="form-check-label" for="editTraining">Enable Troop Training for this village</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveVillageBtn">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>

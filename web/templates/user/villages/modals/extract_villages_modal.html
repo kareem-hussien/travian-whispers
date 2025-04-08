@@ -1,0 +1,51 @@
+<!-- Extract Villages Modal -->
+<div class="modal fade" id="extractVillagesModal" tabindex="-1" aria-labelledby="extractVillagesModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="extractVillagesModalLabel">Extract Villages from Travian</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info mb-3">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    This will log into your Travian account and extract all your villages. Make sure your Travian credentials are correctly set in your <a href="{{ url_for('user.travian_settings') }}">Travian Settings</a>.
+                </div>
+                
+                <div id="extractProgress" class="d-none">
+                    <div class="text-center mb-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                    <div class="progress mb-3">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                    </div>
+                    <div id="extractStatus" class="text-center mb-3">Preparing to extract villages...</div>
+                </div>
+                
+                <div id="extractResults" class="d-none">
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle-fill me-2"></i>
+                        <span id="extractSuccessMessage">Villages extracted successfully!</span>
+                    </div>
+                    
+                    <h6>Extracted Villages:</h6>
+                    <ul id="extractedVillagesList" class="list-group mb-3"></ul>
+                </div>
+                
+                <div id="extractError" class="d-none">
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <span id="extractErrorMessage">An error occurred.</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="extractCancelBtn">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmExtractBtn">Start Extraction</button>
+                <button type="button" class="btn btn-success d-none" data-bs-dismiss="modal" id="extractDoneBtn">Done</button>
+            </div>
+        </div>
+    </div>
+</div>

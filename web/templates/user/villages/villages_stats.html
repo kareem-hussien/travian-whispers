@@ -1,0 +1,84 @@
+<!-- Villages Stats Component -->
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="dashboard-card">
+            <h4 class="mb-3">Villages Statistics</h4>
+            
+            <div class="row">
+                <div class="col-6 mb-3">
+                    <div class="stat-card">
+                        <div class="stat-title">Total Villages</div>
+                        <div class="stat-value">{{ villages|length }}</div>
+                    </div>
+                </div>
+                <div class="col-6 mb-3">
+                    <div class="stat-card">
+                        <div class="stat-title">Active Villages</div>
+                        <div class="stat-value">{{ villages|selectattr('status', 'equalto', 'active')|list|length }}</div>
+                    </div>
+                </div>
+                <div class="col-6 mb-3">
+                    <div class="stat-card">
+                        <div class="stat-title">Total Population</div>
+                        <div class="stat-value">
+                            {% set total_pop = 0 %}
+                            {% for village in villages %}
+                                {% set total_pop = total_pop + (village.population|default(0)|int) %}
+                            {% endfor %}
+                            {{ total_pop }}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 mb-3">
+                    <div class="stat-card">
+                        <div class="stat-title">Automation Status</div>
+                        <div class="stat-value">
+                            {% if current_user.settings.autoFarm %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="dashboard-card">
+            <h4 class="mb-3">Automation Settings</h4>
+            
+            <div class="alert alert-primary mb-3">
+                <i class="bi bi-lightbulb-fill me-2"></i>
+                Configure which villages should be used for auto-farming and troop training.
+            </div>
+            
+            <form id="villageSettingsForm">
+                <div class="mb-3">
+                    <label class="form-label">Auto-Farm Villages</label>
+                    <select class="form-select" id="autoFarmVillages" multiple>
+                        {% for village in villages %}
+                            <option value="{{ village.newdid }}" {% if village.auto_farm_enabled %}selected{% endif %}>
+                                {{ village.name }} ({{ village.x }}|{{ village.y }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Troop Training Villages</label>
+                    <select class="form-select" id="trainingVillages" multiple>
+                        {% for village in villages %}
+                            <option value="{{ village.newdid }}" {% if village.training_enabled %}selected{% endif %}>
+                                {{ village.name }} ({{ village.x }}|{{ village.y }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Save Settings</button>
+            </form>
+        </div>
+    </div>
+</div>

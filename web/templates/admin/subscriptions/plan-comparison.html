@@ -1,0 +1,144 @@
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <h5 class="mb-4">Plan Comparison</h5>
+            
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Feature</th>
+                            {% for plan in plans %}
+                            <th class="text-center">{{ plan.name }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Price</td>
+                            {% for plan in plans %}
+                            <td class="text-center">{{ plan.price }}/month</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Max Villages</td>
+                            {% for plan in plans %}
+                            <td class="text-center">
+                                {% if plan.features and 'maxVillages' in plan.features %}
+                                    {{ plan.features.maxVillages }}
+                                {% elif plan.features_obj and 'maxVillages' in plan.features_obj %}
+                                    {{ plan.features_obj.maxVillages }}
+                                {% else %}
+                                    1
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Max Tasks</td>
+                            {% for plan in plans %}
+                            <td class="text-center">
+                                {% if plan.features and 'maxTasks' in plan.features %}
+                                    {{ plan.features.maxTasks }}
+                                {% elif plan.features_obj and 'maxTasks' in plan.features_obj %}
+                                    {{ plan.features_obj.maxTasks }}
+                                {% else %}
+                                    1
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Auto-Farm</td>
+                            {% for plan in plans %}
+                            <td class="text-center">
+                                {% if plan.features and 'autoFarm' in plan.features %}
+                                    {% if plan.features.autoFarm %}
+                                        <i class="bi bi-check-lg text-success"></i>
+                                    {% else %}
+                                        <i class="bi bi-x-lg text-danger"></i>
+                                    {% endif %}
+                                {% elif plan.features_obj and 'autoFarm' in plan.features_obj %}
+                                    {% if plan.features_obj.autoFarm %}
+                                        <i class="bi bi-check-lg text-success"></i>
+                                    {% else %}
+                                        <i class="bi bi-x-lg text-danger"></i>
+                                    {% endif %}
+                                {% else %}
+                                    <i class="bi bi-x-lg text-danger"></i>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Troop Trainer</td>
+                            {% for plan in plans %}
+                            <td class="text-center">
+                                {% if plan.features and 'trainer' in plan.features %}
+                                    {% if plan.features.trainer %}
+                                        <i class="bi bi-check-lg text-success"></i>
+                                    {% else %}
+                                        <i class="bi bi-x-lg text-danger"></i>
+                                    {% endif %}
+                                {% elif plan.features_obj and 'trainer' in plan.features_obj %}
+                                    {% if plan.features_obj.trainer %}
+                                        <i class="bi bi-check-lg text-success"></i>
+                                    {% else %}
+                                        <i class="bi bi-x-lg text-danger"></i>
+                                    {% endif %}
+                                {% else %}
+                                    <i class="bi bi-x-lg text-danger"></i>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Notifications</td>
+                            {% for plan in plans %}
+                            <td class="text-center">
+                                {% if plan.features and 'notification' in plan.features %}
+                                    {% if plan.features.notification %}
+                                        <i class="bi bi-check-lg text-success"></i>
+                                    {% else %}
+                                        <i class="bi bi-x-lg text-danger"></i>
+                                    {% endif %}
+                                {% elif plan.features_obj and 'notification' in plan.features_obj %}
+                                    {% if plan.features_obj.notification %}
+                                        <i class="bi bi-check-lg text-success"></i>
+                                    {% else %}
+                                        <i class="bi bi-x-lg text-danger"></i>
+                                    {% endif %}
+                                {% else %}
+                                    <i class="bi bi-x-lg text-danger"></i>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Advanced Features</td>
+                            {% for plan in plans %}
+                            <td class="text-center">
+                                {% if plan.features and 'advanced' in plan.features %}
+                                    {% if plan.features.advanced %}
+                                        <i class="bi bi-check-lg text-success"></i>
+                                    {% else %}
+                                        <i class="bi bi-x-lg text-danger"></i>
+                                    {% endif %}
+                                {% elif plan.features_obj and 'advanced' in plan.features_obj %}
+                                    {% if plan.features_obj.advanced %}
+                                        <i class="bi bi-check-lg text-success"></i>
+                                    {% else %}
+                                        <i class="bi bi-x-lg text-danger"></i>
+                                    {% endif %}
+                                {% else %}
+                                    <i class="bi bi-x-lg text-danger"></i>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

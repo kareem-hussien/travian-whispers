@@ -1,0 +1,98 @@
+<!-- Village Details Modal -->
+<div class="modal fade" id="villageDetailsModal" tabindex="-1" aria-labelledby="villageDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="villageDetailsModalLabel">Village Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">Basic Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-2">
+                                    <strong>Name:</strong> <span id="detailsVillageName"></span>
+                                </div>
+                                <div class="mb-2">
+                                    <strong>Coordinates:</strong> <span id="detailsVillageCoords"></span>
+                                </div>
+                                <div class="mb-2">
+                                    <strong>Population:</strong> <span id="detailsVillagePopulation"></span>
+                                </div>
+                                <div class="mb-2">
+                                    <strong>Village ID:</strong> <span id="detailsVillageId"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">Resources</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-2">
+                                    <i class="bi bi-tree text-success me-2"></i> <strong>Wood:</strong> 
+                                    <span id="detailsResourceWood">0</span>
+                                </div>
+                                <div class="mb-2">
+                                    <i class="bi bi-circle-fill text-warning me-2"></i> <strong>Clay:</strong> 
+                                    <span id="detailsResourceClay">0</span>
+                                </div>
+                                <div class="mb-2">
+                                    <i class="bi bi-circle-half text-secondary me-2"></i> <strong>Iron:</strong> 
+                                    <span id="detailsResourceIron">0</span>
+                                </div>
+                                <div class="mb-2">
+                                    <i class="bi bi-flower1 text-primary me-2"></i> <strong>Crop:</strong> 
+                                    <span id="detailsResourceCrop">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">Automation Status</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-2">
+                                        <div class="d-flex align-items-center">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="detailsAutoFarm" disabled>
+                                                <label class="form-check-label" for="detailsAutoFarm">Auto-Farm Enabled</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <div class="d-flex align-items-center">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="detailsTraining" disabled>
+                                                <label class="form-check-label" for="detailsTraining">Troop Training Enabled</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <strong>Last Farm:</strong> <span id="detailsLastFarm">Never</span>
+                                </div>
+                                <div class="mt-2">
+                                    <strong>Last Training:</strong> <span id="detailsLastTraining">Never</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="openVillageInTravian">Open in Travian</button>
+            </div>
+        </div>
+    </div>
+</div>

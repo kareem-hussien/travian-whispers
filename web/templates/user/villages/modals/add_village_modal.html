@@ -1,0 +1,57 @@
+<!-- Add Village Modal -->
+<div class="modal fade" id="addVillageModal" tabindex="-1" aria-labelledby="addVillageModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addVillageModalLabel">Add Village Manually</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addVillageForm">
+                    <div class="mb-3">
+                        <label for="addVillageName" class="form-label">Village Name</label>
+                        <input type="text" class="form-control" id="addVillageName" name="village_name" required>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label for="addVillageX" class="form-label">X Coordinate</label>
+                            <input type="number" class="form-control" id="addVillageX" name="village_x" required>
+                        </div>
+                        <div class="col-6">
+                            <label for="addVillageY" class="form-label">Y Coordinate</label>
+                            <input type="number" class="form-control" id="addVillageY" name="village_y" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="addVillageNewdid" class="form-label">Village ID (newdid)</label>
+                        <input type="text" class="form-control" id="addVillageNewdid" name="village_newdid" required>
+                        <small class="form-text text-muted">You can find this in the URL when viewing the village in Travian</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="addVillagePopulation" class="form-label">Population (optional)</label>
+                        <input type="number" class="form-control" id="addVillagePopulation" name="village_population">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Automation Settings</label>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="addAutoFarm" name="auto_farm">
+                            <label class="form-check-label" for="addAutoFarm">Enable Auto-Farm for this village</label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="addTraining" name="training">
+                            <label class="form-check-label" for="addTraining">Enable Troop Training for this village</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="addVillageBtn">Add Village</button>
+            </div>
+        </div>
+    </div>
+</div>
