@@ -10,7 +10,7 @@ from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
 from bson import ObjectId
 from datetime import datetime
-
+from web.routes.travian_api import register_routes as register_travian_api_routes
 from web.extensions import register_extensions
 from web.routes import register_blueprints
 from web.utils.error_handlers import register_error_handlers
@@ -44,6 +44,9 @@ def create_app(config_object=None):
     # Register extensions
     register_extensions(app)
     
+    # Register Travian API routes
+    register_travian_api_routes(app)
+    
     # Enable CORS
     CORS(app)
     
@@ -74,7 +77,7 @@ def configure_app(app, config_object=None):
     """
     # Load default configuration
     app.config.from_object('web.config.DevelopmentConfig')
-    
+        
     # Load configuration from file specified by environment variable
     if os.environ.get('TRAVIAN_WHISPERS_CONFIG'):
         app.config.from_envvar('TRAVIAN_WHISPERS_CONFIG')

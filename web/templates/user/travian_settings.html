@@ -12,14 +12,17 @@
     %}
         {% include 'user/components/page_header.html' %}
     {% endwith %}
-Copy<div class="row">
+
+<div class="row">
     <!-- Travian Account Settings -->
     <div class="col-lg-8 mb-4">
         <div class="dashboard-card">
             <h4 class="mb-4">Travian Account Settings</h4>
             
             <form action="{{ url_for('user.travian_settings') }}" method="post">
+                {% if csrf_token %}
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                {% endif %}
                 
                 <div class="mb-3">
                     <label for="travian_username" class="form-label">Travian Username</label>
@@ -77,8 +80,11 @@ Copy<div class="row">
             <div class="mb-3">
                 <label class="form-label">Status</label>
                 <div class="d-flex align-items-center">
-                    {% if user_profile.travian_credentials.username and user_profile.travian_credentials.password %}
-                        <span class="badge bg-success me-2">Ready</span>
+                    {% if user_profile.connection_verified %}
+                        <span class="badge bg-success me-2">Connected</span>
+                        <span>Your account is connected and working</span>
+                    {% elif user_profile.travian_credentials.username and user_profile.travian_credentials.password %}
+                        <span class="badge bg-primary me-2">Ready</span>
                         <span>Your credentials are set up</span>
                     {% else %}
                         <span class="badge bg-warning me-2">Not Configured</span>
@@ -87,15 +93,34 @@ Copy<div class="row">
                 </div>
             </div>
             
+            {% if user_profile.connection_verified %}
+            <div class="alert alert-success mt-3">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                <strong>Account connected!</strong> Last verified: {{ user_profile.last_connection }}
+                {% if user_profile.villages_count %}
+                <div class="mt-2">
+                    <i class="bi bi-buildings me-2"></i>
+                    <strong>{{ user_profile.villages_count }}</strong> {% if user_profile.villages_count == 1 %}village{% else %}villages{% endif %} detected in your account
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+            
             <div class="alert alert-info mt-4">
                 <i class="bi bi-info-circle-fill me-2"></i>
                 <span>These settings are required for automation features like Auto Farm and Troop Training to work.</span>
             </div>
             
-            <div class="mt-4">
+            <div class="mt-4 d-flex flex-wrap gap-2">
                 <a href="{{ url_for('user.villages') }}" class="btn btn-outline-primary">
                     <i class="bi bi-buildings me-2"></i>Manage Villages
                 </a>
+                
+                {% if user_profile.show_verify_button %}
+                <button type="button" class="btn btn-outline-success" id="verifyConnectionBtn">
+                    <i class="bi bi-check-circle me-2"></i>Verify Connection
+                </button>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -116,28 +141,69 @@ Copy<div class="row">
 </div>
 {% endblock %}
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/travian_verification.js') }}"></script>
 <script>
-    // Check if password field is empty on load
+    // Handle the password field behavior
     document.addEventListener('DOMContentLoaded', function() {
         const passwordField = document.getElementById('travian_password');
         
-        // If there's a stored password, it will show as masked characters
-        // We replace it with ******** for display purposes
-        if (passwordField.value === "********" || passwordField.value === "") {
+        // Store the original password value
+        const originalValue = passwordField.value;
+        
+        // Clear the actual value but keep it in a data attribute
+        if (originalValue === "********") {
+            passwordField.value = '';
+            passwordField.setAttribute('data-has-password', 'true');
             passwordField.setAttribute('placeholder', '********');
         }
         
-        // When focusing on the password field, clear the placeholder to allow typing
-        passwordField.addEventListener('focus', function() {
-            if (this.value === "********") {
-                this.value = '';
+        // When the form is submitted, if the field is empty and had a password,
+        // set the value back to ******** so the backend knows to use the existing password
+        const form = passwordField.closest('form');
+        form.addEventListener('submit', function(event) {
+            if (passwordField.value === '' && passwordField.getAttribute('data-has-password') === 'true') {
+                passwordField.value = '********';
             }
         });
+    });
+    
+    // Add validation feedback for form fields
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        const usernameField = document.getElementById('travian_username');
+        const passwordField = document.getElementById('travian_password');
+        const serverField = document.getElementById('travian_server');
         
-        // When leaving the field empty, restore the placeholder
-        passwordField.addEventListener('blur', function() {
-            if (this.value === '') {
-                this.setAttribute('placeholder', '********');
+        form.addEventListener('submit', function(event) {
+            let isValid = true;
+            
+            // Validate username
+            if (!usernameField.value.trim()) {
+                usernameField.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                usernameField.classList.remove('is-invalid');
+                usernameField.classList.add('is-valid');
+            }
+            
+            // Validate password - only if it's not using the stored password
+            if (passwordField.getAttribute('data-has-password') !== 'true' && !passwordField.value) {
+                passwordField.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                passwordField.classList.remove('is-invalid');
+                passwordField.classList.add('is-valid');
+            }
+            
+            // Validate server URL
+            if (serverField.value.trim() && !serverField.value.trim().startsWith('http')) {
+                // Add http:// prefix if missing
+                serverField.value = 'https://' + serverField.value.trim();
+            }
+            
+            // Prevent form submission if validation fails
+            if (!isValid) {
+                event.preventDefault();
             }
         });
     });
