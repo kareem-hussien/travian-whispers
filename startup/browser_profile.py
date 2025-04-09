@@ -1,281 +1,265 @@
-import time
+# File: startup/browser_profile.py
+
 import os
 import logging
+import time
 from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
-from startup.session_isolation import BrowserIsolationManager
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
 # Configure logger
 logger = logging.getLogger(__name__)
 
-# Default Travian server URL
-LOGIN_URL = "https://ts1.x1.international.travian.com"
-
-def setup_browser(user_id=None):
+def setup_browser(user_id=None, headless=True):
     """
-    Set up a Chrome browser with proper configuration for Travian.
+    Setup Chrome browser using Selenium Grid if available.
     
     Args:
-        user_id (str, optional): User ID for session isolation
+        user_id (str, optional): User ID for session management
+        headless (bool): Whether to run browser in headless mode
         
     Returns:
-        webdriver.Chrome: Configured Chrome WebDriver instance
+        webdriver.Chrome: Configured WebDriver instance
     """
-    try:
-        # Configure Chrome options
-        chrome_options = Options()
+    # Configure Chrome options
+    chrome_options = Options()
+    
+    # Set headless mode based on environment variable or parameter
+    env_headless = os.environ.get('HEADLESS', 'true').lower() == 'true'
+    if headless or env_headless:
+        chrome_options.add_argument("--headless")
+    
+    # Set common arguments
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--window-size=1920,1080")
+    
+    # Add user agent to avoid detection
+    chrome_options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36")
+    
+    # Set profile parameters if user_id is provided
+    if user_id:
+        # Add a custom profile path based on user_id
+        profile_dir = os.path.join(os.getcwd(), 'info', 'profile', str(user_id))
         
-        # Essential settings for stability
-        chrome_options.add_argument("--window-size=1920,1080")
-        chrome_options.add_argument("--disable-gpu")
-        chrome_options.add_argument("--disable-dev-shm-usage")
-        chrome_options.add_argument("--no-sandbox")
+        # Create directory if it doesn't exist
+        os.makedirs(profile_dir, exist_ok=True)
         
-        # Important for Travian - enable JavaScript and cookies
-        chrome_options.add_argument("--enable-javascript")
-        chrome_options.add_experimental_option("excludeSwitches", ["disable-popup-blocking"])
+        # Set user data directory
+        chrome_options.add_argument(f"--user-data-dir={profile_dir}")
+        logger.info(f"Using Chrome profile directory: {profile_dir}")
+    
+    # Check if Selenium Grid URL is configured
+    selenium_url = os.environ.get('SELENIUM_REMOTE_URL')
+    
+    # Initialize the WebDriver
+    if selenium_url:
+        logger.info(f"Using Selenium Grid at {selenium_url}")
         
-        # Add user agent to appear as a regular browser
-        chrome_options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+        # Create remote WebDriver
+        try:
+            driver = webdriver.Remote(
+                command_executor=selenium_url,
+                options=chrome_options
+            )
+            logger.info("Successfully connected to Selenium Grid")
+        except Exception as e:
+            logger.error(f"Error connecting to Selenium Grid: {e}")
+            raise
+    else:
+        logger.info("Selenium Grid URL not found. Using local Chrome WebDriver.")
         
-        # If running in headless mode (no UI)
-        # chrome_options.add_argument("--headless")
-        
-        # Enable logging
-        chrome_options.add_argument("--enable-logging")
-        chrome_options.add_argument("--log-level=0")  # INFO level
-        
-        # Session isolation if user_id is provided
-        if user_id:
-            # Create user data directory if session isolation is needed
-            user_data_dir = f"selenium_profiles/{user_id}"
-            os.makedirs(user_data_dir, exist_ok=True)
-            chrome_options.add_argument(f"--user-data-dir={user_data_dir}")
-        
-        # Create and return the driver
+        # Fallback to local WebDriver
         driver = webdriver.Chrome(options=chrome_options)
-        
-        # Set page load timeout (30 seconds)
-        driver.set_page_load_timeout(30)
-        
-        # Add certain cookies that might be needed for Travian
-        return driver
-        
-    except Exception as e:
-        logger.error(f"Error setting up browser: {str(e)}")
-        return None
+    
+    # Configure browser
+    driver.set_page_load_timeout(60)
+    driver.implicitly_wait(10)
+    
+    return driver
 
-def login(driver, username, password, server_url=None):
+def login_only(driver, username, password, server_url=None):
     """
-    Logs in with the provided credentials and returns True if successful.
+    Login to Travian with the provided credentials.
     
     Args:
-        driver (webdriver.Chrome): Chrome WebDriver instance
+        driver: WebDriver instance
         username (str): Travian username
         password (str): Travian password
-        server_url (str, optional): Travian server URL, defaults to LOGIN_URL
-    
+        server_url (str, optional): Travian server URL
+        
     Returns:
-        bool: True if login was successful, False otherwise
+        bool: True if login successful, False otherwise
     """
-    # Use the provided server URL or default
-    url = server_url if server_url else LOGIN_URL
-    
     try:
-        logger.info(f"Navigating to login page: {url}")
-        driver.get(url)
-        time.sleep(3)
+        # Default server URL if none provided
+        if not server_url:
+            server_url = "https://ts1.x1.international.travian.com"
         
-        # Wait for username field
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, "name")))
+        # Ensure server URL starts with protocol
+        if not server_url.startswith(('http://', 'https://')):
+            server_url = f"https://{server_url}"
         
-        # Enter credentials
-        driver.find_element(By.NAME, "name").send_keys(username)
-        driver.find_element(By.NAME, "password").send_keys(password)
+        logger.info(f"Logging in to Travian at {server_url}")
         
-        # Submit login form
-        driver.find_element(By.XPATH, "//button[@type='submit']").click()
-        time.sleep(5)
+        # Navigate to server URL
+        driver.get(server_url)
+        time.sleep(2)  # Allow page to load
         
-        # Debug information
-        logger.debug(f"Current page URL after login: {driver.current_url}")
+        # Check if we need to navigate to login page
+        if "login" not in driver.current_url.lower() and "dorf1.php" not in driver.current_url.lower():
+            # Try to find and click login button
+            try:
+                login_link = driver.find_element(By.XPATH, "//a[contains(@href, 'login.php')]")
+                login_link.click()
+                time.sleep(2)
+            except NoSuchElementException:
+                # If login link not found, navigate directly to login page
+                driver.get(f"{server_url}/login.php")
+                time.sleep(2)
         
-        # Check for CAPTCHA
+        # Check if already logged in
+        if "dorf1.php" in driver.current_url or "village" in driver.current_url:
+            logger.info("Already logged in to Travian.")
+            return True
+        
+        # Fill in login form
         try:
-            captcha_element = driver.find_element(By.CLASS_NAME, "recaptcha-checkbox")
-            logger.warning("CAPTCHA detected! Please solve it manually.")
+            username_field = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.NAME, "name"))
+            )
+            password_field = driver.find_element(By.NAME, "password")
             
-            # In automated settings, we might need to handle this differently
-            # For now, we'll assume manual intervention is possible
-            input("Press Enter after solving CAPTCHA...")
-        except:
-            logger.info("No CAPTCHA detected.")
-        
-        # Wait for successful login (topBar presence indicates logged in state)
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "topBar")))
-        
-        logger.info("Logged in successfully!")
-        return True
-        
+            # Enter credentials
+            username_field.clear()
+            username_field.send_keys(username)
+            
+            password_field.clear()
+            password_field.send_keys(password)
+            
+            # Find and click login button
+            login_button = driver.find_element(By.CSS_SELECTOR, "button[type='submit'], input[type='submit']")
+            login_button.click()
+            
+            # Wait for successful login (redirect to village page)
+            WebDriverWait(driver, 15).until(
+                lambda d: "dorf1.php" in d.current_url or 
+                           "village" in d.current_url or 
+                           "game.php" in d.current_url
+            )
+            
+            logger.info("Successfully logged in to Travian.")
+            return True
+            
+        except (TimeoutException, NoSuchElementException) as e:
+            logger.error(f"Login failed: {str(e)}")
+            
+            # Check for error messages
+            try:
+                error_elements = driver.find_elements(By.CLASS_NAME, "error")
+                if error_elements:
+                    error_message = error_elements[0].text
+                    logger.error(f"Login error: {error_message}")
+            except:
+                pass
+                
+            return False
+            
     except Exception as e:
-        logger.error(f"Login failed: {e}")
+        logger.error(f"Error during login: {str(e)}")
         return False
 
-def update_profile(driver, profile_path="info/profile/tribe.txt"):
+def update_profile(driver):
     """
-    Navigates to the profile edit page, clicks the Overview tab,
-    waits for the URL to update (e.g. .../profile/4662), and extracts the tribe.
-    Saves tribe & profile ID to 'info/profile/tribe.txt' if confirmed.
+    Extract profile information from Travian account.
     
     Args:
-        driver (webdriver.Chrome): Chrome WebDriver instance
-        profile_path (str, optional): Path to save profile information
+        driver: WebDriver instance with active Travian session
         
     Returns:
-        tuple: (detected_tribe, profile_id) if successful, else None
+        tuple: (tribe, profile_id) if successful, None otherwise
     """
-    profile_edit_url = "https://ts1.x1.international.travian.com/profile/edit"
-    logger.info("Navigating to the profile edit page for profile update...")
-    
     try:
-        driver.get(profile_edit_url)
-
-        # Click the "Overview" tab
+        # Navigate to profile page
+        driver.get(driver.current_url.split('?')[0] + "?profile")
+        time.sleep(2)
+        
+        # Extract tribe information
+        tribe_element = None
+        tribe = "unknown"
+        
         try:
-            overview_tab = WebDriverWait(driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, "//a[@data-tab='1' and contains(.,'Overview')]"))
-            )
-            overview_tab.click()
-        except Exception as e:
-            logger.error(f"Could not click Overview tab: {e}")
-            return None
-
-        # Wait until the URL changes to .../profile/xxxx
+            # Try to find tribe information in profile
+            tribe_element = driver.find_element(By.XPATH, "//td[contains(text(), 'Tribe')]/following-sibling::td")
+            if tribe_element:
+                tribe_text = tribe_element.text.strip().lower()
+                
+                # Map tribe text to internal representation
+                if "roman" in tribe_text:
+                    tribe = "romans"
+                elif "gaul" in tribe_text:
+                    tribe = "gauls"
+                elif "teuton" in tribe_text:
+                    tribe = "teutons"
+                elif "egyptian" in tribe_text:
+                    tribe = "egyptians"
+                elif "hun" in tribe_text:
+                    tribe = "huns"
+        except NoSuchElementException:
+            # Try alternative method to detect tribe
+            try:
+                # Check the icons or images that might indicate tribe
+                race_icon = driver.find_element(By.CSS_SELECTOR, ".playerRace img")
+                race_src = race_icon.get_attribute("src")
+                
+                if "roman" in race_src:
+                    tribe = "romans"
+                elif "gaul" in race_src:
+                    tribe = "gauls"
+                elif "teuton" in race_src:
+                    tribe = "teutons"
+                elif "egyptian" in race_src:
+                    tribe = "egyptians"
+                elif "hun" in race_src:
+                    tribe = "huns"
+            except NoSuchElementException:
+                logger.warning("Could not determine tribe from profile")
+        
+        # Extract profile ID
+        profile_id = None
         try:
-            WebDriverWait(driver, 10).until(lambda d: "/profile/" in d.current_url and d.current_url != profile_edit_url)
-            current_url = driver.current_url
-            logger.info(f"Redirected URL: {current_url}")
-            profile_id = current_url.rstrip("/").split("/")[-1]
+            # Check URL for profile ID
+            if "profile" in driver.current_url:
+                url_parts = driver.current_url.split('?')
+                if len(url_parts) > 1:
+                    query_params = url_parts[1].split('&')
+                    for param in query_params:
+                        if "uid=" in param:
+                            profile_id = param.split('=')[1]
+                            break
+            
+            # If not found in URL, try to find it on the page
+            if not profile_id:
+                # Look for elements that might contain the profile ID
+                profile_elements = driver.find_elements(By.XPATH, "//a[contains(@href, 'uid=')]")
+                if profile_elements:
+                    href = profile_elements[0].get_attribute("href")
+                    if "uid=" in href:
+                        profile_id = href.split("uid=")[1].split("&")[0]
         except Exception as e:
-            logger.error(f"Could not retrieve profile id from URL: {e}")
-            profile_id = None
-
-        # Detect tribe from the table
-        try:
-            tribe_element = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, "//tr[th[text()='Tribe']]/td"))
-            )
-            detected_tribe = tribe_element.text.strip()
-            logger.info(f"Detected tribe: {detected_tribe}")
-            
-            # Ensure directory exists
-            os.makedirs(os.path.dirname(profile_path), exist_ok=True)
-            
-            # Save to file
-            with open(profile_path, "w") as file:
-                file.write(f"{detected_tribe},{profile_id}")
-            logger.info("Tribe and profile ID saved.")
-            
-            return (detected_tribe, profile_id)
-            
-        except Exception as e:
-            logger.error(f"Could not detect tribe: {e}")
+            logger.warning(f"Error extracting profile ID: {e}")
+        
+        if tribe != "unknown" or profile_id:
+            logger.info(f"Profile updated - Tribe: {tribe}, Profile ID: {profile_id}")
+            return (tribe, profile_id)
+        else:
+            logger.warning("Failed to extract profile information")
             return None
             
     except Exception as e:
         logger.error(f"Error updating profile: {e}")
         return None
-
-def check_for_captcha(driver):
-    """
-    Checks if a CAPTCHA is present on the current page.
-    
-    Args:
-        driver (webdriver.Chrome): Chrome WebDriver instance
-        
-    Returns:
-        bool: True if CAPTCHA detected, False otherwise
-    """
-    try:
-        captcha_element = driver.find_element(By.CLASS_NAME, "recaptcha-checkbox")
-        logger.warning("CAPTCHA detected!")
-        return True
-    except:
-        return False
-
-def check_for_ban(driver):
-    """
-    Checks if the current page indicates an account ban or IP ban.
-    
-    Args:
-        driver (webdriver.Chrome): Chrome WebDriver instance
-        
-    Returns:
-        tuple: (banned, reason) - banned is True if ban detected, reason contains details
-    """
-    # Common ban indicators in Travian
-    ban_indicators = [
-        "//div[contains(text(), 'banned')]",
-        "//div[contains(text(), 'suspended')]",
-        "//div[contains(text(), 'violation')]",
-        "//div[contains(text(), 'account has been')]"
-    ]
-    
-    for indicator in ban_indicators:
-        try:
-            element = driver.find_element(By.XPATH, indicator)
-            if element:
-                logger.critical(f"Ban detected: {element.text}")
-                return (True, element.text)
-        except:
-            pass
-    
-    # Check for unusual redirects that might indicate IP blocking
-    if "blocked" in driver.current_url or "ban" in driver.current_url:
-        logger.critical(f"Ban detected from URL: {driver.current_url}")
-        return (True, f"Banned URL: {driver.current_url}")
-    
-    return (False, None)
-
-def handle_detection_event(driver, user_id, event_type, context=None):
-    """
-    Handles detection events such as CAPTCHA or potential bans.
-    
-    Args:
-        driver (webdriver.Chrome): Chrome WebDriver instance
-        user_id (str): User ID
-        event_type (str): Type of event ('captcha', 'ban', 'suspicious')
-        context (dict, optional): Additional context about the event
-        
-    Returns:
-        dict: Action taken to handle the event
-    """
-    if not user_id:
-        logger.warning(f"Detection event ({event_type}) but no user_id provided")
-        return {"action": "none", "message": "No user ID provided"}
-    
-    # Initialize isolation manager
-    isolation_manager = BrowserIsolationManager()
-    
-    # Determine risk level based on event type
-    risk_level = "low"
-    if event_type == "captcha":
-        risk_level = "medium"
-    elif event_type == "ban" or event_type == "ip_block":
-        risk_level = "high"
-    elif event_type == "suspicious":
-        risk_level = "medium"
-    
-    # Handle the detection risk
-    result = isolation_manager.handle_detection_risk(user_id, risk_level, context)
-    
-    # If action requires browser restart, we should inform the caller
-    if result["action"] in ["session_rotation", "full_rotation"]:
-        result["requires_restart"] = True
-    
-    return result

@@ -1,154 +1,303 @@
+# File: tasks/auto_farm.py
+
+import logging
 import time
 import random
-import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from startup.browser_profile import check_for_captcha, check_for_ban, handle_detection_event
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
 # Configure logger
 logger = logging.getLogger(__name__)
 
-# Travian farm list URL
-FARM_LIST_URL = "https://ts1.x1.international.travian.com/build.php?id=39&gid=16&tt=99"
-
-def send_farm_list(driver, user_id=None):
+class AutoFarm:
     """
-    Clicks the 'Start all farm lists' button.
+    Auto Farm task for Travian.
+    Automatically sends farm raids at regular intervals.
+    """
     
-    Args:
-        driver (webdriver.Chrome): Chrome WebDriver instance
-        user_id (str, optional): User ID for detection handling
+    def __init__(self, driver, user_id=None):
+        """
+        Initialize the Auto Farm task.
         
-    Returns:
-        bool: True if farm lists were sent successfully, False otherwise
-    """
-    try:
-        logger.info("Navigating to farm list page")
-        driver.get(FARM_LIST_URL)
-        time.sleep(3)
+        Args:
+            driver: WebDriver instance
+            user_id (str, optional): User ID for logging
+        """
+        self.driver = driver
+        self.user_id = user_id
+        self.running = False
+        self.villages = []
+        self.interval = 30  # Default: 30 minutes
+        self.randomize = 5   # Default: ±5 minutes randomization
         
-        # Check for CAPTCHA or bans before proceeding
-        if check_for_captcha(driver):
-            logger.warning("CAPTCHA detected during farm list operation")
-            if user_id:
-                handle_detection_event(driver, user_id, "captcha")
-            return False
-        
-        banned, reason = check_for_ban(driver)
-        if banned:
-            logger.critical(f"Ban detected during farm list operation: {reason}")
-            if user_id:
-                handle_detection_event(driver, user_id, "ban", {"reason": reason})
-            return False
-        
-        # Look for the start all button
+        # If user_id provided, load settings from database
+        if user_id:
+            self._load_settings()
+    
+    def _load_settings(self):
+        """Load Auto Farm settings from database."""
         try:
-            start_all_button = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, "//button[contains(@class, 'startAllFarmLists')]"))
+            from database.models.auto_farm import AutoFarmConfiguration
+            
+            # Get configuration from database
+            auto_farm_model = AutoFarmConfiguration()
+            config = auto_farm_model.get_user_configuration(self.user_id)
+            
+            if config:
+                self.interval = config.get('interval', 30)
+                self.randomize = config.get('randomize', 5)
+                logger.info(f"Loaded Auto Farm settings: interval={self.interval}m, randomize=±{self.randomize}m")
+        except ImportError:
+            logger.warning("AutoFarmConfiguration model not available. Using default settings.")
+        except Exception as e:
+            logger.error(f"Error loading Auto Farm settings: {e}")
+    
+    def _get_next_interval(self):
+        """
+        Get the next interval with randomization.
+        
+        Returns:
+            int: Interval in minutes
+        """
+        if self.randomize > 0:
+            # Add randomization within specified range
+            return self.interval + random.randint(-self.randomize, self.randomize)
+        return self.interval
+    
+    def _log_activity(self, village_name, farm_lists_sent, status='success'):
+        """
+        Log Auto Farm activity to database.
+        
+        Args:
+            village_name (str): Village name
+            farm_lists_sent (int): Number of farm lists sent
+            status (str): Activity status
+        """
+        if not self.user_id:
+            return
+            
+        try:
+            from database.models.activity_log import ActivityLog
+            
+            # Create activity log
+            activity_model = ActivityLog()
+            activity_model.log_activity(
+                user_id=self.user_id,
+                activity_type='auto-farm',
+                details=f"Sent {farm_lists_sent} farm lists from {village_name}",
+                status=status,
+                village=village_name,
+                data={
+                    'farm_lists_sent': farm_lists_sent,
+                    'next_interval': self._get_next_interval()
+                }
             )
+        except ImportError:
+            logger.warning("ActivityLog model not available. Activity not logged.")
+        except Exception as e:
+            logger.error(f"Error logging activity: {e}")
+    
+    def _get_villages(self):
+        """
+        Get list of villages from database or directly from Travian.
+        
+        Returns:
+            list: List of village data
+        """
+        if self.user_id:
+            try:
+                # Get villages from database
+                from database.models.user import User
+                
+                user_model = User()
+                user = user_model.get_user_by_id(self.user_id)
+                
+                if user and 'villages' in user:
+                    # Filter for villages with auto farm enabled
+                    villages = [v for v in user['villages'] if v.get('auto_farm_enabled', True)]
+                    
+                    if villages:
+                        logger.info(f"Found {len(villages)} villages with Auto Farm enabled")
+                        return villages
+            except ImportError:
+                logger.warning("User model not available. Will extract villages directly.")
+            except Exception as e:
+                logger.error(f"Error getting villages from database: {e}")
+        
+        # Fallback: Extract villages directly from Travian
+        try:
+            from startup.villages_list import extract_villages
             
-            # Click the button
-            start_all_button.click()
-            logger.info("Clicked 'Start all farm lists' button!")
+            villages = extract_villages(self.driver)
+            logger.info(f"Extracted {len(villages)} villages directly from Travian")
+            return villages
+        except ImportError:
+            logger.error("villages_list module not available. Cannot extract villages.")
+            return []
+        except Exception as e:
+            logger.error(f"Error extracting villages: {e}")
+            return []
+    
+    def run_farm_lists(self, max_iterations=None):
+        """
+        Run the Auto Farm task.
+        
+        Args:
+            max_iterations (int, optional): Maximum number of iterations
             
-            # Verify success (optional - you might look for a confirmation message)
-            time.sleep(2)
+        Returns:
+            bool: True if completed successfully, False otherwise
+        """
+        try:
+            logger.info("Starting Auto Farm task")
+            self.running = True
+            iterations = 0
             
+            # Get villages
+            self.villages = self._get_villages()
+            
+            if not self.villages:
+                logger.error("No villages found for Auto Farm")
+                self.running = False
+                return False
+            
+            # Main loop
+            while self.running:
+                # Check if max iterations reached
+                if max_iterations is not None and iterations >= max_iterations:
+                    logger.info(f"Reached maximum iterations ({max_iterations}). Stopping Auto Farm.")
+                    self.running = False
+                    break
+                
+                start_time = datetime.now()
+                logger.info(f"Starting Auto Farm iteration {iterations + 1}")
+                
+                # Process each village
+                for village in self.villages:
+                    village_name = village.get('name', 'Unknown Village')
+                    logger.info(f"Processing village: {village_name}")
+                    
+                    try:
+                        # Switch to village
+                        self._switch_to_village(village)
+                        
+                        # Send farm lists
+                        farm_lists_sent = self._send_farm_lists(village)
+                        
+                        # Log activity
+                        self._log_activity(village_name, farm_lists_sent)
+                        
+                    except Exception as e:
+                        logger.error(f"Error processing village {village_name}: {e}")
+                        self._log_activity(village_name, 0, 'error')
+                
+                # Calculate next run time
+                iterations += 1
+                end_time = datetime.now()
+                elapsed_time = (end_time - start_time).total_seconds() / 60  # Convert to minutes
+                
+                next_interval = self._get_next_interval()
+                wait_time = max(0, next_interval - elapsed_time)
+                
+                logger.info(f"Auto Farm iteration {iterations} completed in {elapsed_time:.1f} minutes")
+                logger.info(f"Next iteration in {wait_time:.1f} minutes")
+                
+                # Wait until next iteration
+                if self.running and wait_time > 0:
+                    time.sleep(wait_time * 60)  # Convert to seconds
+            
+            logger.info("Auto Farm task stopped")
             return True
             
         except Exception as e:
-            logger.error(f"'Start all farm lists' button not found: {e}")
+            logger.error(f"Error in Auto Farm task: {e}")
+            self.running = False
             return False
-            
-    except Exception as e:
-        logger.error(f"Could not send farm list: {e}")
-        return False
-
-def run_auto_farm(driver, user_id=None, max_runtime=None, interval_range=(1800, 2700)):
-    """
-    Runs the farm list automation in a loop.
     
-    Args:
-        driver (webdriver.Chrome): Chrome WebDriver instance
-        user_id (str, optional): User ID for detection handling
-        max_runtime (int, optional): Maximum runtime in seconds
-        interval_range (tuple, optional): Range of wait times between farms (min, max) in seconds
+    def _switch_to_village(self, village):
+        """
+        Switch to the specified village.
         
-    Returns:
-        dict: Summary of auto farm session
-    """
-    start_time = datetime.now()
-    end_time = None if max_runtime is None else start_time + timedelta(seconds=max_runtime)
-    
-    farm_count = 0
-    success_count = 0
-    failure_count = 0
-    
-    logger.info(f"Starting auto farm for user {user_id if user_id else 'Anonymous'}")
-    
-    try:
-        while True:
-            # Check if we've exceeded max runtime
-            if end_time and datetime.now() >= end_time:
-                logger.info(f"Maximum runtime reached ({max_runtime} seconds)")
-                break
+        Args:
+            village (dict): Village data
             
-            # Send farm lists
-            farm_count += 1
-            success = send_farm_list(driver, user_id)
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            village_id = village.get('newdid')
+            village_name = village.get('name', 'Unknown Village')
             
-            if success:
-                success_count += 1
-            else:
-                failure_count += 1
-                
-                # Check if we need to rotate IP or session
-                if failure_count >= 3:
-                    logger.warning("Multiple farm list failures detected, considering rotation")
-                    if user_id:
-                        result = handle_detection_event(driver, user_id, "suspicious", 
-                                                     {"operation": "auto_farm", "failures": failure_count})
-                        
-                        # If rotation requires restart, return with status
-                        if result.get("requires_restart", False):
-                            logger.info("Browser restart required after rotation")
-                            return {
-                                "status": "rotation_required",
-                                "farm_count": farm_count,
-                                "success_count": success_count,
-                                "failure_count": failure_count,
-                                "runtime": (datetime.now() - start_time).total_seconds(),
-                                "rotation_info": result
-                            }
+            if not village_id:
+                logger.warning(f"Village {village_name} has no ID (newdid). Cannot switch.")
+                return False
             
-            # Calculate wait time for next cycle
-            wait_time = random.randint(interval_range[0], interval_range[1])
-            next_run = datetime.now() + timedelta(seconds=wait_time)
+            # Navigate to village URL
+            self.driver.get(f"https://ts1.x1.international.travian.com/dorf1.php?newdid={village_id}")
             
-            logger.info(f"Waiting {wait_time/60:.2f} minutes before next farm list send. Next run at {next_run.strftime('%H:%M:%S')}")
+            # Wait for page to load
+            WebDriverWait(self.driver, 10).until(
+                EC.presence_of_element_located((By.ID, "village_map"))
+            )
             
-            # If max_runtime is set, check if the next run would exceed it
-            if end_time and next_run >= end_time:
-                logger.info("Next run would exceed maximum runtime, ending auto farm")
-                break
-                
-            # Wait until next cycle
-            time.sleep(wait_time)
+            logger.info(f"Switched to village: {village_name}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error switching to village: {e}")
+            return False
     
-    except KeyboardInterrupt:
-        logger.info("Auto farm interrupted by user")
-    except Exception as e:
-        logger.error(f"Auto farm error: {e}")
-        failure_count += 1
+    def _send_farm_lists(self, village):
+        """
+        Send farm lists for the current village.
+        
+        Args:
+            village (dict): Village data
+            
+        Returns:
+            int: Number of farm lists sent
+        """
+        try:
+            # Navigate to rally point and farm lists
+            self.driver.get(self.driver.current_url.split('?')[0] + "?t=3&tt=99")
+            
+            # Wait for farm lists to load
+            WebDriverWait(self.driver, 10).until(
+                EC.presence_of_element_located((By.CLASS_NAME, "raidList"))
+            )
+            
+            # Find farm list start buttons
+            start_buttons = self.driver.find_elements(By.CSS_SELECTOR, "button.startButton")
+            
+            # Count how many were actually sent
+            sent_count = 0
+            
+            # Click each start button
+            for button in start_buttons:
+                try:
+                    button.click()
+                    time.sleep(0.5)  # Short delay between clicks
+                    sent_count += 1
+                except Exception as e:
+                    logger.warning(f"Error clicking farm list button: {e}")
+            
+            logger.info(f"Sent {sent_count} farm lists from {village.get('name', 'Unknown Village')}")
+            return sent_count
+            
+        except TimeoutException:
+            logger.warning("Timeout waiting for farm lists to load")
+            return 0
+        except NoSuchElementException:
+            logger.warning("Farm lists or buttons not found")
+            return 0
+        except Exception as e:
+            logger.error(f"Error sending farm lists: {e}")
+            return 0
     
-    # Return summary
-    total_runtime = (datetime.now() - start_time).total_seconds()
-    return {
-        "status": "completed",
-        "farm_count": farm_count,
-        "success_count": success_count,
-        "failure_count": failure_count,
-        "runtime": total_runtime
-    }
+    def stop(self):
+        """Stop the Auto Farm task."""
+        logger.info("Stopping Auto Farm task")
+        self.running = False

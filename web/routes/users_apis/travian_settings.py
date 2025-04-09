@@ -10,6 +10,20 @@ from flask import (
 from web.utils.decorators import login_required
 from database.models.user import User
 
+# Import needed for connection testing
+# Defining as None initially so we can handle import errors gracefully
+test_connection = None
+try:
+    from travian_api.connector import test_connection
+except ImportError:
+    # Define a fallback function if the module is not available
+    def test_connection(username, password, server_url, timeout=30):
+        logger.warning("travian_api.connector module not available, using fallback")
+        return {
+            'success': False,
+            'message': "Connection test not available - module not installed"
+        }
+        
 # Initialize logger
 logger = logging.getLogger(__name__)
 

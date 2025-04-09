@@ -1,9 +1,8 @@
-"""
-Travian API connection module for Travian Whispers.
-This module provides functionality to connect and verify Travian accounts.
-"""
+# File: travian_api/connector.py
+
 import logging
 import time
+import os
 import requests
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -80,9 +79,20 @@ def _selenium_login_test(username, password, server_url, timeout=30):
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--window-size=1920,1080")
         
-        # Initialize Chrome WebDriver
-        from selenium.webdriver.chrome.service import Service
-        driver = webdriver.Chrome(options=chrome_options)
+        # Check if Selenium Grid URL is configured
+        selenium_url = os.environ.get('SELENIUM_REMOTE_URL')
+        
+        # Initialize the WebDriver
+        if selenium_url:
+            logger.info(f"Using Selenium Grid at {selenium_url} for connection test")
+            driver = webdriver.Remote(
+                command_executor=selenium_url,
+                options=chrome_options
+            )
+        else:
+            # If no Selenium Grid, use local Chrome
+            from selenium.webdriver.chrome.service import Service
+            driver = webdriver.Chrome(options=chrome_options)
         
         # Set page load timeout
         driver.set_page_load_timeout(timeout)
@@ -91,6 +101,8 @@ def _selenium_login_test(username, password, server_url, timeout=30):
         driver.get(server_url)
         time.sleep(2)  # Allow page to load
         
+        # File: travian_api/connector.py (continued)
+
         # Check if we're redirected to a login page
         if "login" not in driver.current_url.lower() and "dorf1.php" not in driver.current_url.lower():
             # Navigate to the login page
@@ -120,7 +132,9 @@ def _selenium_login_test(username, password, server_url, timeout=30):
             
             # Wait for login to complete
             WebDriverWait(driver, 10).until(
-                lambda d: "dorf1.php" in d.current_url or "village" in d.current_url or "game.php" in d.current_url
+                lambda d: "dorf1.php" in d.current_url or 
+                           "village" in d.current_url or 
+                           "game.php" in d.current_url
             )
             
             # Check if login was successful
@@ -164,7 +178,7 @@ def _selenium_login_test(username, password, server_url, timeout=30):
         # Clean up: close the browser
         if driver:
             driver.quit()
-
+    
 def _simple_login_test(username, password, server_url):
     """
     Simple login test using direct requests (fallback method).
@@ -179,6 +193,7 @@ def _simple_login_test(username, password, server_url):
     """
     try:
         # Create a session to handle cookies
+        import requests
         session = requests.Session()
         
         # Get the login page to obtain any CSRF tokens
@@ -214,36 +229,41 @@ def _simple_login_test(username, password, server_url):
                 'message': "Login failed, please check your credentials"
             }
     except Exception as e:
-        logger.error(f"Error in simple login test: {str(e)}")
+        logger.error(f"Error in simple login test: {e}")
         return {
             'success': False,
             'message': f"Connection error: {str(e)}"
         }
-
+        
 def _count_villages(driver):
     """
-    Count the number of villages the account has.
+    Count the number of villages in the Travian account.
     
     Args:
-        driver: Selenium WebDriver instance with active Travian session
+        driver: WebDriver instance with active Travian session
         
     Returns:
-        int: Number of villages found
+        int: Number of villages
     """
     try:
-        # Try to find the village list
-        village_list = driver.find_elements(By.CSS_SELECTOR, "#sidebarBoxVillagelist .listEntry")
-        if village_list:
-            return len(village_list)
+        # Navigate to village overview page
+        driver.get(driver.current_url.split('?')[0] + "?profile=1&s=1")
+        time.sleep(2)  # Allow page to load
         
-        # If no village list found, check if we have village navigation elements
-        village_nav = driver.find_elements(By.CSS_SELECTOR, ".villageList")
-        if village_nav:
-            villages = village_nav[0].find_elements(By.TAG_NAME, "a")
-            return len(villages)
+        # Find village elements
+        village_elements = driver.find_elements(By.CLASS_NAME, "village")
         
-        # If no village elements found, assume there's just one village
+        # If village elements found, return count
+        if village_elements:
+            return len(village_elements)
+        
+        # Alternative method - check the sidebar
+        village_sidebar = driver.find_elements(By.CSS_SELECTOR, "#sidebarBoxVillagelist .villageList .listEntry")
+        if village_sidebar:
+            return len(village_sidebar)
+        
+        # If we can't find villages directly, just return 1 (account has at least one village)
         return 1
     except Exception as e:
-        logger.warning(f"Error counting villages: {e}")
-        return 0
+        logger.error(f"Error counting villages: {e}")
+        return 0  # Return 0 on error

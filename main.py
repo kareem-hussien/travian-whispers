@@ -224,6 +224,8 @@ def web_mode(host='0.0.0.0', port=5000, debug=False):
         logger.error(traceback.format_exc())
         return 1
 
+# File: main.py (Update bot_mode function)
+
 def bot_mode(user_id=None, headless=False):
     """
     Run in bot mode for automating Travian.
@@ -236,23 +238,17 @@ def bot_mode(user_id=None, headless=False):
         int: Exit code (0 for success, 1 for failure)
     """
     try:
-        # Import startup modules
-        try:
-            from startup.welcome_messages import welcome
-            from startup.browser_profile import setup_browser, login_only, update_profile
-            from startup.villages_list import run_villages
-            from startup.tasks import run_task_menu
-        except ImportError as e:
-            logger.error(f"Failed to import startup modules: {e}")
-            logger.error("Make sure all required modules are properly installed.")
-            return 1
+        # Import required modules
+        from utils.selenium_handler import SeleniumHandler
+        from startup.welcome_messages import welcome
+        from startup.tasks import run_task_menu
         
         # Ensure database is connected
         from database.mongodb import MongoDB
         db = MongoDB()
         if not db.connect():
             logger.error("Failed to connect to MongoDB. Exiting.")
-            sys.exit(1)
+            return 1
         logger.info("MongoDB connected successfully.")
         
         # Display welcome messages
@@ -276,8 +272,9 @@ def bot_mode(user_id=None, headless=False):
                 return 1
             
             # Get Travian credentials
-            travian_username = user['travianCredentials']['username']
-            travian_password = user['travianCredentials']['password']
+            travian_username = user['travianCredentials'].get('username')
+            travian_password = user['travianCredentials'].get('password')
+            travian_server = user['travianCredentials'].get('server', 'https://ts1.x1.international.travian.com')
             
             if not travian_username or not travian_password:
                 logger.error("Travian credentials not found. Please update your profile through the web interface.")
@@ -313,8 +310,9 @@ def bot_mode(user_id=None, headless=False):
                     return 1
                 
                 # Get Travian credentials
-                travian_username = user['travianCredentials']['username']
-                travian_password = user['travianCredentials']['password']
+                travian_username = user['travianCredentials'].get('username')
+                travian_password = user['travianCredentials'].get('password')
+                travian_server = user['travianCredentials'].get('server', 'https://ts1.x1.international.travian.com')
                 
                 if not travian_username or not travian_password:
                     logger.error("Travian credentials not found. Please update your profile through the web interface.")
@@ -324,10 +322,17 @@ def bot_mode(user_id=None, headless=False):
                 logger.warning("Auth module not found. Using direct Travian login (development mode).")
                 travian_username = input("Enter your Travian username: ")
                 travian_password = input("Enter your Travian password: ")
+                travian_server = input("Enter Travian server URL [https://ts1.x1.international.travian.com]: ")
+                if not travian_server:
+                    travian_server = "https://ts1.x1.international.travian.com"
         
-        # Setup browser and login to Travian
-        driver = setup_browser(headless=headless)
-        if not login_only(driver, travian_username, travian_password):
+        # Create Selenium handler and setup browser
+        selenium_handler = SeleniumHandler()
+        driver = selenium_handler.create_driver(user_id=user_id, headless=headless)
+        
+        # Login to Travian
+        from startup.browser_profile import login_only
+        if not login_only(driver, travian_username, travian_password, travian_server):
             logger.error("Failed to login to Travian. Please check your credentials.")
             driver.quit()
             return 1
@@ -336,6 +341,7 @@ def bot_mode(user_id=None, headless=False):
         update_choice = input("Do you want to update your profile (check account tribe and refresh villages)? (y/n): ").strip().lower()
         if update_choice == "y":
             # Update tribe information
+            from startup.browser_profile import update_profile
             profile_info = update_profile(driver)
             if profile_info:
                 detected_tribe, profile_id = profile_info
@@ -348,7 +354,8 @@ def bot_mode(user_id=None, headless=False):
                         travian_username=travian_username,
                         travian_password=travian_password,
                         tribe=detected_tribe,
-                        profile_id=profile_id
+                        profile_id=profile_id,
+                        server=travian_server
                     )
                     logger.info("Tribe and profile ID saved to user profile.")
             else:
@@ -358,6 +365,7 @@ def bot_mode(user_id=None, headless=False):
             refresh = input("Do you want to refresh the villages list? (y/n): ").strip().lower()
             if refresh == "y":
                 logger.info("Refreshing villages list...")
+                from startup.villages_list import run_villages
                 villages = run_villages(driver, return_villages=True)
                 
                 if villages and user_id:
@@ -421,6 +429,9 @@ def bot_mode(user_id=None, headless=False):
             logger.error(traceback.format_exc())
             driver.quit()
             return 1
+        
+        # Properly close the driver when done
+        driver.quit()
         
         return 0
     except Exception as e:
