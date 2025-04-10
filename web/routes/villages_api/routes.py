@@ -2,10 +2,15 @@
 Villages API endpoint for direct village management.
 """
 import logging
+import re
+import time
 from flask import Blueprint, request, jsonify, session
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.remote.webdriver import WebDriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException, NoSuchElementException, StaleElementReferenceException
 from web.utils.decorators import login_required, api_error_handler
 from database.models.user import User
 from database.models.activity_log import ActivityLog
@@ -192,7 +197,7 @@ def update_villages():
             'message': 'Failed to update villages'
         }), 500
 
-def improved_village_extraction(driver: WebDriver, username: str, password: str, server_url: str) -> list:
+def improved_village_extraction(driver, username, password, server_url):
     """
     Improved village extraction method that's more robust against UI changes.
     
@@ -205,12 +210,6 @@ def improved_village_extraction(driver: WebDriver, username: str, password: str,
     Returns:
         list: List of extracted villages
     """
-    import time
-    from selenium.webdriver.common.by import By
-    from selenium.webdriver.support.ui import WebDriverWait
-    from selenium.webdriver.support import expected_conditions as EC
-    from selenium.common.exceptions import TimeoutException, NoSuchElementException
-    
     villages = []
     
     try:
@@ -383,7 +382,8 @@ def improved_village_extraction(driver: WebDriver, username: str, password: str,
         if not villages or len(villages) < 2:  # If only one village found, check if there are more
             try:
                 # Navigate to profile villages tab
-                driver.get(f"{server_url}/profile/villages")
+                profile_url = f"{server_url}/profile/villages"
+                driver.get(profile_url)
                 time.sleep(2)
                 
                 # Find village table rows
@@ -461,6 +461,10 @@ def improved_village_extraction(driver: WebDriver, username: str, password: str,
             
             for newdid, village in villages_map.items():
                 try:
+                    # Skip placeholder IDs
+                    if "unknown" in newdid:
+                        continue
+                        
                     # Visit the village
                     driver.get(f"{server_url}/dorf1.php?newdid={newdid}")
                     time.sleep(2)
@@ -496,13 +500,16 @@ def improved_village_extraction(driver: WebDriver, username: str, password: str,
                     
                 except Exception as e:
                     logger.warning(f"Error getting additional data for village {village['name']}: {e}")
+            
+            # Convert map back to list
+            villages = list(villages_map.values())
         
         return villages
         
     except Exception as e:
         logger.error(f"Error in village extraction: {e}")
         return []
-        
+
 def register_routes(app):
     """Register Villages API routes with the application."""
     app.register_blueprint(villages_api_bp)
