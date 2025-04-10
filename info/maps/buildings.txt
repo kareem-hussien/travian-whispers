@@ -1,6 +1,0 @@
-barracks=https://ts1.x1.international.travian.com/build.php?gid=19
-greatbarracks=https://ts1.x1.international.travian.com/build.php?gid=29
-stable=https://ts1.x1.international.travian.com/build.php?gid=20
-greatbarracks=https://ts1.x1.international.travian.com/build.php?gid=30
-workshop=https://ts1.x1.international.travian.com/build.php?gid=21
-
