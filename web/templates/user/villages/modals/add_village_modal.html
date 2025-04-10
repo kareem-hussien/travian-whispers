@@ -1,4 +1,4 @@
-<!-- Add Village Modal -->
+<!-- Add Village Modal - Updated -->
 <div class="modal fade" id="addVillageModal" tabindex="-1" aria-labelledby="addVillageModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -7,43 +7,61 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
+                <div class="alert alert-info mb-3">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    <strong>Need to add a village?</strong> It's usually easier to extract villages automatically by updating your Travian credentials in the <a href="{{ url_for('user.travian_settings') }}">Travian Settings</a> page.
+                </div>
+                
                 <form id="addVillageForm">
                     <div class="mb-3">
                         <label for="addVillageName" class="form-label">Village Name</label>
                         <input type="text" class="form-control" id="addVillageName" name="village_name" required>
+                        <small class="text-muted">The name of your village as it appears in Travian.</small>
                     </div>
                     
                     <div class="row mb-3">
                         <div class="col-6">
                             <label for="addVillageX" class="form-label">X Coordinate</label>
                             <input type="number" class="form-control" id="addVillageX" name="village_x" required>
+                            <small class="text-muted">X-coordinate on the map (-400 to 400)</small>
                         </div>
                         <div class="col-6">
                             <label for="addVillageY" class="form-label">Y Coordinate</label>
                             <input type="number" class="form-control" id="addVillageY" name="village_y" required>
+                            <small class="text-muted">Y-coordinate on the map (-400 to 400)</small>
                         </div>
                     </div>
                     
                     <div class="mb-3">
                         <label for="addVillageNewdid" class="form-label">Village ID (newdid)</label>
-                        <input type="text" class="form-control" id="addVillageNewdid" name="village_newdid" required>
-                        <small class="form-text text-muted">You can find this in the URL when viewing the village in Travian</small>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="addVillageNewdid" name="village_newdid" required>
+                            <button class="btn btn-outline-info" type="button" data-bs-toggle="tooltip" data-bs-placement="top" title="Find in URL when viewing village - looks like 'newdid=123456'">
+                                <i class="bi bi-question-circle"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted">You can find this in the URL when viewing the village in Travian (numbers after "newdid=")</small>
                     </div>
                     
                     <div class="mb-3">
                         <label for="addVillagePopulation" class="form-label">Population (optional)</label>
-                        <input type="number" class="form-control" id="addVillagePopulation" name="village_population">
+                        <input type="number" class="form-control" id="addVillagePopulation" name="village_population" min="0">
+                        <small class="text-muted">Village population shown in Travian</small>
                     </div>
                     
-                    <div class="mb-3">
+                    <div class="mb-4">
                         <label class="form-label">Automation Settings</label>
-                        <div class="form-check form-switch mb-2">
-                            <input class="form-check-input" type="checkbox" id="addAutoFarm" name="auto_farm">
-                            <label class="form-check-label" for="addAutoFarm">Enable Auto-Farm for this village</label>
-                        </div>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="addTraining" name="training">
-                            <label class="form-check-label" for="addTraining">Enable Troop Training for this village</label>
+                        <div class="card bg-light p-3">
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="addAutoFarm" name="auto_farm" checked>
+                                <label class="form-check-label" for="addAutoFarm">Enable Auto-Farm for this village</label>
+                                <div class="small text-muted">Auto-Farm automatically sends farm raids at regular intervals</div>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="addTraining" name="training">
+                                <label class="form-check-label" for="addTraining">Enable Troop Training for this village</label>
+                                <div class="small text-muted">Troop Training automatically trains troops based on your settings</div>
+                            </div>
                         </div>
                     </div>
                 </form>
@@ -55,3 +73,100 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    tooltipTriggerList.forEach(el => {
+        new bootstrap.Tooltip(el);
+    });
+    
+    // Handle modal shown event
+    const addModal = document.getElementById('addVillageModal');
+    if (addModal) {
+        addModal.addEventListener('show.bs.modal', function (event) {
+            // Default values
+            document.getElementById('addVillageX').value = "";
+            document.getElementById('addVillageY').value = "";
+            document.getElementById('addVillageName').value = "";
+            document.getElementById('addVillageNewdid').value = "";
+            document.getElementById('addVillagePopulation').value = "";
+            
+            // Default auto-farm to checked (enabled)
+            document.getElementById('addAutoFarm').checked = true;
+            document.getElementById('addTraining').checked = false;
+            
+            // Wait for modal to fully open before focusing on fields
+            setTimeout(() => {
+                document.getElementById('addVillageName')?.focus();
+            }, 500);
+        });
+    }
+    
+    // Add input validation
+    const addForm = document.getElementById('addVillageForm');
+    if (addForm) {
+        const xCoord = document.getElementById('addVillageX');
+        const yCoord = document.getElementById('addVillageY');
+        const newdid = document.getElementById('addVillageNewdid');
+        
+        // Add validation for coordinate inputs
+        [xCoord, yCoord].forEach(input => {
+            input?.addEventListener('input', function() {
+                // Only allow integers
+                this.value = this.value.replace(/[^-0-9]/g, '');
+                
+                // Validate range (Travian typically uses -400 to 400)
+                const val = parseInt(this.value);
+                if (!isNaN(val)) {
+                    if (val < -400) this.value = "-400";
+                    if (val > 400) this.value = "400";
+                }
+            });
+        });
+        
+        // Add validation for newdid (village ID)
+        newdid?.addEventListener('input', function() {
+            // Only allow digits
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    }
+    
+    // Add village button handler
+    const addVillageBtn = document.getElementById('addVillageBtn');
+    if (addVillageBtn) {
+        addVillageBtn.addEventListener('click', function() {
+            // Validate form
+            const form = document.getElementById('addVillageForm');
+            if (!form.checkValidity()) {
+                // Trigger browser validation
+                const submitEvent = new Event('submit', {cancelable: true});
+                form.dispatchEvent(submitEvent);
+                if (submitEvent.defaultPrevented) {
+                    return;
+                }
+            }
+            
+            // Get form data
+            const villageData = {
+                village_name: document.getElementById('addVillageName').value,
+                village_x: parseInt(document.getElementById('addVillageX').value),
+                village_y: parseInt(document.getElementById('addVillageY').value),
+                village_newdid: document.getElementById('addVillageNewdid').value,
+                village_population: parseInt(document.getElementById('addVillagePopulation').value || 0),
+                auto_farm_enabled: document.getElementById('addAutoFarm').checked,
+                training_enabled: document.getElementById('addTraining').checked
+            };
+            
+            // Call global addVillage function (defined in villages.js)
+            if (typeof addVillage === 'function') {
+                addVillage(villageData);
+            } else {
+                console.error("addVillage function not found!");
+                alert("Error: Could not add village. Please refresh the page and try again.");
+            }
+        });
+    }
+});
+</script>

@@ -3,6 +3,8 @@ Villages management routes for Travian Whispers web application.
 """
 import logging
 import json
+import os
+import time
 from flask import (
     render_template, flash, session, redirect, 
     url_for, request, jsonify, current_app
@@ -12,10 +14,314 @@ from bson import ObjectId
 from web.utils.decorators import login_required, api_error_handler
 from database.models.user import User
 from database.models.activity_log import ActivityLog
-from tasks.villages import run_villages
 
 # Initialize logger
 logger = logging.getLogger(__name__)
+
+# Define the extract_villages_internal function first, before it's referenced
+def extract_villages_internal(user_id):
+    """
+    Extract villages internally (without HTTP request/response).
+    This can be called from travian_settings when a user adds/updates their account.
+    
+    Args:
+        user_id (str): User ID
+        
+    Returns:
+        dict: Result dictionary with keys 'success', 'message', and optionally 'data'
+    """
+    from database.models.user import User
+    from database.models.activity_log import ActivityLog
+    
+    # Get user data
+    user_model = User()
+    user = user_model.get_user_by_id(user_id)
+    
+    if not user:
+        return {
+            'success': False,
+            'message': 'User not found'
+        }
+    
+    # Check if Travian credentials are set
+    if not user['travianCredentials'].get('username') or not user['travianCredentials'].get('password'):
+        return {
+            'success': False,
+            'message': 'Travian credentials not set'
+        }
+    
+    driver = None
+    
+    try:
+        # Set up detailed logging
+        logger.info(f"Starting internal village extraction for user {user['username']} (ID: {user_id})")
+        
+        # Get Travian credentials
+        travian_username = user['travianCredentials']['username']
+        travian_password = user['travianCredentials']['password']
+        travian_server = user['travianCredentials'].get('server', 'https://ts1.x1.international.travian.com')
+        
+        logger.info(f"Using server URL: {travian_server}")
+        
+        # Import required modules for browser automation
+        try:
+            from selenium import webdriver
+            from selenium.webdriver.chrome.options import Options
+            from selenium.webdriver.chrome.service import Service
+            from selenium.webdriver.common.by import By
+            from selenium.webdriver.support.ui import WebDriverWait
+            from selenium.webdriver.support import expected_conditions as EC
+            
+            logger.info("Successfully imported required Selenium modules")
+        except ImportError as e:
+            logger.error(f"Failed to import required Selenium modules: {str(e)}")
+            return {
+                'success': False,
+                'message': f'Server configuration error: Unable to import Selenium modules'
+            }
+        
+        # Setup browser
+        try:
+            logger.info("Setting up browser for internal village extraction")
+            
+            # Check for Selenium remote URL
+            selenium_url = os.environ.get('SELENIUM_REMOTE_URL')
+            logger.info(f"Selenium remote URL: {selenium_url if selenium_url else 'Not set - using local browser'}")
+            
+            # Configure Chrome options
+            chrome_options = Options()
+            chrome_options.add_argument("--headless")
+            chrome_options.add_argument("--no-sandbox")
+            chrome_options.add_argument("--disable-dev-shm-usage")
+            chrome_options.add_argument("--disable-gpu")
+            chrome_options.add_argument("--window-size=1920,1080")
+            
+            # Initialize the WebDriver
+            if selenium_url:
+                logger.info(f"Using Selenium Grid at {selenium_url} for village extraction")
+                try:
+                    driver = webdriver.Remote(
+                        command_executor=selenium_url,
+                        options=chrome_options
+                    )
+                    logger.info("Successfully connected to Selenium Grid")
+                except Exception as e:
+                    logger.warning(f"Failed to connect to Selenium Grid: {e}. Falling back to local Chrome.")
+                    selenium_url = None  # Force fallback to local Chrome
+            
+            if not selenium_url:
+                # If no Selenium Grid, use local Chrome
+                logger.info("Using local Chrome for village extraction")
+                # Check if we need to specify the service object
+                try:
+                    from webdriver_manager.chrome import ChromeDriverManager
+                    service = Service(ChromeDriverManager().install())
+                    driver = webdriver.Chrome(service=service, options=chrome_options)
+                    logger.info("Using webdriver_manager to set up ChromeDriver")
+                except ImportError:
+                    logger.info("webdriver_manager not available, using default Chrome setup")
+                    driver = webdriver.Chrome(options=chrome_options)
+            
+            logger.info("Browser setup successful")
+        except Exception as e:
+            logger.error(f"Error setting up browser: {str(e)}", exc_info=True)
+            return {
+                'success': False,
+                'message': f'Failed to set up browser: {str(e)}'
+            }
+        
+        # Login to Travian
+        try:
+            logger.info(f"Attempting to log in to Travian as {travian_username}")
+            
+            # Basic login implementation
+            if not travian_server.startswith(('http://', 'https://')):
+                travian_server = f"https://{travian_server}"
+                
+            driver.get(travian_server)
+            time.sleep(2)
+            
+            # Check if we're already on a login page or need to navigate to it
+            if "login" not in driver.current_url.lower():
+                # Try to find and click a login link
+                try:
+                    login_links = driver.find_elements(By.XPATH, "//a[contains(@href, 'login')]")
+                    if login_links:
+                        login_links[0].click()
+                        time.sleep(2)
+                    else:
+                        # Directly navigate to login page
+                        driver.get(f"{travian_server}/login.php")
+                        time.sleep(2)
+                except:
+                    # Direct navigation as fallback
+                    driver.get(f"{travian_server}/login.php")
+                    time.sleep(2)
+            
+            # Find login form elements
+            try:
+                username_field = WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.NAME, "name"))
+                )
+                password_field = driver.find_element(By.NAME, "password")
+                
+                # Enter credentials
+                username_field.clear()
+                username_field.send_keys(travian_username)
+                password_field.clear()
+                password_field.send_keys(travian_password)
+                
+                # Find login button
+                login_buttons = driver.find_elements(By.CSS_SELECTOR, "button[type='submit'], input[type='submit']")
+                
+                if login_buttons:
+                    login_buttons[0].click()
+                    time.sleep(3)  # Wait for login to process
+                else:
+                    # Try alternate button locators
+                    login_buttons = driver.find_elements(By.XPATH, "//button[contains(.,'Login') or contains(.,'Sign in')]")
+                    if login_buttons:
+                        login_buttons[0].click()
+                        time.sleep(3)
+                    else:
+                        # Last resort - try by form submission
+                        form = driver.find_element(By.TAG_NAME, "form")
+                        if form:
+                            form.submit()
+                            time.sleep(3)
+                
+                # Check if login was successful by looking for typical elements on the game page
+                try:
+                    # Wait for map or resources to appear, which indicates successful login
+                    WebDriverWait(driver, 10).until(
+                        EC.any_of(
+                            EC.presence_of_element_located((By.ID, "village_map")),
+                            EC.presence_of_element_located((By.ID, "navigation")),
+                            EC.presence_of_element_located((By.ID, "resources"))
+                        )
+                    )
+                    logger.info("Login successful - found game elements")
+                    login_successful = True
+                except Exception as e:
+                    # If we didn't find game elements, login probably failed
+                    logger.warning(f"Login failed - couldn't find game elements: {e}")
+                    login_successful = False
+            except Exception as e:
+                logger.error(f"Error finding or interacting with login elements: {str(e)}")
+                login_successful = False
+            
+            if not login_successful:
+                logger.error("Login failed - invalid credentials or Travian site changes")
+                if driver:
+                    driver.quit()
+                return {
+                    'success': False,
+                    'message': 'Failed to log in to Travian. Please check your credentials or try again later.'
+                }
+            logger.info("Login successful")
+        except Exception as e:
+            logger.error(f"Error during login: {str(e)}", exc_info=True)
+            if driver:
+                driver.quit()
+            return {
+                'success': False,
+                'message': f'Error during login: {str(e)}'
+            }
+        
+        # Extract villages
+        try:
+            logger.info("Running village extraction")
+            from tasks.villages import run_villages
+            
+            extracted_villages = run_villages(driver)
+            
+            if not extracted_villages:
+                logger.error("No villages were extracted")
+                if driver:
+                    driver.quit()
+                return {
+                    'success': False,
+                    'message': 'No villages were extracted. Please try again.'
+                }
+            
+            logger.info(f"Successfully extracted {len(extracted_villages)} villages")
+            for idx, village in enumerate(extracted_villages):
+                logger.info(f"Village {idx+1}: {village['name']} ({village['x']}|{village['y']})")
+                
+        except Exception as e:
+            logger.error(f"Error extracting villages: {str(e)}", exc_info=True)
+            if driver:
+                driver.quit()
+            return {
+                'success': False,
+                'message': f'Error extracting villages: {str(e)}'
+            }
+        
+        # Close browser
+        if driver:
+            driver.quit()
+            logger.info("Browser closed")
+        
+        # Preserve existing settings when updating villages
+        current_villages = user.get('villages', [])
+        village_settings = {}
+        
+        # Create a map of existing village settings by newdid
+        for village in current_villages:
+            newdid = village.get('newdid')
+            if newdid:
+                village_settings[newdid] = {
+                    'auto_farm_enabled': village.get('auto_farm_enabled', False),
+                    'training_enabled': village.get('training_enabled', False)
+                }
+        
+        # Apply existing settings to extracted villages
+        for village in extracted_villages:
+            newdid = village.get('newdid')
+            if newdid and newdid in village_settings:
+                village['auto_farm_enabled'] = village_settings[newdid]['auto_farm_enabled']
+                village['training_enabled'] = village_settings[newdid]['training_enabled']
+            else:
+                # Default settings for new villages - ENABLE auto-farm by default for better UX
+                village['auto_farm_enabled'] = True  # Enable auto-farm by default
+                village['training_enabled'] = False
+        
+        # Update user's villages in database
+        logger.info("Updating user's villages in database")
+        if user_model.update_user(user_id, {'villages': extracted_villages}):
+            # Log the activity
+            activity_model = ActivityLog()
+            activity_model.log_activity(
+                user_id=user_id,
+                activity_type='village-extract',
+                details=f"Automatically extracted {len(extracted_villages)} villages from Travian",
+                status='success'
+            )
+            
+            logger.info(f"User '{user['username']}' extracted {len(extracted_villages)} villages from Travian")
+            return {
+                'success': True,
+                'message': f'Successfully extracted {len(extracted_villages)} villages',
+                'data': extracted_villages
+            }
+        else:
+            logger.warning(f"Failed to save extracted villages for user '{user['username']}'")
+            return {
+                'success': False,
+                'message': 'Failed to save extracted villages'
+            }
+            
+    except Exception as e:
+        logger.error(f"Error extracting villages for user '{user['username']}': {str(e)}", exc_info=True)
+        if driver:
+            try:
+                driver.quit()
+            except:
+                pass
+        return {
+            'success': False,
+            'message': f'Error extracting villages: {str(e)}'
+        }
 
 def register_routes(user_bp):
     """Register villages routes with the user blueprint."""
@@ -140,7 +446,7 @@ def add_village():
         'y': int(data['village_y']),
         'newdid': data['village_newdid'],
         'population': int(data.get('village_population', 0)),
-        'auto_farm_enabled': data.get('auto_farm_enabled', False),
+        'auto_farm_enabled': data.get('auto_farm_enabled', True),  # Default to True for better UX
         'training_enabled': data.get('training_enabled', False),
         'status': 'active',
         'resources': {
@@ -405,248 +711,18 @@ def update_village_settings():
 @login_required
 def extract_villages():
     """API endpoint to extract villages from Travian."""
-    # Get user data
-    user_model = User()
-    user = user_model.get_user_by_id(session['user_id'])
+    # Call the internal function, just passing the user ID from the session
+    result = extract_villages_internal(session['user_id'])
     
-    if not user:
+    # Return JSON response based on the result
+    if result.get('success'):
+        return jsonify({
+            'success': True,
+            'message': result.get('message', f'Successfully extracted {len(result.get("data", []))} villages'),
+            'data': result.get('data', [])
+        })
+    else:
         return jsonify({
             'success': False,
-            'message': 'User not found'
-        }), 404
-    
-    # Check if Travian credentials are set
-    if not user['travianCredentials'].get('username') or not user['travianCredentials'].get('password'):
-        return jsonify({
-            'success': False,
-            'message': 'Travian credentials not set. Please update your Travian settings first.'
-        }), 400
-    
-    driver = None
-    
-    try:
-        # Set up logging for detailed troubleshooting
-        logger.info(f"Starting village extraction for user {user['username']}")
-        
-        # Get Travian credentials
-        travian_username = user['travianCredentials']['username']
-        travian_password = user['travianCredentials']['password']
-        travian_server = user['travianCredentials'].get('server', 'https://ts1.x1.international.travian.com')
-        
-        logger.info(f"Using server URL: {travian_server}")
-        
-        # Import required modules for browser automation
-        try:
-            from selenium import webdriver
-            from selenium.webdriver.chrome.options import Options
-            from selenium.webdriver.chrome.service import Service
-            from selenium.webdriver.common.by import By
-            from startup.browser_profile import setup_browser, login
-            
-            logger.info("Successfully imported required modules")
-        except ImportError as e:
-            logger.error(f"Failed to import required modules: {str(e)}")
-            return jsonify({
-                'success': False,
-                'message': f'Failed to import required modules: {str(e)}'
-            }), 500
-        
-        # Setup browser
-        try:
-            logger.info("Setting up browser")
-            driver = setup_browser(session['user_id'])
-            if not driver:
-                logger.error("Failed to set up browser")
-                return jsonify({
-                    'success': False,
-                    'message': 'Failed to set up browser'
-                }), 500
-            logger.info("Browser setup successful")
-        except Exception as e:
-            logger.error(f"Error setting up browser: {str(e)}")
-            return jsonify({
-                'success': False,
-                'message': f'Error setting up browser: {str(e)}'
-            }), 500
-        
-        # Login to Travian
-        try:
-            logger.info(f"Attempting to log in to Travian as {travian_username}")
-            login_successful = login(
-                driver, 
-                travian_username, 
-                travian_password, 
-                travian_server
-            )
-            
-            if not login_successful:
-                logger.error("Login failed")
-                if driver:
-                    driver.quit()
-                return jsonify({
-                    'success': False,
-                    'message': 'Failed to log in to Travian. Please check your credentials.'
-                }), 400
-            logger.info("Login successful")
-        except Exception as e:
-            logger.error(f"Error during login: {str(e)}")
-            if driver:
-                driver.quit()
-            return jsonify({
-                'success': False,
-                'message': f'Error during login: {str(e)}'
-            }), 500
-        
-        # Extract villages using the improved function
-        try:
-            logger.info("Running village extraction")
-            extracted_villages = run_villages(driver)
-            
-            if not extracted_villages:
-                logger.error("No villages were extracted")
-                if driver:
-                    driver.quit()
-                return jsonify({
-                    'success': False,
-                    'message': 'No villages were extracted. Please try again.'
-                }), 400
-            
-            logger.info(f"Successfully extracted {len(extracted_villages)} villages")
-            for idx, village in enumerate(extracted_villages):
-                logger.info(f"Village {idx+1}: {village['name']} ({village['x']}|{village['y']})")
-                
-        except Exception as e:
-            logger.error(f"Error extracting villages: {str(e)}")
-            if driver:
-                driver.quit()
-            return jsonify({
-                'success': False,
-                'message': f'Error extracting villages: {str(e)}'
-            }), 500
-        
-        # Close browser
-        if driver:
-            driver.quit()
-            logger.info("Browser closed")
-        
-        # Preserve existing settings when updating villages
-        current_villages = user.get('villages', [])
-        village_settings = {}
-        
-        # Create a map of existing village settings by newdid
-        for village in current_villages:
-            newdid = village.get('newdid')
-            if newdid:
-                village_settings[newdid] = {
-                    'auto_farm_enabled': village.get('auto_farm_enabled', False),
-                    'training_enabled': village.get('training_enabled', False)
-                }
-        
-        # Apply existing settings to extracted villages
-        for village in extracted_villages:
-            newdid = village.get('newdid')
-            if newdid and newdid in village_settings:
-                village['auto_farm_enabled'] = village_settings[newdid]['auto_farm_enabled']
-                village['training_enabled'] = village_settings[newdid]['training_enabled']
-            else:
-                # Default settings for new villages
-                village['auto_farm_enabled'] = False
-                village['training_enabled'] = False
-        
-        # Update user's villages in database
-        logger.info("Updating user's villages in database")
-        if user_model.update_user(session['user_id'], {'villages': extracted_villages}):
-            # Log the activity
-            activity_model = ActivityLog()
-            activity_model.log_activity(
-                user_id=session['user_id'],
-                activity_type='village-extract',
-                details=f"Extracted {len(extracted_villages)} villages from Travian",
-                status='success'
-            )
-            
-            logger.info(f"User '{user['username']}' extracted {len(extracted_villages)} villages from Travian")
-            return jsonify({
-                'success': True,
-                'message': f'Successfully extracted {len(extracted_villages)} villages',
-                'data': extracted_villages
-            })
-        else:
-            logger.warning(f"Failed to save extracted villages for user '{user['username']}'")
-            return jsonify({
-                'success': False,
-                'message': 'Failed to save extracted villages'
-            }), 500
-            
-    except Exception as e:
-        logger.error(f"Error extracting villages for user '{user['username']}': {str(e)}")
-        if driver:
-            try:
-                driver.quit()
-            except:
-                pass
-        return jsonify({
-            'success': False,
-            'message': f'Error extracting villages: {str(e)}'
+            'message': result.get('message', 'Unknown error occurred during extraction')
         }), 500
-
-@api_error_handler
-@login_required
-def get_user_villages():
-    """API endpoint to get user villages data."""
-    # Get user data
-    user_model = User()
-    user = user_model.get_user_by_id(session['user_id'])
-    
-    if not user:
-        return jsonify({
-            'success': False,
-            'message': 'User not found'
-        }), 404
-    
-    # Format villages with activity data
-    formatted_villages = []
-    for village in user.get('villages', []):
-        # Get activity logs for this village
-        activity_model = ActivityLog()
-        
-        # Get the last farm activity for this village
-        farm_activity = activity_model.get_latest_user_activity(
-            user_id=session['user_id'],
-            activity_type='auto-farm',
-            filter_query={'village': village.get('name')}
-        )
-        
-        # Get the last training activity for this village
-        training_activity = activity_model.get_latest_user_activity(
-            user_id=session['user_id'],
-            activity_type='troop-training',
-            filter_query={'village': village.get('name')}
-        )
-        
-        # Format village with consistent data structure
-        formatted_village = {
-            'name': village.get('name', 'Unknown Village'),
-            'x': village.get('x', 0),
-            'y': village.get('y', 0),
-            'newdid': village.get('newdid', '0'),
-            'population': village.get('population', 0),
-            'status': village.get('status', 'active'),
-            'auto_farm_enabled': village.get('auto_farm_enabled', False),
-            'training_enabled': village.get('training_enabled', False),
-            'resources': village.get('resources', {
-                'wood': 0,
-                'clay': 0,
-                'iron': 0,
-                'crop': 0
-            }),
-            'last_farmed': farm_activity['timestamp'].strftime('%Y-%m-%d %H:%M') if farm_activity and farm_activity.get('timestamp') else 'Never',
-            'last_trained': training_activity['timestamp'].strftime('%Y-%m-%d %H:%M') if training_activity and training_activity.get('timestamp') else 'Never'
-        }
-        
-        formatted_villages.append(formatted_village)
-    
-    return jsonify({
-        'success': True,
-        'data': formatted_villages
-    })

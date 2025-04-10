@@ -1,18 +1,18 @@
 """
-Fixed version of travian_settings.py with bug fixes
+Enhanced Travian settings module with automatic village extraction.
 """
 import logging
+import time
 from flask import (
     render_template, request, redirect, 
-    url_for, flash, session
+    url_for, flash, session, jsonify
 )
 
 from web.utils.decorators import login_required
 from database.models.user import User
+from database.models.activity_log import ActivityLog
 
 # Import needed for connection testing
-# Defining as None initially so we can handle import errors gracefully
-test_connection = None
 try:
     from travian_api.connector import test_connection
 except ImportError:
@@ -79,7 +79,9 @@ def travian_settings():
                     'server': travian_server,
                     'tribe': travian_tribe
                 },
-                'last_connection': 'Never'  # Default value
+                'last_connection': 'Never',  # Default value
+                'connection_verified': False,
+                'show_verify_button': True
             }
             
             # Try to get connection log information
@@ -93,6 +95,7 @@ def travian_settings():
                 
                 if connection_log and connection_log.get('timestamp'):
                     travian_settings['last_connection'] = connection_log['timestamp'].strftime('%Y-%m-%d %H:%M')
+                    travian_settings['connection_verified'] = connection_log.get('status') == 'success'
             except Exception as e:
                 logger.error(f"Error getting connection log: {e}")
             
@@ -119,8 +122,10 @@ def travian_settings():
             flash('Travian account settings updated successfully', 'success')
             logger.info(f"User '{user['username']}' updated Travian settings")
             
-            # Attempt to verify connection with Travian servers (new feature)
+            # Attempt to verify connection with Travian servers and extract villages
             connection_verified = False
+            villages_extracted = False
+            villages_count = 0
             try:
                 # Test the connection
                 from travian_api.connector import test_connection
@@ -134,11 +139,39 @@ def travian_settings():
                 if connection_verified:
                     flash('Travian account successfully connected and verified!', 'success')
                     logger.info(f"Travian connection verified for user '{user['username']}'")
+                    
+                    # Now automatically extract villages
+                    try:
+                        # Notify user that we're extracting villages
+                        flash('Extracting villages from your Travian account...', 'info')
+                        
+                        # Import the extract_villages function
+                        try:
+                            from web.routes.users_apis.villages import extract_villages_internal
+                            
+                            # Extract villages
+                            extraction_result = extract_villages_internal(session['user_id'])
+                            
+                            if extraction_result.get('success'):
+                                villages_extracted = True
+                                villages_count = len(extraction_result.get('data', []))
+                                flash(f'Successfully extracted {villages_count} villages from your Travian account!', 'success')
+                                logger.info(f"Villages extracted for user '{user['username']}': {villages_count}")
+                            else:
+                                flash(f"Villages could not be extracted: {extraction_result.get('message', 'Unknown error')}", 'warning')
+                                logger.warning(f"Village extraction failed for user '{user['username']}': {extraction_result.get('message', 'Unknown error')}")
+                        except ImportError:
+                            logger.warning("extract_villages_internal function not available")
+                            flash('Villages could not be extracted automatically. Please use the Extract Villages button on the Villages page.', 'warning')
+                    except Exception as e:
+                        logger.error(f"Error during village extraction: {e}")
+                        flash('Connection verified, but village extraction failed. Please try manually extracting villages.', 'warning')
                 else:
                     flash(f"Settings saved but connection could not be verified: {connection_result.get('message', 'Unknown error')}", 'warning')
                     logger.warning(f"Travian connection failed for user '{user['username']}': {connection_result.get('message', 'Unknown error')}")
             except ImportError:
                 logger.warning("Travian API connector module not available, connection verification skipped")
+                flash('Settings saved. To verify your connection, please visit the Villages page and click "Extract Villages".', 'info')
             except Exception as e:
                 logger.error(f"Error verifying Travian connection: {e}")
                 flash('Settings saved but there was an error verifying the connection', 'warning')
@@ -154,7 +187,11 @@ def travian_settings():
                         user_id=session['user_id'],
                         activity_type='travian-connection',
                         details='Successfully connected to Travian account',
-                        status='success'
+                        status='success',
+                        data={
+                            'villages_extracted': villages_extracted,
+                            'villages_count': villages_count
+                        }
                     )
                 else:
                     activity_model.log_activity(
@@ -179,7 +216,10 @@ def travian_settings():
             'server': user['travianCredentials'].get('server', ''),
             'tribe': user['travianCredentials'].get('tribe', '')
         },
-        'last_connection': 'Never'  # Default value
+        'last_connection': 'Never',  # Default value
+        'connection_verified': False,
+        'show_verify_button': True,
+        'villages_count': len(user.get('villages', []))
     }
     
     try:
@@ -195,6 +235,8 @@ def travian_settings():
         # Update last connection if available
         if connection_log and connection_log.get('timestamp'):
             travian_settings['last_connection'] = connection_log['timestamp'].strftime('%Y-%m-%d %H:%M')
+            travian_settings['connection_verified'] = connection_log.get('status') == 'success'
+            travian_settings['show_verify_button'] = False
     except Exception as e:
         logger.error(f"Error getting connection log: {e}")
     

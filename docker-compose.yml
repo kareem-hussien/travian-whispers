@@ -46,7 +46,7 @@ services:
 
   web:
     build: .
-    command: gunicorn --bind 0.0.0.0:5000 "web.app:create_app()"
+    command: gunicorn --bind 0.0.0.0:5000 --timeout 120 "web.app:create_app()"
     volumes:
       - ./:/app
       - logs:/app/logs

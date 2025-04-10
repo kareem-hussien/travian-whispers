@@ -1,4 +1,4 @@
-<!-- Edit Village Modal -->
+<!-- Edit Village Modal - Updated -->
 <div class="modal fade" id="editVillageModal" tabindex="-1" aria-labelledby="editVillageModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -13,34 +13,47 @@
                     <div class="mb-3">
                         <label for="editVillageName" class="form-label">Village Name</label>
                         <input type="text" class="form-control" id="editVillageName" name="village_name" required>
+                        <small class="text-muted">The name of your village as it appears in Travian.</small>
                     </div>
                     
                     <div class="row mb-3">
                         <div class="col-6">
                             <label for="editVillageX" class="form-label">X Coordinate</label>
                             <input type="number" class="form-control" id="editVillageX" name="village_x" required>
+                            <small class="text-muted">X-coordinate on the map</small>
                         </div>
                         <div class="col-6">
                             <label for="editVillageY" class="form-label">Y Coordinate</label>
                             <input type="number" class="form-control" id="editVillageY" name="village_y" required>
+                            <small class="text-muted">Y-coordinate on the map</small>
                         </div>
                     </div>
                     
                     <div class="mb-3">
                         <label for="editVillagePopulation" class="form-label">Population</label>
-                        <input type="number" class="form-control" id="editVillagePopulation" name="village_population">
+                        <input type="number" class="form-control" id="editVillagePopulation" name="village_population" min="0">
+                        <small class="text-muted">Village population (optional)</small>
                     </div>
                     
-                    <div class="mb-3">
+                    <div class="mb-4">
                         <label class="form-label">Automation Settings</label>
-                        <div class="form-check form-switch mb-2">
-                            <input class="form-check-input" type="checkbox" id="editAutoFarm" name="auto_farm">
-                            <label class="form-check-label" for="editAutoFarm">Enable Auto-Farm for this village</label>
+                        <div class="card bg-light p-3">
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="editAutoFarm" name="auto_farm">
+                                <label class="form-check-label" for="editAutoFarm">Enable Auto-Farm for this village</label>
+                                <div class="small text-muted">Auto-Farm automatically sends farm raids at regular intervals</div>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="editTraining" name="training">
+                                <label class="form-check-label" for="editTraining">Enable Troop Training for this village</label>
+                                <div class="small text-muted">Troop Training automatically trains troops based on your settings</div>
+                            </div>
                         </div>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="editTraining" name="training">
-                            <label class="form-check-label" for="editTraining">Enable Troop Training for this village</label>
-                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        If you're editing a village that was automatically extracted, make sure any changes match your Travian account. Manual edits won't be synchronized with Travian.
                     </div>
                 </form>
             </div>
@@ -51,3 +64,65 @@
         </div>
     </div>
 </div>
+
+<script>
+// Initialize the edit form when modal is shown
+document.addEventListener('DOMContentLoaded', function() {
+    const editModal = document.getElementById('editVillageModal');
+    if (editModal) {
+        editModal.addEventListener('show.bs.modal', function (event) {
+            // Button that triggered the modal
+            const button = event.relatedTarget;
+            
+            // Wait for modal to fully open before focusing on fields
+            setTimeout(() => {
+                document.getElementById('editVillageName')?.focus();
+            }, 500);
+        });
+    }
+    
+    // Add input validation
+    const editForm = document.getElementById('editVillageForm');
+    if (editForm) {
+        const xCoord = document.getElementById('editVillageX');
+        const yCoord = document.getElementById('editVillageY');
+        
+        // Add validation for coordinate inputs
+        [xCoord, yCoord].forEach(input => {
+            input?.addEventListener('input', function() {
+                // Only allow integers
+                this.value = this.value.replace(/[^-0-9]/g, '');
+                
+                // Validate range (Travian typically uses -400 to 400)
+                const val = parseInt(this.value);
+                if (!isNaN(val)) {
+                    if (val < -400) this.value = "-400";
+                    if (val > 400) this.value = "400";
+                }
+            });
+        });
+    }
+});
+
+// Function to populate edit village form (called from villages.js)
+function populateEditVillageForm(villageId) {
+    // Find village data from the global villages data
+    const village = window.villagesData.find(v => v.newdid == villageId);
+    
+    if (!village) {
+        console.error("Village not found:", villageId);
+        return;
+    }
+    
+    // Populate form fields
+    document.getElementById('editVillageId').value = village.newdid;
+    document.getElementById('editVillageName').value = village.name;
+    document.getElementById('editVillageX').value = village.x;
+    document.getElementById('editVillageY').value = village.y;
+    document.getElementById('editVillagePopulation').value = village.population || 0;
+    document.getElementById('editAutoFarm').checked = village.auto_farm_enabled;
+    document.getElementById('editTraining').checked = village.training_enabled;
+    
+    console.log("Edit form populated for village:", village.name);
+}
+</script>

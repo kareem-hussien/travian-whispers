@@ -59,6 +59,11 @@
                     <small class="form-text text-muted">Select your tribe for proper troop training configuration</small>
                 </div>
                 
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    After saving your Travian credentials, we'll automatically verify your connection and extract your villages.
+                </div>
+                
                 <button type="submit" class="btn btn-primary">Save Settings</button>
             </form>
         </div>
@@ -161,6 +166,13 @@
         // set the value back to ******** so the backend knows to use the existing password
         const form = passwordField.closest('form');
         form.addEventListener('submit', function(event) {
+            // Show loading message
+            const submitButton = form.querySelector('button[type="submit"]');
+            if (submitButton) {
+                submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
+                submitButton.disabled = true;
+            }
+            
             if (passwordField.value === '' && passwordField.getAttribute('data-has-password') === 'true') {
                 passwordField.value = '********';
             }
