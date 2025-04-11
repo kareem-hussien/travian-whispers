@@ -85,10 +85,28 @@ def subscription():
         'start_date': user['subscription'].get('startDate').strftime('%Y-%m-%d') if user['subscription'].get('startDate') else 'N/A',
         'end_date': user['subscription'].get('endDate').strftime('%Y-%m-%d') if user['subscription'].get('endDate') else 'N/A',
         'total_spent': sum(tx.get('amount', 0) for tx in transactions),
-        'subscription_age': (datetime.utcnow().replace(tzinfo=None) - user['subscription'].get('startDate')).days if user['subscription'].get('startDate') else 0,
         'transactions_count': len(transactions),
         'next_payment': user['subscription'].get('endDate').strftime('%Y-%m-%d') if user['subscription'].get('endDate') else 'N/A'
     }
+    
+    # Calculate subscription age safely
+    start_date = user['subscription'].get('startDate')
+    if start_date:
+        try:
+            # Simply use .days attribute which handles timezone differences
+            # as long as both dates are in the same timezone (UTC)
+            now = datetime.utcnow()
+            delta = now - start_date
+            subscription_stats['subscription_age'] = delta.days
+        except TypeError:
+            # If there's a timezone mismatch, convert to string and parse to ensure both are naive
+            start_date_str = start_date.strftime('%Y-%m-%d %H:%M:%S')
+            start_date_naive = datetime.strptime(start_date_str, '%Y-%m-%d %H:%M:%S')
+            now = datetime.utcnow()
+            delta = now - start_date_naive
+            subscription_stats['subscription_age'] = delta.days
+    else:
+        subscription_stats['subscription_age'] = 0
     
     # Log a view activity
     activity_model = ActivityLog()

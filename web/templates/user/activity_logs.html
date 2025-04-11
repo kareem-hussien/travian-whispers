@@ -82,12 +82,13 @@
         </div>
         
         <div class="col-md-3 mb-4 mb-md-0">
+            {% set success_rate = ((stats.success / stats.total) * 100)|round|int ~ '% success rate' if stats.success|default(0) > 0 else 'No activities yet' %}
             {% with 
                 icon='check-circle',
                 icon_bg='bg-success-light',
                 title='Successful Operations',
                 value=stats.success,
-                subtitle=stats.success|default(0) > 0 ? (((stats.success / stats.total) * 100)|round|int) ~ '% success rate' : 'No activities yet'
+                subtitle=success_rate
             %}
                 {% include 'user/components/stat_card.html' %}
             {% endwith %}
@@ -360,7 +361,7 @@
         const activityTypes = {
             'Auto-Farm': {{ stats.auto_farm|default(0) }},
             'Troop Training': {{ stats.training|default(0) }},
-            'Login': {{ stats.system|default(0) // This is an approximation }},
+            'Login': {{ stats.system|default(0) }},
             'Village': {{ stats.system|default(0) // This is an approximation }},
             'Profile': {{ stats.system|default(0) // This is an approximation }},
             'System': {{ stats.system|default(0) }}

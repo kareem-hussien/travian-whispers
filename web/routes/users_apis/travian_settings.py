@@ -2,12 +2,14 @@
 Enhanced Travian settings module with automatic village extraction.
 """
 import logging
+
 import time
 from flask import (
     render_template, request, redirect, 
     url_for, flash, session, jsonify
 )
 
+from bson import ObjectId
 from web.utils.decorators import login_required
 from database.models.user import User
 from database.models.activity_log import ActivityLog
@@ -31,6 +33,41 @@ def register_routes(user_bp):
     """Register travian settings routes with the user blueprint."""
     # Attach routes to the blueprint
     user_bp.route('/travian-settings', methods=['GET', 'POST'])(login_required(travian_settings))
+
+def is_travian_account_registered(username, server, exclude_user_id=None):
+    """
+    Check if a Travian account is already registered by another user.
+    
+    Args:
+        username (str): Travian username
+        server (str): Travian server URL
+        exclude_user_id (str, optional): User ID to exclude from the check
+        
+    Returns:
+        bool: True if account is already registered, False otherwise
+    """
+    user_model = User()
+    
+    # Normalize the server URL for comparison
+    if server and not server.startswith(('http://', 'https://')):
+        server = f"https://{server}"
+    
+    # Build query to find users with this Travian account
+    query = {
+        "travianCredentials.username": username
+    }
+    
+    # If server is provided, include it in the query
+    if server:
+        query["travianCredentials.server"] = server
+    
+    # If we're updating an existing user, exclude them from the check
+    if exclude_user_id:
+        query["_id"] = {"$ne": ObjectId(exclude_user_id)}
+    
+    # Check if any user has this account registered
+    count = user_model.collection.count_documents(query)
+    return count > 0
 
 @login_required
 def travian_settings():
@@ -69,6 +106,11 @@ def travian_settings():
             flash('Travian password is required', 'danger')
             error = True
             
+        # Check if account is already registered by another user
+        if not error and is_travian_account_registered(travian_username, travian_server, session['user_id']):
+            flash('This Travian account is already registered and cannot be added again', 'danger')
+            error = True
+        
         if error:
             # If there were validation errors, don't update and re-render the form
             # with the current values

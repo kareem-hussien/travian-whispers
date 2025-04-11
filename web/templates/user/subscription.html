@@ -1,0 +1,566 @@
+{% extends 'user/layout.html' %}
+
+{% block title %}Subscription Management{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">Subscription</li>
+{% endblock %}
+
+{% block content %}
+<div class="content">
+    <!-- Page Header -->
+    {% with 
+        title="Subscription Management",
+        subtitle="Manage your subscription plan and billing information"
+    %}
+        {% include 'user/components/page_header.html' %}
+    {% endwith %}
+    
+    <!-- Subscription Overview -->
+    <div class="row mb-4">
+        <div class="col-lg-7 mb-4 mb-lg-0">
+            <div class="dashboard-card">
+                <h4 class="mb-4">Current Subscription</h4>
+                
+                {% if subscription_stats.status == 'active' %}
+                <div class="subscription-status active mb-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="status-icon bg-success-light me-3">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-1">{{ current_plan.name }} Plan</h5>
+                            <p class="mb-0 text-muted">Your subscription is active</p>
+                        </div>
+                        <div class="ms-auto">
+                            <span class="badge bg-success">Active</span>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="subscription-detail">
+                                <small class="text-muted d-block mb-1">Started On</small>
+                                <span>{{ subscription_stats.start_date }}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="subscription-detail">
+                                <small class="text-muted d-block mb-1">Renews On</small>
+                                <span>{{ subscription_stats.next_payment }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="subscription-features mt-4">
+                        <h6 class="mb-3">Your Plan Features</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <ul class="feature-list">
+                                    {% if current_plan.features.autoFarm %}
+                                    <li class="feature-available"><i class="bi bi-check-circle-fill me-2"></i> Auto-Farm feature</li>
+                                    {% else %}
+                                    <li class="feature-unavailable"><i class="bi bi-x-circle-fill me-2"></i> Auto-Farm feature</li>
+                                    {% endif %}
+                                    
+                                    {% if current_plan.features.trainer %}
+                                    <li class="feature-available"><i class="bi bi-check-circle-fill me-2"></i> Troop training</li>
+                                    {% else %}
+                                    <li class="feature-unavailable"><i class="bi bi-x-circle-fill me-2"></i> Troop training</li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul class="feature-list">
+                                    <li class="feature-available"><i class="bi bi-check-circle-fill me-2"></i> Support for {{ current_plan.features.maxVillages }} villages</li>
+                                    <li class="feature-available"><i class="bi bi-check-circle-fill me-2"></i> {{ current_plan.features.maxTasks }} concurrent tasks</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="subscription-actions mt-4 d-flex gap-2">
+                        <button class="btn btn-outline-primary" id="changeSubscriptionBtn">
+                            <i class="bi bi-arrow-up-circle me-2"></i>Change Plan
+                        </button>
+                        <button class="btn btn-outline-danger" id="cancelSubscriptionBtn" data-bs-toggle="modal" data-bs-target="#cancelSubscriptionModal">
+                            <i class="bi bi-x-circle me-2"></i>Cancel Subscription
+                        </button>
+                    </div>
+                </div>
+                
+                {% elif subscription_stats.status == 'cancelled' %}
+                <div class="subscription-status cancelled mb-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="status-icon bg-warning-light me-3">
+                            <i class="bi bi-exclamation-circle"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-1">{{ current_plan.name }} Plan</h5>
+                            <p class="mb-0 text-muted">Your subscription has been cancelled</p>
+                        </div>
+                        <div class="ms-auto">
+                            <span class="badge bg-warning">Cancelled</span>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        Your access will continue until <strong>{{ subscription_stats.end_date }}</strong>. After this date, you'll lose access to premium features.
+                    </div>
+                    
+                    <div class="subscription-actions mt-4">
+                        <button class="btn btn-primary" id="renewSubscriptionBtn">
+                            <i class="bi bi-arrow-clockwise me-2"></i>Renew Subscription
+                        </button>
+                    </div>
+                </div>
+                
+                {% else %}
+                <div class="subscription-status inactive mb-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="status-icon bg-secondary-light me-3">
+                            <i class="bi bi-dash-circle"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-1">No Active Subscription</h5>
+                            <p class="mb-0 text-muted">You don't have an active subscription plan</p>
+                        </div>
+                        <div class="ms-auto">
+                            <span class="badge bg-secondary">Inactive</span>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        Subscribe to a plan to unlock premium features like Auto-Farm and Troop Training.
+                    </div>
+                    
+                    <div class="subscription-actions mt-4">
+                        <button class="btn btn-primary" id="selectPlanBtn">
+                            <i class="bi bi-plus-circle me-2"></i>Select a Plan
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Subscription Stats -->
+        <div class="col-lg-5">
+            <div class="dashboard-card h-100">
+                <h4 class="mb-4">Subscription Stats</h4>
+                
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-icon bg-primary-light">
+                            <i class="bi bi-calendar-check"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h6 class="stat-title">Subscription Age</h6>
+                            <div class="stat-value">{{ subscription_stats.subscription_age }} days</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <div class="stat-icon bg-success-light">
+                            <i class="bi bi-credit-card"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h6 class="stat-title">Total Spent</h6>
+                            <div class="stat-value">${{ "%.2f"|format(subscription_stats.total_spent) }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <div class="stat-icon bg-info-light">
+                            <i class="bi bi-receipt"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h6 class="stat-title">Transactions</h6>
+                            <div class="stat-value">{{ subscription_stats.transactions_count }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-item">
+                        <div class="stat-icon bg-warning-light">
+                            <i class="bi bi-clock-history"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h6 class="stat-title">Next Payment</h6>
+                            <div class="stat-value">{{ subscription_stats.next_payment }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Available Plans -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="dashboard-card">
+                <h4 class="mb-4">Available Plans</h4>
+                
+                <div class="row">
+                    {% for plan in plans %}
+                    <div class="col-md-4 mb-4">
+                        {% with 
+                            plan=plan,
+                            current=current_plan and current_plan._id == plan._id
+                        %}
+                            {% include 'user/components/subscription_card.html' %}
+                        {% endwith %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Transaction History -->
+    <div class="row">
+        <div class="col-12">
+            <div class="dashboard-card">
+                <h4 class="mb-4">Transaction History</h4>
+                
+                {% if transaction_history|length > 0 %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Plan</th>
+                                <th>Amount</th>
+                                <th>Payment Method</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for transaction in transaction_history %}
+                            <tr>
+                                <td>{{ transaction.date }}</td>
+                                <td>{{ transaction.plan }}</td>
+                                <td>${{ "%.2f"|format(transaction.amount) }}</td>
+                                <td>
+                                    {% if transaction.payment_method == 'paypal' %}
+                                    <i class="bi bi-paypal text-primary me-2"></i>PayPal
+                                    {% else %}
+                                    <i class="bi bi-credit-card text-success me-2"></i>{{ transaction.payment_method|capitalize }}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if transaction.status == 'completed' %}
+                                    <span class="badge bg-success">Completed</span>
+                                    {% elif transaction.status == 'pending' %}
+                                    <span class="badge bg-warning">Pending</span>
+                                    {% elif transaction.status == 'failed' %}
+                                    <span class="badge bg-danger">Failed</span>
+                                    {% elif transaction.status == 'refunded' %}
+                                    <span class="badge bg-info">Refunded</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ transaction.status|capitalize }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#transactionDetailsModal" data-transaction-id="{{ transaction.id }}">
+                                        <i class="bi bi-eye"></i> View
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    No transaction history available.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Subscription Modal -->
+<div class="modal fade" id="cancelSubscriptionModal" tabindex="-1" aria-labelledby="cancelSubscriptionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cancelSubscriptionModalLabel">Cancel Subscription</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <strong>Warning:</strong> Cancelling your subscription will disable premium features after your current billing period ends.
+                </div>
+                
+                <p>Your subscription will remain active until <strong>{{ subscription_stats.end_date }}</strong>. After this date, you'll lose access to:</p>
+                
+                <ul>
+                    <li>Auto-Farm feature</li>
+                    <li>Troop Training</li>
+                    <li>Multiple villages support</li>
+                    <li>Other premium features</li>
+                </ul>
+                
+                <p>Are you sure you want to cancel your subscription?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No, Keep My Subscription</button>
+                <button type="button" class="btn btn-danger" id="confirmCancelSubscription">Yes, Cancel Subscription</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Transaction Details Modal -->
+<div class="modal fade" id="transactionDetailsModal" tabindex="-1" aria-labelledby="transactionDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="transactionDetailsModalLabel">Transaction Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex justify-content-between mb-3">
+                    <div>
+                        <strong>Transaction ID:</strong>
+                    </div>
+                    <div id="transaction-id">---</div>
+                </div>
+                
+                <div class="d-flex justify-content-between mb-3">
+                    <div>
+                        <strong>Date:</strong>
+                    </div>
+                    <div id="transaction-date">---</div>
+                </div>
+                
+                <div class="d-flex justify-content-between mb-3">
+                    <div>
+                        <strong>Plan:</strong>
+                    </div>
+                    <div id="transaction-plan">---</div>
+                </div>
+                
+                <div class="d-flex justify-content-between mb-3">
+                    <div>
+                        <strong>Amount:</strong>
+                    </div>
+                    <div id="transaction-amount">---</div>
+                </div>
+                
+                <div class="d-flex justify-content-between mb-3">
+                    <div>
+                        <strong>Payment Method:</strong>
+                    </div>
+                    <div id="transaction-method">---</div>
+                </div>
+                
+                <div class="d-flex justify-content-between mb-3">
+                    <div>
+                        <strong>Status:</strong>
+                    </div>
+                    <div id="transaction-status">---</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="#" class="btn btn-primary" id="downloadReceiptBtn">
+                    <i class="bi bi-download me-2"></i>Download Receipt
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle Cancel Subscription
+        const confirmCancelBtn = document.getElementById('confirmCancelSubscription');
+        if (confirmCancelBtn) {
+            confirmCancelBtn.addEventListener('click', function() {
+                // Show loading state
+                this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+                this.disabled = true;
+                
+                // Send request to cancel subscription
+                fetch('/api/subscription/cancel', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({})
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Show success message and reload page
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('cancelSubscriptionModal'));
+                        modal.hide();
+                        
+                        // Create alert
+                        const alertDiv = document.createElement('div');
+                        alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                        alertDiv.innerHTML = `
+                            <i class="bi bi-check-circle-fill me-2"></i>
+                            ${data.message}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        `;
+                        
+                        // Insert after the page header
+                        const pageHeader = document.querySelector('.page-header');
+                        pageHeader.parentNode.insertBefore(alertDiv, pageHeader.nextSibling);
+                        
+                        // Reload page after a delay
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 2000);
+                    } else {
+                        // Show error message
+                        alert('Error: ' + data.message);
+                        
+                        // Reset button
+                        confirmCancelBtn.innerHTML = 'Yes, Cancel Subscription';
+                        confirmCancelBtn.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred. Please try again.');
+                    
+                    // Reset button
+                    confirmCancelBtn.innerHTML = 'Yes, Cancel Subscription';
+                    confirmCancelBtn.disabled = false;
+                });
+            });
+        }
+        
+        // Handle Change Plan button
+        const changePlanBtn = document.getElementById('changeSubscriptionBtn');
+        if (changePlanBtn) {
+            changePlanBtn.addEventListener('click', function() {
+                // Scroll to Available Plans section
+                const plansSection = document.querySelector('.dashboard-card h4:contains("Available Plans")').closest('.dashboard-card');
+                plansSection.scrollIntoView({ behavior: 'smooth' });
+            });
+        }
+        
+        // Handle Transaction Details Modal
+        const transactionDetailsModal = document.getElementById('transactionDetailsModal');
+        if (transactionDetailsModal) {
+            transactionDetailsModal.addEventListener('show.bs.modal', function (event) {
+                // Get the button that triggered the modal
+                const button = event.relatedTarget;
+                
+                // Extract transaction ID from button data attribute
+                const transactionId = button.getAttribute('data-transaction-id');
+                
+                // Find transaction data
+                const transaction = getTransactionById(transactionId);
+                
+                if (transaction) {
+                    // Update modal content
+                    document.getElementById('transaction-id').textContent = transactionId;
+                    document.getElementById('transaction-date').textContent = transaction.date;
+                    document.getElementById('transaction-plan').textContent = transaction.plan;
+                    document.getElementById('transaction-amount').textContent = '$' + parseFloat(transaction.amount).toFixed(2);
+                    document.getElementById('transaction-method').textContent = transaction.payment_method === 'paypal' ? 'PayPal' : transaction.payment_method;
+                    
+                    // Update status with badge
+                    const statusElement = document.getElementById('transaction-status');
+                    let badgeClass = 'bg-secondary';
+                    
+                    if (transaction.status === 'completed') {
+                        badgeClass = 'bg-success';
+                    } else if (transaction.status === 'pending') {
+                        badgeClass = 'bg-warning';
+                    } else if (transaction.status === 'failed') {
+                        badgeClass = 'bg-danger';
+                    } else if (transaction.status === 'refunded') {
+                        badgeClass = 'bg-info';
+                    }
+                    
+                    statusElement.innerHTML = `<span class="badge ${badgeClass}">${transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}</span>`;
+                    
+                    // Update download receipt button
+                    const downloadBtn = document.getElementById('downloadReceiptBtn');
+                    if (transaction.status === 'completed') {
+                        downloadBtn.style.display = 'block';
+                        downloadBtn.href = `/dashboard/receipts/download/${transactionId}`;
+                    } else {
+                        downloadBtn.style.display = 'none';
+                    }
+                }
+            });
+        }
+        
+        // Helper function to get transaction by ID
+        function getTransactionById(id) {
+            // This is just a placeholder. In a real application, you'd fetch this data from the server
+            // or have it pre-loaded in a JavaScript variable.
+            const transactions = {{ transaction_history|tojson|safe }};
+            return transactions.find(t => t.id === id);
+        }
+        
+        // Initialize subscription plan selection buttons
+        const planButtons = document.querySelectorAll('.pricing-card .btn-primary');
+        planButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const planName = this.closest('.pricing-card').querySelector('.pricing-header').textContent;
+                const planId = this.getAttribute('data-plan-id');
+                
+                if (!planId) {
+                    alert('Error: Plan ID not found');
+                    return;
+                }
+                
+                // Show loading state
+                this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+                this.disabled = true;
+                
+                // Send request to create order
+                fetch('/api/subscription/create-order', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        planId: planId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data && data.data.approvalUrl) {
+                        // Redirect to PayPal approval page
+                        window.location.href = data.data.approvalUrl;
+                    } else {
+                        // Show error message
+                        alert('Error: ' + (data.message || 'Failed to create subscription order'));
+                        
+                        // Reset button
+                        this.innerHTML = `Upgrade to ${planName}`;
+                        this.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred. Please try again.');
+                    
+                    // Reset button
+                    this.innerHTML = `Upgrade to ${planName}`;
+                    this.disabled = false;
+                });
+            });
+        });
+    });
+</script>
+{% endblock %}

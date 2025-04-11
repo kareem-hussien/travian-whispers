@@ -37,13 +37,6 @@ def run_villages(driver, return_villages=False):
         # Wait for the page to load completely
         time.sleep(5)  # Give additional time for all elements to load
         
-        # Take a screenshot for debugging (optional)
-        try:
-            driver.save_screenshot("village_extraction.png")
-            logger.info("Screenshot saved as village_extraction.png")
-        except:
-            logger.warning("Failed to save screenshot")
-        
         # Try to find the village list using the exact structure from the HTML
         try:
             logger.info("Looking for the village list with class 'villageList'")
