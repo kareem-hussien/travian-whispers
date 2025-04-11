@@ -192,12 +192,15 @@ def extract_villages_internal(user_id):
                 
                 # Check if login was successful by looking for typical elements on the game page
                 try:
-                    # Wait for map or resources to appear, which indicates successful login
+                    # Wait for elements that indicate successful login
                     WebDriverWait(driver, 10).until(
                         EC.any_of(
-                            EC.presence_of_element_located((By.ID, "village_map")),
                             EC.presence_of_element_located((By.ID, "navigation")),
-                            EC.presence_of_element_located((By.ID, "resources"))
+                            EC.presence_of_element_located((By.ID, "resources")),
+                            EC.presence_of_element_located((By.CLASS_NAME, "villageList")),
+                            EC.presence_of_element_located((By.ID, "sidebarBoxVillagelist")),
+                            EC.presence_of_element_located((By.ID, "village_map")),
+                            EC.presence_of_element_located((By.ID, "villageNameField"))
                         )
                     )
                     logger.info("Login successful - found game elements")

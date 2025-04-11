@@ -111,13 +111,15 @@ class ActivityLog:
                 'total_pages': 0
             }
     
-    def get_latest_user_activity(self, user_id, activity_type=None):
+    def get_latest_user_activity(self, user_id, activity_type=None, village=None, filter_query=None):
         """
         Get the latest user activity of a specific type.
         
         Args:
             user_id (str): User ID
             activity_type (str): Type of activity (optional)
+            village (str): Village name or ID to filter by (optional)
+            filter_query (dict): Additional filter criteria (optional)
         
         Returns:
             dict: Latest activity log or None if not found
@@ -129,6 +131,14 @@ class ActivityLog:
             # Add activity type if provided
             if activity_type:
                 query['activityType'] = activity_type
+            
+            # Add village filter if provided
+            if village:
+                query['village'] = village
+                
+            # Add additional filter criteria if provided
+            if filter_query:
+                query.update(filter_query)
             
             # Get latest activity
             activity = self.collection.find_one(
